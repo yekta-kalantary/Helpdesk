@@ -2,6 +2,7 @@
 
 namespace Modules\Customers\Infrastructure;
 
+use Illuminate\Support\Facades\DB;
 use Modules\Customers\Domain\Contracts\CustomerRepository;
 use Modules\Customers\Infrastructure\Models\Customer;
 
@@ -46,9 +47,14 @@ class EloquentCustomerRepository implements CustomerRepository
     /** @return array<string,mixed> */
     private function map(Customer $customer): array
     {
+        $portalActive = $customer->user_id
+            ? (bool) DB::table('users')->where('id', $customer->user_id)->value('is_active')
+            : false;
+
         return [
             'id' => $customer->id,
             'user_id' => $customer->user_id,
+            'portal_active' => $portalActive,
             'name' => $customer->name,
             'company' => $customer->company,
             'email' => $customer->email,
