@@ -1,16 +1,32 @@
-# Shared UI Kit
+# Shared UI Kit & Livewire Presentation
 
-The Helpdesk presentation layer uses anonymous Blade components from `resources/views/components/ui` as the single source of truth for reusable UI primitives.
+The Helpdesk presentation layer is **Livewire 4 + Blade + Tailwind CSS**. Reusable visual primitives live in `resources/views/components/ui` and remain the single source of truth for styling and interaction surfaces.
 
 ## Architecture
 
-The UI Kit intentionally lives in the root presentation layer rather than in an application module. It is a cross-cutting presentation concern, not a business bounded context. Domain and application layers never depend on it.
+The UI Kit lives in the root presentation layer rather than a business module. It is a cross-cutting presentation concern, not a bounded context. Domain and Application layers never depend on Livewire, Blade or the UI Kit.
 
-Application modules may depend on the shared UI components from their Blade views only.
+Each business module owns class-based Livewire components under:
 
-## Component API
+```text
+app-modules/<module>/src/Presentation/Livewire
+```
 
-Shared primitives currently include:
+and registers a module namespace such as `customers::`, `projects::`, `tasks::` or `tickets::` from its Service Provider.
+
+## Page pattern
+
+Use these component shapes consistently:
+
+- `Index`: list/search/filter/delete interactions.
+- `Form`: create/edit state, validation and save actions.
+- `Show`: record detail and record-specific interactions such as comments, status or replies.
+
+Routes use `Route::livewire()` and retain stable route names/URLs. Write operations should be Livewire actions instead of separate POST/PUT/PATCH/DELETE page routes.
+
+Binary attachment downloads are the intentional exception: they remain authenticated HTTP GET routes after row-scope verification so files can be streamed directly rather than encoded through the Livewire response protocol.
+
+## Shared component API
 
 - `x-ui.page-header`
 - `x-ui.nav-link`
@@ -31,20 +47,25 @@ Shared primitives currently include:
 - `x-ui.progress`
 - `x-ui.meta-item`
 
-## Rules for module views
+These components pass Livewire attributes such as `wire:model`, `wire:click`, `wire:loading`, `wire:target`, `wire:confirm` and `wire:navigate` to the relevant HTML controls.
 
-1. Use `x-ui.*` for reusable controls, cards, tables, badges, alerts, actions, headers and form fields.
-2. Keep Tailwind utilities inside a module view only for page-specific composition such as grid columns, Kanban layout or message-thread spacing.
-3. Do not add a new `.btn-*`, `.card`, `.badge`, form-control or table primitive to module CSS.
-4. Add a new shared component when the same presentation pattern appears in more than one bounded context.
-5. Shared components must not query module models or contain domain/business rules.
-6. Permission and ownership decisions remain in controllers/policies/application queries. Blade may use `@can` only to conditionally expose already-authorized actions.
+## Rules
+
+1. Keep business persistence and invariants in Application/Domain services; Livewire components orchestrate them.
+2. Re-check permissions inside every mutating Livewire action. Page-route middleware is not sufficient for later Livewire update requests.
+3. Preserve row-level ownership/scope checks for customer, project, task and ticket data.
+4. Use `wire:key` in repeated interactive records.
+5. Use `wire:confirm` for destructive actions and loading states for network actions.
+6. Use `WithFileUploads` for Task/Ticket uploads, but keep downloads as streamed HTTP responses.
+7. Keep Tailwind utilities in module views only for page-specific composition such as Kanban grids and conversation spacing.
+8. Shared UI components must not query module models or contain business rules.
 
 ## Layouts
 
-- `layouts.app` is the authenticated application shell and owns navigation, flash messages and global validation feedback.
-- `layouts.guest` is the guest/error shell used by login and HTTP error pages.
+- `layouts.app` is the default Livewire full-page layout and owns authenticated navigation, global flash/error feedback and Livewire assets.
+- `layouts.guest` is used by the Livewire login page and remains usable by error views.
+- Internal navigation uses `wire:navigate` for SPA-like page transitions.
 
 ## CI contract
 
-CI runs `php artisan view:cache` so every Blade view and shared component must compile before tests and frontend build are accepted.
+CI must pass Composer install/validation, migrations/seed, route discovery, `php artisan view:cache`, Livewire-focused feature tests, Pint, frontend build and archive generation.
