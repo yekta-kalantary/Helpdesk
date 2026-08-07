@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Identity\Presentation\Http\Controllers\AuthController;
 use Modules\Identity\Presentation\Http\Controllers\DashboardController;
+use Modules\Identity\Presentation\Http\Controllers\NotificationController;
 use Modules\Identity\Presentation\Http\Controllers\RoleController;
 use Modules\Identity\Presentation\Http\Controllers\UserController;
 
@@ -14,6 +15,12 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::middleware('permission:notifications.view')->group(function (): void {
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/{notification}/open', [NotificationController::class, 'open'])->name('notifications.open');
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    });
 
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:users.view')->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->middleware('permission:users.create')->name('users.create');
