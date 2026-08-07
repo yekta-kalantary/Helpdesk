@@ -1,16 +1,12 @@
-@extends('layouts.app')
+<div>
+    @if(session('success'))
+        <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
+    @endif
 
-@section('title', $ticket['subject'])
-
-@section('content')
     <x-ui.page-header :title="'#'.$ticket['id'].' — '.$ticket['subject']" :subtitle="$ticket['customer_name'].($ticket['project_title'] ? ' · '.$ticket['project_title'] : '')">
         <x-slot:actions>
             @can('tickets.delete')
-                <form method="POST" action="{{ route('tickets.destroy', $ticket['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >
-                    @csrf
-                    @method('DELETE')
-                    <x-ui.button variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button>
-                </form>
+                <x-ui.button variant="danger" wire:click="deleteTicket" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteTicket">{{ __('app.delete') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
@@ -26,7 +22,7 @@
             <x-ui.card :title="__('tickets::messages.conversation')">
                 <div class="space-y-4">
                     @foreach($ticket['messages'] as $message)
-                        <article class="rounded-xl border border-slate-200 p-4">
+                        <article class="rounded-xl border border-slate-200 p-4" wire:key="ticket-message-{{ $message['id'] }}">
                             <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-500">
                                 <span class="font-semibold text-slate-800">{{ $message['user_name'] }}</span>
                                 <span dir="ltr">{{ $message['created_at']?->format('Y-m-d H:i') }}</span>
@@ -46,13 +42,16 @@
             </x-ui.card>
 
             @can('tickets.reply')
-                <form method="POST" enctype="multipart/form-data" action="{{ route('tickets.reply', $ticket['id']) }}">
-                    @csrf
+                <form wire:submit="reply">
                     <x-ui.card :title="__('tickets::messages.reply')">
                         <div class="space-y-4">
-                            <x-ui.textarea name="body" :label="__('tickets::messages.reply')" :value="old('body')" required />
-                            <x-ui.input name="attachments[]" :label="__('tickets::messages.attachments')" type="file" multiple />
-                            <x-ui.button type="submit">{{ __('tickets::messages.reply') }}</x-ui.button>
+                            <x-ui.textarea name="replyBody" :label="__('tickets::messages.reply')" :value="$replyBody" wire:model="replyBody" required />
+                            <x-ui.input name="replyAttachments" :label="__('tickets::messages.attachments')" type="file" wire:model="replyAttachments" multiple />
+                            @error('replyAttachments.*')<p class="text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                            <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="reply,replyAttachments">
+                                <span wire:loading.remove wire:target="reply">{{ __('tickets::messages.reply') }}</span>
+                                <span wire:loading wire:target="reply">{{ __('app.loading') }}</span>
+                            </x-ui.button>
                         </div>
                     </x-ui.card>
                 </form>
@@ -61,23 +60,24 @@
 
         <aside class="space-y-4">
             @can('tickets.manage')
-                <form method="POST" action="{{ route('tickets.manage', $ticket['id']) }}">
-                    @csrf
-                    @method('PATCH')
+                <form wire:submit="manage">
                     <x-ui.card :title="__('tickets::messages.manage_ticket')">
                         <div class="space-y-4">
-                            <x-ui.select name="status" :label="__('app.status')">
-                                @foreach($statuses as $status)
-                                    <option value="{{ $status->value }}" @selected($ticket['status'] === $status->value)>{{ __('tickets::messages.status.'.$status->value) }}</option>
+                            <x-ui.select name="status" :label="__('app.status')" wire:model="status">
+                                @foreach($statuses as $statusItem)
+                                    <option value="{{ $statusItem->value }}">{{ __('tickets::messages.status.'.$statusItem->value) }}</option>
                                 @endforeach
                             </x-ui.select>
-                            <x-ui.select name="assigned_to" :label="__('tickets::messages.assignee')">
+                            <x-ui.select name="assigned_to" :label="__('tickets::messages.assignee')" wire:model.number="assigned_to">
                                 <option value="">{{ __('tickets::messages.unassigned') }}</option>
                                 @foreach($options['members'] as $member)
-                                    <option value="{{ $member['id'] }}" @selected((string) $ticket['assigned_to'] === (string) $member['id'])>{{ $member['name'] }}</option>
+                                    <option value="{{ $member['id'] }}">{{ $member['name'] }}</option>
                                 @endforeach
                             </x-ui.select>
-                            <x-ui.button class="w-full" type="submit">{{ __('app.save') }}</x-ui.button>
+                            <x-ui.button class="w-full" type="submit" wire:loading.attr="disabled" wire:target="manage">
+                                <span wire:loading.remove wire:target="manage">{{ __('app.save') }}</span>
+                                <span wire:loading wire:target="manage">{{ __('app.loading') }}</span>
+                            </x-ui.button>
                         </div>
                     </x-ui.card>
                 </form>
@@ -92,4 +92,4 @@
             </x-ui.card>
         </aside>
     </div>
-@endsection
+</div>
