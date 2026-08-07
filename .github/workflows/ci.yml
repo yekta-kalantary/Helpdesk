@@ -52,7 +52,6 @@ jobs:
       - name: Run database migrations
         run: |
           php artisan migrate:fresh --force
-          php artisan settings:migrate
           php artisan db:seed --force
 
       - name: Verify routes
