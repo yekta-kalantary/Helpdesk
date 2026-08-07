@@ -33,7 +33,7 @@ class SpatieAccessControl implements AccessControl
     public function createRole(string $name, array $permissions): void
     {
         if (in_array($name, self::SYSTEM_ROLES, true)) {
-            throw new DomainException('System roles cannot be created manually.');
+            throw new DomainException('system_role_immutable');
         }
 
         $role = Role::create(['name' => $name, 'guard_name' => 'web']);
@@ -45,7 +45,7 @@ class SpatieAccessControl implements AccessControl
         $role = Role::findOrFail($roleId);
 
         if (in_array($role->name, self::SYSTEM_ROLES, true)) {
-            throw new DomainException('System roles cannot be changed.');
+            throw new DomainException('system_role_immutable');
         }
 
         $role->update(['name' => $name]);
@@ -57,7 +57,7 @@ class SpatieAccessControl implements AccessControl
         $role = Role::findOrFail($roleId);
 
         if (in_array($role->name, self::SYSTEM_ROLES, true)) {
-            throw new DomainException('System roles cannot be deleted.');
+            throw new DomainException('system_role_immutable');
         }
 
         $role->delete();
