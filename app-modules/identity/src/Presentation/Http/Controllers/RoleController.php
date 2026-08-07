@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Modules\Identity\Domain\Access\PermissionCatalog;
 use Modules\Identity\Domain\Contracts\AccessControl;
 
 class RoleController extends Controller
@@ -35,7 +36,7 @@ class RoleController extends Controller
         $data = $request->validate([
             'name' => ['required', 'alpha_dash:ascii', 'max:125', Rule::unique('roles', 'name')->where('guard_name', 'web')],
             'permissions' => ['array'],
-            'permissions.*' => ['string', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
+            'permissions.*' => ['string', Rule::in(PermissionCatalog::all())],
         ]);
 
         try {
@@ -60,10 +61,13 @@ class RoleController extends Controller
 
     public function update(Request $request, int $role): RedirectResponse
     {
+        $item = collect($this->access->roles())->firstWhere('id', $role);
+        abort_if(! $item || $item['system'], 404);
+
         $data = $request->validate([
             'name' => ['required', 'alpha_dash:ascii', 'max:125', Rule::unique('roles', 'name')->where('guard_name', 'web')->ignore($role)],
             'permissions' => ['array'],
-            'permissions.*' => ['string', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
+            'permissions.*' => ['string', Rule::in(PermissionCatalog::all())],
         ]);
 
         try {
@@ -91,24 +95,6 @@ class RoleController extends Controller
         } catch (DomainException $exception) {
             return back()->withErrors(['role' => __('identity::messages.'.$exception->getMessage())]);
         }
-
-        return redirect()->route('roles.index')->with('success', __('app.deleted_successfully'));
-    }
-
-    public function storePermission(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'name' => ['required', 'regex:/^[a-z0-9_.-]+$/', 'max:125', Rule::unique('permissions', 'name')->where('guard_name', 'web')],
-        ]);
-
-        $this->access->createPermission($data['name']);
-
-        return redirect()->route('roles.index')->with('success', __('app.created_successfully'));
-    }
-
-    public function destroyPermission(int $permission): RedirectResponse
-    {
-        $this->access->deletePermission($permission);
 
         return redirect()->route('roles.index')->with('success', __('app.deleted_successfully'));
     }
