@@ -30,6 +30,4 @@ interface UserRepository
         bool $isActive,
         string $role,
     ): void;
-
-    public function delete(int $id): void;
 }

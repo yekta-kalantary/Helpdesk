@@ -49,6 +49,7 @@ settings
 - Employee باید User داشته باشد.
 - Customer می‌تواند User نداشته باشد.
 - ایجاد User برای Customer فقط دسترسی Portal را فعال می‌کند و هویت Customer را تغییر نمی‌دهد.
+- غیرفعال‌کردن دسترسی Employee یا Customer فقط `users.is_active` را false می‌کند؛ User و Person حذف نمی‌شوند.
 - Role فقط Authorization است؛ Customer/Employee بودن از `people.type` و رابطه دامنه تعیین می‌شود.
 
 ### `customers`
@@ -57,9 +58,10 @@ settings
 
 - `person_id`: یکتا و متعلق به Person از نوع `customer`
 - `notes`
-- soft delete
 
-Customer وضعیت دامنه‌ای ندارد. ستون legacy با نام `status` ممکن است در دیتابیس‌هایی که migration تاریخی را اجرا کرده‌اند وجود داشته باشد، اما application آن را نمی‌خواند و نمی‌نویسد. حذف فیزیکی ستون فقط در یک migration cleanup مستقل و پس از تعیین سیاست archive/backfill انجام می‌شود.
+Customer وضعیت دامنه‌ای ندارد و مسیر حذف نیز ندارد. Person و Customer برای حفظ history همیشه باقی می‌مانند. اگر Portal User وجود داشته باشد، قطع دسترسی فقط آن User را غیرفعال می‌کند.
+
+ستون‌های legacy مانند `status` یا `deleted_at` ممکن است در دیتابیس‌هایی که migrationهای تاریخی را اجرا کرده‌اند وجود داشته باشند. Application جدید آن‌ها را برای حذف Customer استفاده نمی‌کند و داده‌های موجود بدون migration مستقل و migration path امن دست‌کاری نمی‌شوند.
 
 حساب Portal از `users.person_id = customers.person_id` resolve می‌شود و FK مستقیمی از Customer به User وجود ندارد.
 
@@ -113,12 +115,13 @@ Database notification استاندارد Laravel.
 
 Repository پکیج `spatie/laravel-settings`. رمز SMTP encrypted setting است.
 
-## قواعد حذف
+## قواعد حذف و غیرفعال‌سازی
 
-- Customer و Project و Task و Ticket soft delete دارند.
-- حذف Customer حساب Portal را حذف نمی‌کند؛ حساب همان Person غیرفعال می‌شود تا audit/history باقی بماند.
-- حذف Employee از مسیر مدیریت کاربران، User و Person همان Employee را در یک transaction حذف می‌کند.
-- قبل از تغییر سیاست حذف، وابستگی Project/Task/Ticket بررسی شود.
+- Customer و Employee از Application حذف نمی‌شوند.
+- غیرفعال‌کردن Customer Portal فقط `users.is_active=false` می‌کند و Person/Customer/User را نگه می‌دارد.
+- غیرفعال‌کردن Employee فقط `users.is_active=false` می‌کند و Person/User را نگه می‌دارد.
+- Project و Task و Ticket همچنان سیاست حذف مستقل خودشان را دارند.
+- رکوردهای legacy که قبلاً soft-delete شده‌اند در این تغییر restore یا rewrite نمی‌شوند.
 
 ## تغییر schema در production
 

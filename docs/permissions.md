@@ -24,7 +24,6 @@
 | Customer | `customers.view` |
 | Customer | `customers.create` |
 | Customer | `customers.update` |
-| Customer | `customers.delete` |
 | Project | `projects.view` |
 | Project | `projects.create` |
 | Project | `projects.update` |
@@ -44,7 +43,6 @@
 | User | `users.view` |
 | User | `users.create` |
 | User | `users.update` |
-| User | `users.delete` |
 | RBAC | `roles.view` |
 | RBAC | `roles.create` |
 | RBAC | `roles.update` |
@@ -52,6 +50,8 @@
 | Reports | `reports.view` |
 | Settings | `settings.manage` |
 | Notifications | `notifications.view` |
+
+Customer و Employee permission حذف ندارند. غیرفعال‌سازی دسترسی از `users.is_active` انجام می‌شود و رکوردهای Person/User/Customer باقی می‌مانند.
 
 ## Customer Role Matrix
 

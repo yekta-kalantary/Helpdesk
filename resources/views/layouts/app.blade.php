@@ -75,10 +75,6 @@
     </aside>
 
     <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-        @if(session('success'))
-            <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
-        @endif
-
         @if($errors->any())
             <x-ui.alert class="mb-5" tone="danger">
                 <ul class="list-inside list-disc space-y-1">

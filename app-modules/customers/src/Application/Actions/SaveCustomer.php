@@ -39,13 +39,4 @@ class SaveCustomer
             return $customerId;
         });
     }
-
-    public function delete(int $id): void
-    {
-        DB::transaction(function () use ($id): void {
-            $customer = $this->customers->find($id);
-            $this->portal->disable($customer['person_id']);
-            $this->customers->delete($id);
-        });
-    }
 }

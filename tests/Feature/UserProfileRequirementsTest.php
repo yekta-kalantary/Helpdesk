@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Modules\Customers\Infrastructure\Models\Customer;
+use Modules\Identity\Domain\Access\PermissionCatalog;
 use Spatie\Permission\Models\Role;
 
 it('keeps identity data in people instead of users', function (): void {
@@ -63,6 +65,27 @@ it('creates staff as an employee person with a required user account', function 
         ->and($user->hasRole('developer'))->toBeTrue();
 });
 
+it('keeps employee person and user when access is disabled', function (): void {
+    $admin = User::query()->role('admin')->firstOrFail();
+    $role = Role::findOrCreate('developer', 'web');
+    $person = Person::factory()->create([
+        'type' => PersonType::Employee,
+        'email' => 'disabled.employee@example.test',
+    ]);
+    $user = User::factory()->for($person)->create(['is_active' => true]);
+    $user->assignRole($role);
+
+    Livewire::actingAs($admin)
+        ->test('identity::users.form', ['user' => $user->id])
+        ->set('is_active', false)
+        ->call('save')
+        ->assertRedirectToRoute('users.index');
+
+    expect(Person::query()->whereKey($person->id)->exists())->toBeTrue()
+        ->and(User::query()->whereKey($user->id)->exists())->toBeTrue()
+        ->and(User::query()->findOrFail($user->id)->is_active)->toBeFalse();
+});
+
 it('creates customers without a user account unless portal access is enabled', function (): void {
     $admin = User::query()->role('admin')->firstOrFail();
 
@@ -116,6 +139,56 @@ it('uses the same customer person when portal access is enabled', function (): v
     expect($person->type)->toBe(PersonType::Customer)
         ->and($user->person_id)->toBe($person->id)
         ->and($user->hasRole('customer'))->toBeTrue();
+});
+
+it('keeps customer, person and portal user when portal access is disabled', function (): void {
+    $admin = User::query()->role('admin')->firstOrFail();
+
+    Livewire::actingAs($admin)
+        ->test('customers::form')
+        ->set('name', 'Persistent')
+        ->set('last_name', 'Customer')
+        ->set('email', 'persistent.customer@example.test')
+        ->set('mobile', '09123334444')
+        ->set('portal_enabled', true)
+        ->set('portal_password', 'password123')
+        ->set('portal_password_confirmation', 'password123')
+        ->call('save')
+        ->assertRedirectToRoute('customers.index');
+
+    $person = Person::query()->where('email', 'persistent.customer@example.test')->firstOrFail();
+    $customer = Customer::query()->where('person_id', $person->id)->firstOrFail();
+    $user = User::query()->where('person_id', $person->id)->firstOrFail();
+
+    Livewire::actingAs($admin)
+        ->test('customers::form', ['customer' => $customer->id])
+        ->set('portal_enabled', false)
+        ->call('save')
+        ->assertRedirectToRoute('customers.index');
+
+    expect(Person::query()->whereKey($person->id)->exists())->toBeTrue()
+        ->and(Customer::query()->whereKey($customer->id)->exists())->toBeTrue()
+        ->and(User::query()->whereKey($user->id)->exists())->toBeTrue()
+        ->and(User::query()->findOrFail($user->id)->is_active)->toBeFalse();
+});
+
+it('does not define delete permissions for customers or employees', function (): void {
+    expect(PermissionCatalog::all())
+        ->not->toContain('customers.delete')
+        ->not->toContain('users.delete');
+});
+
+it('shows a success flash only once on its destination page', function (): void {
+    $admin = User::query()->role('admin')->firstOrFail();
+    $message = 'Saved exactly once';
+
+    $response = $this->actingAs($admin)
+        ->withSession(['success' => $message])
+        ->get(route('customers.index'));
+
+    $response->assertOk();
+
+    expect(substr_count($response->getContent(), $message))->toBe(1);
 });
 
 it('authenticates accounts by the email stored on their person', function (): void {
