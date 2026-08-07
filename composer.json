@@ -69,7 +69,6 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan key:generate",
             "@php artisan migrate --force",
-            "@php artisan settings:migrate",
             "@php artisan db:seed --force",
             "npm install --ignore-scripts",
             "npm run build"
