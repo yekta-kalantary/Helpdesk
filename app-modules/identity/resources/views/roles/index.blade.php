@@ -1,18 +1,22 @@
-@extends('layouts.app')
+<div>
+    @if(session('success'))
+        <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
+    @endif
 
-@section('title', __('app.roles_permissions'))
+    @error('role')
+        <x-ui.alert class="mb-5" tone="danger">{{ $message }}</x-ui.alert>
+    @enderror
 
-@section('content')
     <x-ui.page-header :title="__('app.roles_permissions')">
         <x-slot:actions>
             @can('roles.create')
-                <x-ui.button :href="route('roles.create')">{{ __('identity::messages.new_role') }}</x-ui.button>
+                <x-ui.button :href="route('roles.create')" wire:navigate>{{ __('identity::messages.new_role') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
 
     <div class="space-y-6">
-        <x-ui.table>
+        <x-ui.table wire:loading.class="opacity-60" wire:target="delete">
             <thead>
                 <tr>
                     <th>{{ __('identity::messages.role') }}</th>
@@ -22,7 +26,7 @@
             </thead>
             <tbody>
                 @foreach($roles as $role)
-                    <tr>
+                    <tr wire:key="role-{{ $role['id'] }}">
                         <td>
                             <div class="flex flex-wrap items-center gap-2">
                                 <span dir="ltr" class="font-semibold">{{ $role['name'] }}</span>
@@ -40,15 +44,10 @@
                             @if(! $role['system'])
                                 <div class="flex flex-wrap gap-2">
                                     @can('roles.update')
-                                        <x-ui.button size="sm" variant="secondary" :href="route('roles.edit', $role['id'])">{{ __('app.edit') }}</x-ui.button>
+                                        <x-ui.button size="sm" variant="secondary" :href="route('roles.edit', $role['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                                     @endcan
-
                                     @can('roles.delete')
-                                        <form method="POST" action="{{ route('roles.destroy', $role['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-ui.button size="sm" variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button>
-                                        </form>
+                                        <x-ui.button size="sm" variant="danger" wire:click="delete({{ $role['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $role['id'] }})">{{ __('app.delete') }}</x-ui.button>
                                     @endcan
                                 </div>
                             @else
@@ -75,4 +74,4 @@
             </div>
         </x-ui.card>
     </div>
-@endsection
+</div>
