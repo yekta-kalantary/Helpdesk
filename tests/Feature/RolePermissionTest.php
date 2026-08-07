@@ -87,8 +87,10 @@ it('assigns exactly one non-system role to each staff member', function (): void
 
     Livewire::actingAs($admin)
         ->test('identity::users.form')
-        ->set('name', 'Staff Member')
+        ->set('name', 'Staff')
+        ->set('last_name', 'Member')
         ->set('email', 'staff@example.test')
+        ->set('mobile', '09120000001')
         ->set('password', 'password123')
         ->set('password_confirmation', 'password123')
         ->set('is_active', true)
@@ -100,7 +102,9 @@ it('assigns exactly one non-system role to each staff member', function (): void
 
     expect($staff->roles()->count())->toBe(1)
         ->and($staff->hasRole('seo-manager'))->toBeTrue()
-        ->and($staff->hasRole('developer'))->toBeFalse();
+        ->and($staff->hasRole('developer'))->toBeFalse()
+        ->and($staff->full_name)->toBe('Staff Member')
+        ->and($staff->mobile)->toBe('09120000001');
 
     Livewire::actingAs($admin)
         ->test('identity::users.form', ['user' => $staff->id])

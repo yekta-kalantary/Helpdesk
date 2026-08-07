@@ -22,8 +22,9 @@ class TaskFormOptions
             ->where('is_active', true)
             ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
             ->orderBy('name')
-            ->get(['id', 'name'])
-            ->map(fn (User $member) => ['id' => $member->id, 'name' => $member->name])
+            ->orderBy('last_name')
+            ->get(['id', 'name', 'last_name'])
+            ->map(fn (User $member) => ['id' => $member->id, 'name' => $member->full_name])
             ->all();
 
         return compact('projects', 'members');

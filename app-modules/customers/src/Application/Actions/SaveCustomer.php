@@ -13,17 +13,35 @@ class SaveCustomer
         private readonly CustomerPortalAccount $portal,
     ) {}
 
-    public function execute(?int $id, array $attributes, bool $portalEnabled, ?string $portalPassword): int
-    {
-        return DB::transaction(function () use ($id, $attributes, $portalEnabled, $portalPassword): int {
+    public function execute(
+        ?int $id,
+        array $attributes,
+        bool $portalEnabled,
+        array $portalProfile,
+        ?string $portalPassword,
+    ): int {
+        return DB::transaction(function () use ($id, $attributes, $portalEnabled, $portalProfile, $portalPassword): int {
             $current = $id ? $this->customers->find($id) : null;
             $userId = $current['user_id'] ?? null;
 
             if ($portalEnabled) {
                 if ($userId) {
-                    $this->portal->update($userId, $attributes['name'], $attributes['email'], $portalPassword);
+                    $this->portal->update(
+                        $userId,
+                        $attributes['name'],
+                        $portalProfile['last_name'],
+                        $attributes['email'],
+                        $portalProfile['mobile'],
+                        $portalPassword,
+                    );
                 } else {
-                    $userId = $this->portal->create($attributes['name'], $attributes['email'], (string) $portalPassword);
+                    $userId = $this->portal->create(
+                        $attributes['name'],
+                        $portalProfile['last_name'],
+                        $attributes['email'],
+                        $portalProfile['mobile'],
+                        (string) $portalPassword,
+                    );
                 }
             } elseif ($userId) {
                 $this->portal->deactivate($userId);

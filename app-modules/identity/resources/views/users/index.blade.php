@@ -23,6 +23,7 @@
             <tr>
                 <th>{{ __('app.name_label') }}</th>
                 <th>{{ __('app.email') }}</th>
+                <th>{{ __('app.mobile') }}</th>
                 <th>{{ __('identity::messages.role') }}</th>
                 <th>{{ __('app.status') }}</th>
                 <th>{{ __('app.actions') }}</th>
@@ -31,8 +32,9 @@
         <tbody>
             @forelse($users as $user)
                 <tr wire:key="user-{{ $user['id'] }}">
-                    <td class="font-semibold">{{ $user['name'] }}</td>
+                    <td class="font-semibold">{{ $user['full_name'] }}</td>
                     <td dir="ltr" class="text-right">{{ $user['email'] }}</td>
+                    <td dir="ltr" class="text-right">{{ $user['mobile'] }}</td>
                     <td>
                         @if($user['role'])
                             <x-ui.badge>{{ $user['role'] }}</x-ui.badge>
@@ -56,7 +58,7 @@
                     </td>
                 </tr>
             @empty
-                <x-ui.empty-row colspan="5" />
+                <x-ui.empty-row colspan="6" />
             @endforelse
         </tbody>
     </x-ui.table>

@@ -36,7 +36,9 @@ return [
 
     'attributes' => [
         'name' => 'نام',
+        'last_name' => 'نام خانوادگی',
         'email' => 'ایمیل',
+        'mobile' => 'شماره موبایل',
         'password' => 'رمز عبور',
         'password_confirmation' => 'تکرار رمز عبور',
         'is_active' => 'وضعیت حساب',
@@ -49,6 +51,8 @@ return [
         'notes' => 'یادداشت',
         'status' => 'وضعیت',
         'portal_enabled' => 'پنل مشتری',
+        'portal_last_name' => 'نام خانوادگی کاربر پنل مشتری',
+        'portal_mobile' => 'شماره موبایل کاربر پنل مشتری',
         'portal_password' => 'رمز عبور پنل مشتری',
         'portal_password_confirmation' => 'تکرار رمز عبور پنل مشتری',
         'customer_id' => 'مشتری',

@@ -43,6 +43,8 @@ class DatabaseSeeder extends Seeder
             ['email' => config('helpdesk.admin.email')],
             [
                 'name' => config('helpdesk.admin.name'),
+                'last_name' => config('helpdesk.admin.last_name'),
+                'mobile' => config('helpdesk.admin.mobile'),
                 'password' => config('helpdesk.admin.password'),
                 'is_active' => true,
             ],

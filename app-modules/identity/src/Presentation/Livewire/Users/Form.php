@@ -15,7 +15,11 @@ class Form extends Component
 
     public string $name = '';
 
+    public string $last_name = '';
+
     public string $email = '';
+
+    public string $mobile = '';
 
     public string $password = '';
 
@@ -44,7 +48,9 @@ class Form extends Component
         $item = $this->users->find($user);
         $this->userId = $user;
         $this->name = $item['name'];
+        $this->last_name = $item['last_name'];
         $this->email = $item['email'];
+        $this->mobile = $item['mobile'];
         $this->is_active = $item['is_active'];
         $this->role = $item['role'] ?? '';
     }
@@ -59,7 +65,9 @@ class Form extends Component
             $this->users->update(
                 $this->userId,
                 $data['name'],
+                $data['last_name'],
                 $data['email'],
+                $data['mobile'],
                 $data['password'] ?: null,
                 $data['is_active'],
                 $data['role'],
@@ -67,7 +75,9 @@ class Form extends Component
         } else {
             $this->users->create(
                 $data['name'],
+                $data['last_name'],
                 $data['email'],
+                $data['mobile'],
                 $data['password'],
                 $data['is_active'],
                 $data['role'],
@@ -83,7 +93,9 @@ class Form extends Component
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
+            'mobile' => ['required', 'string', 'max:32'],
             'password' => [$this->userId ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['boolean'],
             'role' => ['required', 'string', Rule::notIn(['admin', 'customer']), Rule::exists('roles', 'name')->where('guard_name', 'web')],
