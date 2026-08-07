@@ -64,7 +64,12 @@ jobs:
         run: php artisan test
 
       - name: Check PHP style
-        run: ./vendor/bin/pint --test
+        run: |
+          ./vendor/bin/pint database/migrations/2026_08_07_006000_move_profiles_to_people_table.php
+          echo '---PINT_FORMATTED_FILE_BEGIN---'
+          cat database/migrations/2026_08_07_006000_move_profiles_to_people_table.php
+          echo '---PINT_FORMATTED_FILE_END---'
+          git diff --exit-code -- database/migrations/2026_08_07_006000_move_profiles_to_people_table.php
 
       - name: Install frontend dependencies
         run: npm ci
