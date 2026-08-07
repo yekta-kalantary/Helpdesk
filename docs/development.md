@@ -85,7 +85,7 @@ __('tasks::messages.new_task')
 
 ## Client Portal
 
-Role مشتری صرفاً یک permission set نیست. scope مشتری باید همیشه از `customers.user_id` resolve شود.
+Role مشتری صرفاً permission set است. scope مشتری باید از `users.person_id -> customers.person_id` resolve شود؛ هویت مشتری از Role استنتاج نمی‌شود.
 
 Taskهای داخلی default هستند. فقط Task با `is_customer_visible=true` در Portal دیده می‌شود.
 
