@@ -4,9 +4,15 @@
 
 @section('content')
     <x-ui.page-header :title="'#'.$ticket['id'].' — '.$ticket['subject']" :subtitle="$ticket['customer_name'].($ticket['project_title'] ? ' · '.$ticket['project_title'] : '')">
-        @can('tickets.delete')
-            <x-slot:actions><form method="POST" action="{{ route('tickets.destroy', $ticket['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >@csrf @method('DELETE')<x-ui.button variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button></form></x-slot:actions>
-        @endcan
+        <x-slot:actions>
+            @can('tickets.delete')
+                <form method="POST" action="{{ route('tickets.destroy', $ticket['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >
+                    @csrf
+                    @method('DELETE')
+                    <x-ui.button variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button>
+                </form>
+            @endcan
+        </x-slot:actions>
     </x-ui.page-header>
 
     <div class="mb-5 flex flex-wrap gap-2">
@@ -21,8 +27,12 @@
                 <div class="space-y-4">
                     @foreach($ticket['messages'] as $message)
                         <article class="rounded-xl border border-slate-200 p-4">
-                            <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-500"><span class="font-semibold text-slate-800">{{ $message['user_name'] }}</span><span dir="ltr">{{ $message['created_at']?->format('Y-m-d H:i') }}</span></div>
+                            <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-500">
+                                <span class="font-semibold text-slate-800">{{ $message['user_name'] }}</span>
+                                <span dir="ltr">{{ $message['created_at']?->format('Y-m-d H:i') }}</span>
+                            </div>
                             <div class="mt-3 whitespace-pre-line text-sm leading-7">{{ $message['body'] }}</div>
+
                             @if($message['attachments'])
                                 <div class="mt-4 flex flex-wrap gap-2">
                                     @foreach($message['attachments'] as $attachment)
@@ -52,15 +62,20 @@
         <aside class="space-y-4">
             @can('tickets.manage')
                 <form method="POST" action="{{ route('tickets.manage', $ticket['id']) }}">
-                    @csrf @method('PATCH')
+                    @csrf
+                    @method('PATCH')
                     <x-ui.card :title="__('tickets::messages.manage_ticket')">
                         <div class="space-y-4">
                             <x-ui.select name="status" :label="__('app.status')">
-                                @foreach($statuses as $status)<option value="{{ $status->value }}" @selected($ticket['status'] === $status->value)>{{ __('tickets::messages.status.'.$status->value) }}</option>@endforeach
+                                @foreach($statuses as $status)
+                                    <option value="{{ $status->value }}" @selected($ticket['status'] === $status->value)>{{ __('tickets::messages.status.'.$status->value) }}</option>
+                                @endforeach
                             </x-ui.select>
                             <x-ui.select name="assigned_to" :label="__('tickets::messages.assignee')">
                                 <option value="">{{ __('tickets::messages.unassigned') }}</option>
-                                @foreach($options['members'] as $member)<option value="{{ $member['id'] }}" @selected((string) $ticket['assigned_to'] === (string) $member['id'])>{{ $member['name'] }}</option>@endforeach
+                                @foreach($options['members'] as $member)
+                                    <option value="{{ $member['id'] }}" @selected((string) $ticket['assigned_to'] === (string) $member['id'])>{{ $member['name'] }}</option>
+                                @endforeach
                             </x-ui.select>
                             <x-ui.button class="w-full" type="submit">{{ __('app.save') }}</x-ui.button>
                         </div>
