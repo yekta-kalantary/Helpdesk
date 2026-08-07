@@ -20,6 +20,11 @@
             <div><label for="spent_minutes">{{ __('tasks::messages.spent_minutes') }}</label><input id="spent_minutes" name="spent_minutes" type="number" min="0" value="{{ old('spent_minutes', $task['spent_minutes'] ?? '') }}"></div>
         </div>
 
+        <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3">
+            <input class="h-4 w-4" type="checkbox" name="is_customer_visible" value="1" @checked(old('is_customer_visible', $task['is_customer_visible'] ?? false))>
+            <span>{{ __('tasks::messages.customer_visible') }}</span>
+        </label>
+
         <div><label for="description">{{ __('app.description') }}</label><textarea id="description" name="description">{{ old('description', $task['description'] ?? '') }}</textarea></div>
         <div><label for="attachments">{{ __('tasks::messages.add_attachments') }}</label><input id="attachments" name="attachments[]" type="file" multiple></div>
 
