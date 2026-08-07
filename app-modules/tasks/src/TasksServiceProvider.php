@@ -3,11 +3,13 @@
 namespace Modules\Tasks;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\Tasks\Domain\Contracts\TaskAttachmentReader;
 use Modules\Tasks\Domain\Contracts\TaskAttachmentStore;
 use Modules\Tasks\Domain\Contracts\TaskNotifier;
 use Modules\Tasks\Domain\Contracts\TaskRepository;
 use Modules\Tasks\Infrastructure\DatabaseTaskNotifier;
 use Modules\Tasks\Infrastructure\EloquentTaskRepository;
+use Modules\Tasks\Infrastructure\LocalTaskAttachmentReader;
 use Modules\Tasks\Infrastructure\LocalTaskAttachmentStore;
 
 class TasksServiceProvider extends ServiceProvider
@@ -16,6 +18,7 @@ class TasksServiceProvider extends ServiceProvider
     {
         $this->app->bind(TaskRepository::class, EloquentTaskRepository::class);
         $this->app->bind(TaskAttachmentStore::class, LocalTaskAttachmentStore::class);
+        $this->app->bind(TaskAttachmentReader::class, LocalTaskAttachmentReader::class);
         $this->app->bind(TaskNotifier::class, DatabaseTaskNotifier::class);
     }
 
