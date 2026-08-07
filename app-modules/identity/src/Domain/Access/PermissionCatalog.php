@@ -12,7 +12,6 @@ final class PermissionCatalog
                 'customers.view',
                 'customers.create',
                 'customers.update',
-                'customers.delete',
             ],
             'projects' => [
                 'projects.view',
@@ -40,7 +39,6 @@ final class PermissionCatalog
                 'users.view',
                 'users.create',
                 'users.update',
-                'users.delete',
                 'roles.view',
                 'roles.create',
                 'roles.update',
