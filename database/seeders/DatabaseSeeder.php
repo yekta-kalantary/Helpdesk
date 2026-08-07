@@ -3,23 +3,52 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Modules\Identity\Domain\Access\PermissionCatalog;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $permissions = PermissionCatalog::all();
+
+        foreach ($permissions as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        Permission::query()
+            ->where('guard_name', 'web')
+            ->whereNotIn('name', $permissions)
+            ->delete();
+
+        $adminRole = Role::findOrCreate('admin', 'web');
+        $customerRole = Role::findOrCreate('customer', 'web');
+
+        $adminRole->syncPermissions($permissions);
+        $customerRole->syncPermissions([
+            'projects.view',
+            'tasks.view',
+            'tickets.view',
+            'tickets.create',
+            'tickets.reply',
+            'notifications.view',
         ]);
+
+        $admin = User::query()->updateOrCreate(
+            ['email' => config('helpdesk.admin.email')],
+            [
+                'name' => config('helpdesk.admin.name'),
+                'password' => config('helpdesk.admin.password'),
+                'is_active' => true,
+            ],
+        );
+        $admin->syncRoles(['admin']);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

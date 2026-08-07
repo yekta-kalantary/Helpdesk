@@ -3,8 +3,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
-        "dev": "vite"
+        "prepare-font": "node scripts/prepare-font.mjs",
+        "build": "npm run prepare-font && vite build",
+        "dev": "npm run prepare-font && vite"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

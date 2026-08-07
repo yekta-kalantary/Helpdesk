@@ -1,0 +1,9 @@
+{
+    "name": "modules/reports",
+    "description": "Read-only reporting module for the Helpdesk modular monolith.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {"php": "^8.4", "laravel/framework": "^13.8"},
+    "autoload": {"psr-4": {"Modules\\Reports\\": "src/"}},
+    "extra": {"laravel": {"providers": ["Modules\\Reports\\ReportsServiceProvider"]}}
+}

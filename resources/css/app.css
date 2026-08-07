@@ -2,8 +2,56 @@
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../../app-modules/**/resources/views/**/*.blade.php';
+
+@font-face {
+    font-family: 'IRANYekanXVF';
+    src: url('/fonts/IRANYekanXVF.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 100 1000;
+    font-display: swap;
+}
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'IRANYekanXVF';
+    --font-serif: 'IRANYekanXVF';
+    --font-mono: 'IRANYekanXVF';
+}
+
+@layer base {
+    html {
+        direction: rtl;
+        font-family: 'IRANYekanXVF';
+    }
+
+    *, *::before, *::after {
+        font-family: 'IRANYekanXVF';
+    }
+
+    body {
+        @apply bg-slate-50 text-slate-900 antialiased;
+    }
+}
+
+@layer components {
+    .ui-table {
+        @apply min-w-full divide-y divide-slate-200 text-sm;
+    }
+
+    .ui-table thead {
+        @apply bg-slate-50;
+    }
+
+    .ui-table tbody {
+        @apply divide-y divide-slate-100;
+    }
+
+    .ui-table th {
+        @apply px-4 py-3 text-right font-semibold text-slate-600;
+    }
+
+    .ui-table td {
+        @apply px-4 py-3 align-top text-slate-700;
+    }
 }

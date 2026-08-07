@@ -1,58 +1,108 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Helpdesk
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+سامانه فارسی مدیریت مشتری، پروژه، تسک و تیکت برای تیم‌های طراحی سایت، سئو و دیجیتال مارکتینگ.
 
-## About Laravel
+این پروژه یک **Modular Monolith** مبتنی بر Laravel 13 است. API عمومی ندارد و رابط کاربری آن با **Livewire 4 + Blade + Tailwind CSS** پیاده‌سازی شده است.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## نیازمندی‌های اجرا
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.4+
+- Composer 2
+- SQLite و extensionهای `pdo_sqlite` / `sqlite3`
+- extensionهای استاندارد Laravel شامل `mbstring`, `openssl`, `ctype`, `json`, `fileinfo`
+- `exif` و `fileinfo` برای Media Library
+- Node.js فقط برای build کردن assetها در محیط توسعه/CI؛ runtime وب به Node نیاز ندارد.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+هیچ Redis، Docker، Elasticsearch، queue worker یا سرویس خارجی اجباری نیست. Livewire در همان Laravel web runtime اجرا می‌شود.
 
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## نصب محلی
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cp .env.example .env
+composer run setup
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+اسکریپت `setup` dependencyها، SQLite، APP_KEY، migration/seed و frontend build را آماده می‌کند.
 
-## Contributing
+## معماری UI
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+هر bounded context، class-based Livewire componentهای خودش را در مسیر زیر نگهداری می‌کند:
 
-## Code of Conduct
+```text
+app-modules/<module>/src/Presentation/Livewire
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+namespaceهای UI ماژولی هستند؛ برای مثال:
 
-## Security Vulnerabilities
+```text
+identity::users.index
+customers::form
+projects::index
+tasks::show
+tickets::create
+settings::smtp
+reports::index
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+صفحات، فرم‌ها، فیلترها و write actionهای UI با Livewire انجام می‌شوند. URL و route nameهای اصلی حفظ شده‌اند و navigation داخلی از `wire:navigate` استفاده می‌کند.
 
-## License
+Shared Design System در `resources/views/components/ui` قرار دارد و Domain/Application هیچ وابستگی‌ای به Livewire یا Blade ندارند.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+تنها exception عمدی، **دانلود attachment** است که برای streaming مستقیم فایل از HTTP GET احراز هویت‌شده استفاده می‌کند. Upload، delete، reply، comment، status و سایر interactionها Livewire هستند.
+
+## نقش‌ها
+
+دو Role سیستمی وجود دارد:
+
+- `admin`: غیرقابل ایجاد، تغییر یا حذف از پنل و دارای دسترسی کامل.
+- `customer`: غیرقابل ایجاد، تغییر یا حذف از پنل و مخصوص Client Portal.
+
+تمام Roleهای دیگر و Permissionهای سفارشی از پنل قابل مدیریت هستند.
+
+## ماژول‌ها
+
+| Module | مسئولیت |
+| --- | --- |
+| `Identity` | Livewire login/logout، کاربران تیم، Role/Permission، Dashboard، Notifications |
+| `Customers` | مشتری و حساب Client Portal |
+| `Projects` | پروژه، نوع/وضعیت، اعضای تیم و پیشرفت |
+| `Tasks` | Livewire Kanban، Assignment، Deadline، زمان، upload، فایل و کامنت داخلی |
+| `Tickets` | Livewire تیکت، گفتگو، upload، Assignment و وضعیت پشتیبانی |
+| `Reports` | گزارش read-only مشتری، پروژه و تیم |
+| `Settings` | تنظیمات SMTP |
+
+ماژول‌های مالی، Website و Subscription عمداً در این نسخه وجود ندارند.
+
+## Client Portal
+
+مشتری پس از فعال شدن Portal می‌تواند پروژه‌های خودش، Taskهای `is_customer_visible`، تیکت‌ها و اعلان‌های خودش را مشاهده کند و روی تیکت‌های خودش پاسخ بدهد. کامنت داخلی Task، زمان تخمینی/مصرف‌شده و Taskهای داخلی برای مشتری نمایش داده نمی‌شوند.
+
+## فایل‌ها
+
+فایل‌های Task و Ticket با `spatie/laravel-medialibrary` روی disk محلی ذخیره می‌شوند. فایل‌ها URL عمومی ندارند. Uploadها از `Livewire\WithFileUploads` و validation server-side عبور می‌کنند و download از route scopeشده stream می‌شود.
+
+## SMTP
+
+SMTP از صفحه Livewire تنظیمات مدیریت می‌شود. رمز SMTP با encrypted settings پکیج `spatie/laravel-settings` نگهداری می‌شود. اگر SMTP غیرفعال باشد، Laravel از mailer محلی `log` استفاده می‌کند.
+
+## مستندات
+
+- `docs/architecture.md`
+- `docs/database.md`
+- `docs/permissions.md`
+- `docs/development.md`
+- `docs/installation.md`
+- `docs/ui.md`
+- `docs/roadmap.md`
+
+## تست و کیفیت
+
+```bash
+php artisan view:cache
+php artisan test
+./vendor/bin/pint --test
+npm run build
+```
+
+CI روی PHP 8.4 و SQLite، routeها، تمام Blade viewها، Livewire actionهای امنیتی، frontend build و deployable ZIP را اعتبارسنجی می‌کند.
