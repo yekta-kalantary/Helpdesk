@@ -63,6 +63,19 @@ Modelهای Eloquent implementation detail لایه Infrastructure هستند. �
 
 `App\Models\User` یک shared identity model در application shell است و فعلاً استثنای آگاهانه سیستم است.
 
+## Migrationهای production
+
+پروژه live است. از این نقطه به بعد migration اجراشده **immutable** محسوب می‌شود و نباید برای تغییر schema بازنویسی شود.
+
+برای هر تغییر schema/data:
+
+1. migration جدید بسازید؛ migration تاریخی را edit نکنید.
+2. تغییرات ناسازگار را به‌صورت چندمرحله‌ای انجام دهید: `add -> backfill -> validate -> enforce/drop`.
+3. اگر ستون/رابطه جدید جایگزین داده قبلی می‌شود، backfill تمام رکوردهای موجود الزامی است.
+4. قبل از enforce کردن `NOT NULL`، unique یا FK جدید، migration باید وجود رکوردهای map نشده را بررسی کند و در صورت مشکل fail شود.
+5. حذف ستون یا جدول داده‌دار بدون مقصد archive/backfill مجاز نیست. ابتدا application باید خواندن/نوشتن آن را متوقف کند و cleanup در deployment جداگانه انجام شود.
+6. migration داده‌ای مخرب باید forward-only و با توضیح صریح باشد؛ rollback نباید source of truth قبلی و جدید را همزمان برگرداند.
+
 ## ترجمه
 
 تمام stringهای UI باید با translation key فراخوانی شوند:
