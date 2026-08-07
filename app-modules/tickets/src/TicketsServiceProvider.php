@@ -31,7 +31,7 @@ class TicketsServiceProvider extends ServiceProvider
             namespace: 'tickets',
             classNamespace: 'Modules\\Tickets\\Presentation\\Livewire',
             classPath: __DIR__.'/Presentation/Livewire',
-            classViewPath: __DIR__.'/../resources/views/livewire',
+            classViewPath: __DIR__.'/../resources/views',
         );
     }
 }
