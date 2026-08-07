@@ -19,7 +19,7 @@ class Task extends Model implements HasMedia
 
     protected $fillable = [
         'project_id', 'title', 'description', 'assigned_to', 'created_by', 'priority', 'status',
-        'due_at', 'estimated_minutes', 'spent_minutes',
+        'is_customer_visible', 'due_at', 'estimated_minutes', 'spent_minutes',
     ];
 
     protected function casts(): array
@@ -27,6 +27,7 @@ class Task extends Model implements HasMedia
         return [
             'priority' => TaskPriority::class,
             'status' => TaskStatus::class,
+            'is_customer_visible' => 'boolean',
             'due_at' => 'datetime',
             'estimated_minutes' => 'integer',
             'spent_minutes' => 'integer',
