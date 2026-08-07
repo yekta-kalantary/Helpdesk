@@ -43,7 +43,7 @@ class RoleController extends Controller
         try {
             $this->access->createRole($data['name'], $data['permissions'] ?? []);
         } catch (DomainException $exception) {
-            return back()->withErrors(['name' => $exception->getMessage()])->withInput();
+            return back()->withErrors(['name' => __('identity::messages.'.$exception->getMessage())])->withInput();
         }
 
         return redirect()->route('roles.index')->with('success', __('app.created_successfully'));
@@ -71,7 +71,7 @@ class RoleController extends Controller
         try {
             $this->access->updateRole($role, $data['name'], $data['permissions'] ?? []);
         } catch (DomainException $exception) {
-            return back()->withErrors(['name' => $exception->getMessage()])->withInput();
+            return back()->withErrors(['name' => __('identity::messages.'.$exception->getMessage())])->withInput();
         }
 
         return redirect()->route('roles.index')->with('success', __('app.updated_successfully'));
@@ -82,7 +82,7 @@ class RoleController extends Controller
         try {
             $this->access->deleteRole($role);
         } catch (DomainException $exception) {
-            return back()->withErrors(['role' => $exception->getMessage()]);
+            return back()->withErrors(['role' => __('identity::messages.'.$exception->getMessage())]);
         }
 
         return redirect()->route('roles.index')->with('success', __('app.deleted_successfully'));
