@@ -5,13 +5,26 @@
 @source '../views/**/*.blade.php';
 @source '../../app-modules/**/resources/views/**/*.blade.php';
 
+@font-face {
+    font-family: 'IRANYekanXVF';
+    src: url('/fonts/IRANYekanXVF.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 100 1000;
+    font-display: swap;
+}
+
 @theme {
-    --font-sans: Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'IRANYekanXVF', Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
-    html { direction: rtl; }
-    body { @apply bg-slate-50 text-slate-900 antialiased; }
+    html {
+        direction: rtl;
+        font-family: 'IRANYekanXVF', Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    body { @apply bg-slate-50 font-sans text-slate-900 antialiased; }
+    button, input, textarea, select { font-family: inherit; }
     input, textarea, select { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500; }
     textarea { @apply min-h-28; }
     label { @apply mb-1 block text-sm font-medium text-slate-700; }
