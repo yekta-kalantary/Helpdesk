@@ -72,12 +72,15 @@ class TicketController extends Controller
         ]);
 
         $customerId = $customerActor ? $scope['customer_id'] : (int) $data['customer_id'];
+        $projectId = isset($data['project_id']) ? (int) $data['project_id'] : null;
+
         abort_unless($customerId, 403);
-        $this->assertProjectBelongsToCustomer($data['project_id'] ?? null, (int) $customerId);
+        $this->assertProjectBelongsToCustomer($projectId, (int) $customerId);
+        $this->assertStaffCustomerAccess((int) $customerId, $projectId, $scope);
 
         $ticketId = $this->createTicket->execute([
             'customer_id' => $customerId,
-            'project_id' => $data['project_id'] ?? null,
+            'project_id' => $projectId,
             'created_by' => $user->id,
             'assigned_to' => $customerActor ? null : $user->id,
             'subject' => $data['subject'],
@@ -158,6 +161,7 @@ class TicketController extends Controller
     {
         /** @var User $user */
         $user = auth()->user();
+
         return $this->scopeBuilder->for($user);
     }
 
@@ -167,6 +171,46 @@ class TicketController extends Controller
             return;
         }
 
-        abort_unless(DB::table('projects')->where('id', $projectId)->where('customer_id', $customerId)->whereNull('deleted_at')->exists(), 422);
+        abort_unless(
+            DB::table('projects')
+                ->where('id', $projectId)
+                ->where('customer_id', $customerId)
+                ->whereNull('deleted_at')
+                ->exists(),
+            422,
+        );
+    }
+
+    /** @param array{actor_id:int,customer_id:?int,manage_all:bool} $scope */
+    private function assertStaffCustomerAccess(int $customerId, ?int $projectId, array $scope): void
+    {
+        if ($scope['customer_id'] || $scope['manage_all']) {
+            return;
+        }
+
+        $actorId = $scope['actor_id'];
+
+        $hasCustomerAccess = DB::table('projects')
+            ->join('project_user', 'project_user.project_id', '=', 'projects.id')
+            ->where('projects.customer_id', $customerId)
+            ->where('project_user.user_id', $actorId)
+            ->whereNull('projects.deleted_at')
+            ->exists();
+
+        abort_unless($hasCustomerAccess, 403);
+
+        if (! $projectId) {
+            return;
+        }
+
+        $hasProjectAccess = DB::table('project_user')
+            ->join('projects', 'projects.id', '=', 'project_user.project_id')
+            ->where('project_user.project_id', $projectId)
+            ->where('project_user.user_id', $actorId)
+            ->where('projects.customer_id', $customerId)
+            ->whereNull('projects.deleted_at')
+            ->exists();
+
+        abort_unless($hasProjectAccess, 403);
     }
 }
