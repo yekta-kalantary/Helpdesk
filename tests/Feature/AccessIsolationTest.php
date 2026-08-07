@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
 
 function createPortalCustomer(string $email, string $name): array
 {
@@ -162,4 +163,41 @@ it('shows a customer only their own tickets', function (): void {
         ->assertOk()
         ->assertSee('My Visible Ticket')
         ->assertDontSee('Other Customer Ticket');
+});
+
+it('prevents scoped staff from creating tickets for unrelated customers', function (): void {
+    [, $allowedCustomerId] = createPortalCustomer('allowed-ticket-customer@example.com', 'Allowed Ticket Customer');
+    [, $blockedCustomerId] = createPortalCustomer('blocked-ticket-customer@example.com', 'Blocked Ticket Customer');
+
+    $allowedProjectId = createProjectForCustomer($allowedCustomerId, 'Allowed Staff Project');
+    $blockedProjectId = createProjectForCustomer($blockedCustomerId, 'Blocked Staff Project');
+
+    $role = Role::findOrCreate('support-agent', 'web');
+    $role->syncPermissions(['tickets.view', 'tickets.create', 'tickets.reply']);
+
+    $staff = User::factory()->create([
+        'email' => 'support-agent@example.com',
+        'is_active' => true,
+    ]);
+    $staff->assignRole($role);
+
+    DB::table('project_user')->insert([
+        'project_id' => $allowedProjectId,
+        'user_id' => $staff->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($staff)
+        ->post(route('tickets.store'), [
+            'customer_id' => $blockedCustomerId,
+            'project_id' => $blockedProjectId,
+            'subject' => 'Forged Ticket',
+            'category' => 'technical',
+            'priority' => 'medium',
+            'body' => 'This request must be rejected by server-side scope enforcement.',
+        ])
+        ->assertForbidden();
+
+    expect(DB::table('tickets')->where('subject', 'Forged Ticket')->exists())->toBeFalse();
 });
