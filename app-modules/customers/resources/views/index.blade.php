@@ -24,7 +24,7 @@
                     <td dir="ltr" class="text-right">{{ $customer['email'] }}</td>
                     <td dir="ltr" class="text-right">{{ $customer['phone'] ?: '—' }}</td>
                     <td><span class="badge">{{ __('customers::messages.status.'.$customer['status']) }}</span></td>
-                    <td><span class="badge">{{ $customer['user_id'] ? __('app.active') : __('app.inactive') }}</span></td>
+                    <td><span class="badge">{{ $customer['portal_active'] ? __('app.active') : __('app.inactive') }}</span></td>
                     <td><div class="flex gap-2">
                         @can('customers.update')<a class="btn-secondary" href="{{ route('customers.edit', $customer['id']) }}">{{ __('app.edit') }}</a>@endcan
                         @can('customers.delete')<form method="POST" action="{{ route('customers.destroy', $customer['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >@csrf @method('DELETE')<button class="btn-danger" type="submit">{{ __('app.delete') }}</button></form>@endcan
