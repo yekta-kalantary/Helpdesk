@@ -4,14 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', __('app.name')) - {{ __('app.name') }}</title>
+    @php($resolvedTitle = $title ?? trim($__env->yieldContent('title')) ?: __('app.name'))
+    <title>{{ $resolvedTitle }} - {{ __('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body>
     <main class="flex min-h-screen items-center justify-center p-4 sm:p-6">
         <div class="w-full max-w-xl">
-            @yield('content')
+            @isset($slot)
+                {{ $slot }}
+            @else
+                @yield('content')
+            @endisset
         </div>
     </main>
+    @livewireScripts
 </body>
 </html>
