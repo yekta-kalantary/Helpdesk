@@ -23,6 +23,7 @@ return [
     'view' => 'View',
     'actions' => 'Actions',
     'search' => 'Search',
+    'loading' => 'Loading...',
     'status' => 'Status',
     'title' => 'Title',
     'description' => 'Description',
