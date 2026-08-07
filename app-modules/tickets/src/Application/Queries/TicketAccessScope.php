@@ -2,6 +2,7 @@
 
 namespace Modules\Tickets\Application\Queries;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -10,8 +11,8 @@ class TicketAccessScope
     /** @return array{actor_id:int,customer_id:?int,manage_all:bool} */
     public function for(User $user): array
     {
-        $customerId = $user->hasRole('customer')
-            ? DB::table('customers')->where('user_id', $user->id)->whereNull('deleted_at')->value('id')
+        $customerId = $user->person?->type === PersonType::Customer
+            ? DB::table('customers')->where('person_id', $user->person_id)->whereNull('deleted_at')->value('id')
             : null;
 
         return [
