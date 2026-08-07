@@ -2,65 +2,53 @@
 
 namespace Modules\Customers\Infrastructure;
 
+use App\Enums\PersonType;
+use App\Models\Person;
 use App\Models\User;
+use DomainException;
 use Modules\Customers\Domain\Contracts\CustomerPortalAccount;
 
 class LaravelCustomerPortalAccount implements CustomerPortalAccount
 {
-    public function find(int $userId): array
+    public function enable(int $personId, ?string $password = null): int
     {
-        $user = User::query()->findOrFail($userId);
+        $person = Person::query()->findOrFail($personId);
 
-        return [
-            'name' => $user->name,
-            'last_name' => $user->last_name,
-            'email' => $user->email,
-            'mobile' => $user->mobile,
-        ];
-    }
+        if ($person->type !== PersonType::Customer) {
+            throw new DomainException('portal_account_requires_customer_person');
+        }
 
-    public function create(string $name, string $lastName, string $email, string $mobile, string $password): int
-    {
-        $user = User::create([
-            'name' => $name,
-            'last_name' => $lastName,
-            'email' => $email,
-            'mobile' => $mobile,
-            'password' => $password,
-            'is_active' => true,
-        ]);
-        $user->assignRole('customer');
+        $user = User::query()->where('person_id', $personId)->first();
+
+        if (! $user) {
+            if ($password === null || $password === '') {
+                throw new DomainException('portal_password_required');
+            }
+
+            $user = User::create([
+                'person_id' => $personId,
+                'password' => $password,
+                'is_active' => true,
+            ]);
+        } else {
+            $attributes = ['is_active' => true];
+
+            if ($password !== null && $password !== '') {
+                $attributes['password'] = $password;
+            }
+
+            $user->update($attributes);
+        }
+
+        $user->syncRoles(['customer']);
 
         return $user->id;
     }
 
-    public function update(
-        int $userId,
-        string $name,
-        string $lastName,
-        string $email,
-        string $mobile,
-        ?string $password = null,
-    ): void {
-        $user = User::findOrFail($userId);
-        $data = [
-            'name' => $name,
-            'last_name' => $lastName,
-            'email' => $email,
-            'mobile' => $mobile,
-            'is_active' => true,
-        ];
-
-        if ($password !== null && $password !== '') {
-            $data['password'] = $password;
-        }
-
-        $user->update($data);
-        $user->syncRoles(['customer']);
-    }
-
-    public function deactivate(int $userId): void
+    public function disable(int $personId): void
     {
-        User::query()->whereKey($userId)->update(['is_active' => false]);
+        User::query()
+            ->where('person_id', $personId)
+            ->update(['is_active' => false]);
     }
 }
