@@ -56,9 +56,10 @@ settings
 `customers` اطلاعات مخصوص رابطه مشتری را نگه می‌دارد:
 
 - `person_id`: یکتا و متعلق به Person از نوع `customer`
-- `status`: `lead | active | inactive`
 - `notes`
 - soft delete
+
+Customer وضعیت دامنه‌ای ندارد. ستون legacy با نام `status` ممکن است در دیتابیس‌هایی که migration تاریخی را اجرا کرده‌اند وجود داشته باشد، اما application آن را نمی‌خواند و نمی‌نویسد. حذف فیزیکی ستون فقط در یک migration cleanup مستقل و پس از تعیین سیاست archive/backfill انجام می‌شود.
 
 حساب Portal از `users.person_id = customers.person_id` resolve می‌شود و FK مستقیمی از Customer به User وجود ندارد.
 
@@ -119,6 +120,16 @@ Repository پکیج `spatie/laravel-settings`. رمز SMTP encrypted setting ا�
 - حذف Employee از مسیر مدیریت کاربران، User و Person همان Employee را در یک transaction حذف می‌کند.
 - قبل از تغییر سیاست حذف، وابستگی Project/Task/Ticket بررسی شود.
 
-## تغییر schema
+## تغییر schema در production
 
-برای نصب‌های موجود migration سازگاری داده‌ها را از ستون‌های legacy به `people` منتقل می‌کند و سپس ستون‌های تکراری را حذف می‌کند. این migration forward-only است؛ rollback نباید دوباره دو source of truth ایجاد کند.
+از زمان live شدن پروژه، migration اجراشده immutable است و ویرایش نمی‌شود. هر تغییر schema با migration جدید انجام می‌شود.
+
+برای تغییرات داده‌دار، ترتیب امن الزامی است:
+
+1. اضافه‌کردن schema سازگار و nullable/default-safe در صورت نیاز.
+2. backfill داده‌های موجود به مقصد جدید.
+3. اعتبارسنجی کامل بودن backfill و جلوگیری از ادامه migration در صورت وجود رکورد map نشده.
+4. enforce کردن constraintهای جدید.
+5. حذف schema قدیمی فقط زمانی که داده‌ای بدون مقصد باقی نمانده باشد.
+
+migration سازگاری پروفایل‌های قبلی همین الگو را برای انتقال داده‌ها به `people` استفاده می‌کند و forward-only است؛ rollback نباید دوباره دو source of truth ایجاد کند.
