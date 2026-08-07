@@ -1,23 +1,26 @@
-name: Refresh Composer Lock
+name: CI
 
 on:
+  push:
+    branches:
+      - main
+      - 'agent/**'
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  refresh-lock:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: Checkout feature branch
+      - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: agent/helpdesk-core
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -27,18 +30,61 @@ jobs:
           coverage: none
           tools: composer:v2
 
-      - name: Refresh lock file
-        run: composer update --no-interaction --prefer-dist --no-progress --no-scripts
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          package-manager-cache: false
 
-      - name: Commit lock file
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Validate Composer
+        run: composer validate --no-check-publish
+
+      - name: Prepare environment
         run: |
-          if git diff --quiet -- composer.lock; then
-            echo "composer.lock is already current."
-            exit 0
-          fi
+          cp .env.example .env
+          touch database/database.sqlite
+          php artisan key:generate
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add composer.lock
-          git commit -m "Refresh Composer lock"
-          git push origin HEAD:agent/helpdesk-core
+      - name: Run database migrations
+        run: |
+          php artisan migrate:fresh --force
+          php artisan settings:migrate
+          php artisan db:seed --force
+
+      - name: Verify routes
+        run: php artisan route:list
+
+      - name: Run tests
+        run: php artisan test
+
+      - name: Check PHP style
+        run: ./vendor/bin/pint --test
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build deployable source archive
+        run: |
+          rm -f database/database.sqlite
+          zip -qr helpdesk.zip . \
+            -x '.git/*' \
+            -x 'node_modules/*' \
+            -x 'vendor/*' \
+            -x '.env' \
+            -x 'storage/logs/*' \
+            -x 'helpdesk.zip'
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: helpdesk
+          path: helpdesk.zip
+          if-no-files-found: error
+          retention-days: 30
