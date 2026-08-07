@@ -7,7 +7,7 @@ return [
     'projects' => 'پروژه‌ها',
     'tasks' => 'تسک‌ها',
     'tickets' => 'تیکت‌ها',
-    'users' => 'کاربران',
+    'users' => 'کارکنان',
     'roles_permissions' => 'نقش‌ها و دسترسی‌ها',
     'settings' => 'تنظیمات',
     'logout' => 'خروج',
