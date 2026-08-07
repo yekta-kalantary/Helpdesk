@@ -21,8 +21,9 @@ class ProjectFormOptions
                 ->where('is_active', true)
                 ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
                 ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn (User $user) => ['id' => $user->id, 'name' => $user->name])
+                ->orderBy('last_name')
+                ->get(['id', 'name', 'last_name'])
+                ->map(fn (User $user) => ['id' => $user->id, 'name' => $user->full_name])
                 ->all(),
         ];
     }
