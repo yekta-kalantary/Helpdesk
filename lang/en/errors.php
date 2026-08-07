@@ -1,6 +1,8 @@
 <?php
 
 return [
+    '4xx.title' => 'Invalid request',
+    '4xx.message' => 'This request cannot be processed.',
     '403.title' => 'Forbidden',
     '403.message' => 'You are not allowed to access this section.',
     '404.title' => 'Not found',
