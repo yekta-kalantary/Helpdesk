@@ -28,11 +28,12 @@ cp .env.example .env
 touch database/database.sqlite
 php artisan key:generate
 php artisan migrate --force
-php artisan settings:migrate
 php artisan db:seed --force
 npm install
 npm run build
 ```
+
+Migrationهای `spatie/laravel-settings` از طریق migrationهای معمول Laravel بارگذاری و با همان `php artisan migrate` اجرا می‌شوند؛ command جداگانه‌ای لازم نیست.
 
 ## تنظیم Admin
 
@@ -85,7 +86,6 @@ Secret SMTP داخل settings repository به‌صورت encrypted نگهدار�
 ```bash
 composer install --no-dev --prefer-dist --optimize-autoloader
 php artisan migrate --force
-php artisan settings:migrate
 php artisan db:seed --force
 php artisan optimize
 ```
@@ -115,9 +115,8 @@ APP_URL=https://your-domain.example
 
 1. کد جدید را دریافت کنید.
 2. `composer install` اجرا کنید.
-3. migrationهای Laravel را اجرا کنید.
-4. `settings:migrate` اجرا کنید.
-5. Seeder canonical permissions را اجرا کنید.
-6. cacheها را rebuild کنید.
+3. migrationهای Laravel را اجرا کنید؛ migrationهای Settings نیز از همین مسیر اجرا می‌شوند.
+4. Seeder canonical permissions را اجرا کنید.
+5. cacheها را rebuild کنید.
 
 Seeder idempotent طراحی شده است و Roleهای سیستمی را به permission set canonical برمی‌گرداند.
