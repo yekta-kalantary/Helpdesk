@@ -14,17 +14,22 @@
 }
 
 @theme {
-    --font-sans: 'IRANYekanXVF', Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'IRANYekanXVF';
+    --font-serif: 'IRANYekanXVF';
+    --font-mono: 'IRANYekanXVF';
 }
 
 @layer base {
     html {
         direction: rtl;
-        font-family: 'IRANYekanXVF', Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+        font-family: 'IRANYekanXVF';
     }
 
-    body { @apply bg-slate-50 font-sans text-slate-900 antialiased; }
-    button, input, textarea, select { font-family: inherit; }
+    *, *::before, *::after {
+        font-family: 'IRANYekanXVF';
+    }
+
+    body { @apply bg-slate-50 text-slate-900 antialiased; }
     input, textarea, select { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500; }
     textarea { @apply min-h-28; }
     label { @apply mb-1 block text-sm font-medium text-slate-700; }
