@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Tasks\Presentation\Http\Controllers\TaskController;
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/tasks', [TaskController::class, 'index'])->middleware('permission:tasks.view')->name('tasks.index');
     Route::get('/tasks/create', [TaskController::class, 'create'])->middleware('permission:tasks.create')->name('tasks.create');
     Route::post('/tasks', [TaskController::class, 'store'])->middleware('permission:tasks.create')->name('tasks.store');
