@@ -16,11 +16,11 @@ class SettingsServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'settings');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
-        if (! Schema::hasTable('settings')) {
-            return;
-        }
-
         try {
+            if (! Schema::hasTable('settings')) {
+                return;
+            }
+
             $settings = app(SmtpSettings::class);
 
             config([
@@ -35,7 +35,8 @@ class SettingsServiceProvider extends ServiceProvider
                 'mail.from.name' => $settings->from_name,
             ]);
         } catch (Throwable) {
-            // First-install commands can boot before settings migrations have run.
+            // Composer/package discovery can boot before the SQLite file exists,
+            // and first-install commands can boot before settings migrations run.
         }
     }
 }
