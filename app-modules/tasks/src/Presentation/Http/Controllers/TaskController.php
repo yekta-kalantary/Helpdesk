@@ -73,7 +73,12 @@ class TaskController extends Controller
 
     public function show(int $task): View
     {
-        return view('tasks::show', ['task' => $this->tasks->findAccessible($task, $this->scope())]);
+        $scope = $this->scope();
+
+        return view('tasks::show', [
+            'task' => $this->tasks->findAccessible($task, $scope),
+            'customerView' => (bool) $scope['customer_id'],
+        ]);
     }
 
     public function edit(int $task): View
@@ -105,9 +110,8 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, int $task): RedirectResponse
     {
-        $current = $this->tasks->findAccessible($task, $this->scope());
+        $this->tasks->findAccessible($task, $this->scope());
         $data = $request->validate(['status' => ['required', Rule::enum(TaskStatus::class)]]);
-
         $this->tasks->update($task, ['status' => $data['status']]);
 
         return back()->with('success', __('app.updated_successfully'));
@@ -155,6 +159,7 @@ class TaskController extends Controller
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'priority' => ['required', Rule::enum(TaskPriority::class)],
             'status' => ['required', Rule::enum(TaskStatus::class)],
+            'is_customer_visible' => ['nullable', 'boolean'],
             'due_at' => ['nullable', 'date'],
             'estimated_minutes' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'spent_minutes' => ['nullable', 'integer', 'min:0', 'max:1000000'],
@@ -172,6 +177,7 @@ class TaskController extends Controller
             'assigned_to' => $data['assigned_to'] ?? null,
             'priority' => $data['priority'],
             'status' => $data['status'],
+            'is_customer_visible' => (bool) ($data['is_customer_visible'] ?? false),
             'due_at' => $data['due_at'] ?? null,
             'estimated_minutes' => $data['estimated_minutes'] ?? null,
             'spent_minutes' => $data['spent_minutes'] ?? null,
@@ -187,13 +193,15 @@ class TaskController extends Controller
 
     private function assertProjectAllowed(int $projectId, array $scope): void
     {
+        abort_if($scope['customer_id'], 403);
+
         if ($scope['manage_all']) {
             return;
         }
 
         abort_unless(
             \Illuminate\Support\Facades\DB::table('project_user')->where('project_id', $projectId)->where('user_id', $scope['actor_id'])->exists(),
-            403
+            403,
         );
     }
 
