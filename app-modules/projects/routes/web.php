@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Projects\Presentation\Http\Controllers\ProjectController;
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/projects', [ProjectController::class, 'index'])->middleware('permission:projects.view')->name('projects.index');
     Route::get('/projects/create', [ProjectController::class, 'create'])->middleware('permission:projects.create')->name('projects.create');
     Route::post('/projects', [ProjectController::class, 'store'])->middleware('permission:projects.create')->name('projects.store');
