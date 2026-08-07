@@ -2,6 +2,7 @@
 
 namespace Modules\Projects\Presentation\Livewire;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -71,7 +72,7 @@ class Form extends Component
         $data = $this->validate();
         $members = User::query()
             ->whereIn('id', $data['member_ids'] ?? [])
-            ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
+            ->whereHas('person', fn ($query) => $query->where('type', PersonType::Employee->value))
             ->pluck('id')
             ->all();
 
