@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             'roles.create',
             'roles.update',
             'roles.delete',
+            'reports.view',
             'settings.manage',
             'notifications.view',
         ];
