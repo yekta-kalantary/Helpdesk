@@ -2,6 +2,7 @@
 
 namespace Modules\Tasks\Presentation\Livewire;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -172,7 +173,7 @@ class Form extends Component
         }
 
         $user = User::query()->findOrFail($userId);
-        abort_if(! $user->is_active || $user->hasRole('customer'), 422);
+        abort_if(! $user->is_active || $user->person?->type !== PersonType::Employee, 422);
     }
 
     public function render()
