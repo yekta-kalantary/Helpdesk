@@ -15,13 +15,16 @@ class EloquentTaskRepository implements TaskRepository
         $query = DB::table('tasks')
             ->join('projects', 'projects.id', '=', 'tasks.project_id')
             ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
+            ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
             ->leftJoin('users as assignees', 'assignees.id', '=', 'tasks.assigned_to')
+            ->leftJoin('people as assignee_people', 'assignee_people.id', '=', 'assignees.person_id')
             ->whereNull('tasks.deleted_at')
             ->whereNull('projects.deleted_at')
             ->select([
                 'tasks.id', 'tasks.project_id', 'tasks.title', 'tasks.priority', 'tasks.status', 'tasks.due_at',
                 'tasks.is_customer_visible', 'tasks.assigned_to', 'projects.title as project_title',
-                'customers.name as customer_name', 'assignees.name as assignee_name',
+                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
+                'assignee_people.first_name as assignee_first_name', 'assignee_people.last_name as assignee_last_name',
             ]);
 
         $this->applyDbScope($query, $scope);
@@ -32,14 +35,26 @@ class EloquentTaskRepository implements TaskRepository
             ->orderBy('tasks.due_at')
             ->orderByDesc('tasks.id')
             ->get()
-            ->map(fn (object $row) => (array) $row)
+            ->map(fn (object $row) => [
+                'id' => $row->id,
+                'project_id' => $row->project_id,
+                'title' => $row->title,
+                'priority' => $row->priority,
+                'status' => $row->status,
+                'due_at' => $row->due_at,
+                'is_customer_visible' => (bool) $row->is_customer_visible,
+                'assigned_to' => $row->assigned_to,
+                'project_title' => $row->project_title,
+                'customer_name' => trim(($row->customer_first_name ?? '').' '.($row->customer_last_name ?? '')),
+                'assignee_name' => $row->assigned_to ? trim(($row->assignee_first_name ?? '').' '.($row->assignee_last_name ?? '')) : null,
+            ])
             ->all();
     }
 
     public function findAccessible(int $id, array $scope): array
     {
         $query = Task::query()
-            ->with(['assignee:id,name', 'creator:id,name', 'comments.user:id,name'])
+            ->with(['assignee.person', 'creator.person', 'comments.user.person'])
             ->whereKey($id)
             ->whereIn('project_id', DB::table('projects')->whereNull('deleted_at')->select('id'));
 
@@ -48,20 +63,24 @@ class EloquentTaskRepository implements TaskRepository
         $task = $query->firstOrFail();
         $project = DB::table('projects')
             ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
+            ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
             ->where('projects.id', $task->project_id)
-            ->first(['projects.title as project_title', 'projects.customer_id', 'customers.name as customer_name']);
+            ->first([
+                'projects.title as project_title', 'projects.customer_id',
+                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
+            ]);
 
         return [
             'id' => $task->id,
             'project_id' => $task->project_id,
             'project_title' => $project?->project_title,
             'customer_id' => $project?->customer_id,
-            'customer_name' => $project?->customer_name,
+            'customer_name' => $project ? trim(($project->customer_first_name ?? '').' '.($project->customer_last_name ?? '')) : null,
             'title' => $task->title,
             'description' => $task->description,
             'assigned_to' => $task->assigned_to,
-            'assignee_name' => $task->assignee?->name,
-            'creator_name' => $task->creator?->name,
+            'assignee_name' => $task->assignee?->full_name,
+            'creator_name' => $task->creator?->full_name,
             'priority' => $task->priority->value,
             'status' => $task->status->value,
             'is_customer_visible' => (bool) $task->is_customer_visible,
@@ -71,7 +90,7 @@ class EloquentTaskRepository implements TaskRepository
             'comments' => $task->comments->map(fn (TaskComment $comment) => [
                 'id' => $comment->id,
                 'body' => $comment->body,
-                'user_name' => $comment->user?->name,
+                'user_name' => $comment->user?->full_name,
                 'created_at' => $comment->created_at,
             ])->all(),
             'attachments' => $task->getMedia('attachments')->map(fn ($media) => [
