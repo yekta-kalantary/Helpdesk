@@ -3,6 +3,7 @@
 namespace Modules\Customers;
 
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Modules\Customers\Domain\Contracts\CustomerPortalAccount;
 use Modules\Customers\Domain\Contracts\CustomerRepository;
 use Modules\Customers\Infrastructure\EloquentCustomerRepository;
@@ -22,5 +23,12 @@ class CustomersServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'customers');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'customers');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        Livewire::addNamespace(
+            namespace: 'customers',
+            classNamespace: 'Modules\\Customers\\Presentation\\Livewire',
+            classPath: __DIR__.'/Presentation/Livewire',
+            classViewPath: __DIR__.'/../resources/views/livewire',
+        );
     }
 }
