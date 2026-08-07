@@ -13,10 +13,12 @@ class EloquentProjectRepository implements ProjectRepository
     {
         $query = DB::table('projects')
             ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
+            ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
             ->whereNull('projects.deleted_at')
             ->select([
                 'projects.id', 'projects.customer_id', 'projects.title', 'projects.type', 'projects.status',
-                'projects.starts_at', 'projects.ends_at', 'projects.created_at', 'customers.name as customer_name',
+                'projects.starts_at', 'projects.ends_at', 'projects.created_at',
+                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
             ]);
 
         if (Schema::hasTable('tasks')) {
@@ -43,7 +45,8 @@ class EloquentProjectRepository implements ProjectRepository
             ->when($customerId, fn ($builder) => $builder->where('projects.customer_id', $customerId))
             ->when($term, fn ($builder) => $builder->where(fn ($nested) => $nested
                 ->where('projects.title', 'like', "%{$term}%")
-                ->orWhere('customers.name', 'like', "%{$term}%")))
+                ->orWhere('customer_people.first_name', 'like', "%{$term}%")
+                ->orWhere('customer_people.last_name', 'like', "%{$term}%")))
             ->orderByDesc('projects.id')
             ->get();
 
@@ -54,7 +57,7 @@ class EloquentProjectRepository implements ProjectRepository
             return [
                 'id' => $row->id,
                 'customer_id' => $row->customer_id,
-                'customer_name' => $row->customer_name,
+                'customer_name' => trim($row->customer_first_name.' '.$row->customer_last_name),
                 'title' => $row->title,
                 'type' => $row->type,
                 'status' => $row->status,
@@ -68,12 +71,15 @@ class EloquentProjectRepository implements ProjectRepository
     public function find(int $id): array
     {
         $project = Project::query()->findOrFail($id);
-        $customerName = DB::table('customers')->where('id', $project->customer_id)->value('name');
+        $customer = DB::table('customers')
+            ->join('people', 'people.id', '=', 'customers.person_id')
+            ->where('customers.id', $project->customer_id)
+            ->first(['people.first_name', 'people.last_name']);
 
         return [
             'id' => $project->id,
             'customer_id' => $project->customer_id,
-            'customer_name' => $customerName,
+            'customer_name' => $customer ? trim($customer->first_name.' '.$customer->last_name) : null,
             'title' => $project->title,
             'type' => $project->type->value,
             'description' => $project->description,
