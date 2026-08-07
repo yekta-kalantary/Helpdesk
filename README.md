@@ -2,7 +2,7 @@
 
 سامانه فارسی مدیریت مشتری، پروژه، تسک و تیکت برای تیم‌های طراحی سایت، سئو و دیجیتال مارکتینگ.
 
-این پروژه یک **Modular Monolith** مبتنی بر Laravel است. API عمومی ندارد و رابط کاربری آن با Blade + Tailwind CSS پیاده‌سازی شده است.
+این پروژه یک **Modular Monolith** مبتنی بر Laravel 13 است. API عمومی ندارد و رابط کاربری آن با **Livewire 4 + Blade + Tailwind CSS** پیاده‌سازی شده است.
 
 ## نیازمندی‌های اجرا
 
@@ -13,7 +13,7 @@
 - `exif` و `fileinfo` برای Media Library
 - Node.js فقط برای build کردن assetها در محیط توسعه/CI؛ runtime وب به Node نیاز ندارد.
 
-هیچ Redis، Docker، Elasticsearch، queue worker یا سرویس خارجی اجباری نیست.
+هیچ Redis، Docker، Elasticsearch، queue worker یا سرویس خارجی اجباری نیست. Livewire در همان Laravel web runtime اجرا می‌شود.
 
 ## نصب محلی
 
@@ -23,26 +23,35 @@ composer run setup
 php artisan serve
 ```
 
-اسکریپت `setup` این مراحل را انجام می‌دهد:
+اسکریپت `setup` dependencyها، SQLite، APP_KEY، migration/seed و frontend build را آماده می‌کند.
 
-1. نصب dependencyهای Composer
-2. ایجاد فایل SQLite در `database/database.sqlite`
-3. تولید `APP_KEY`
-4. اجرای migrationهای Laravel؛ migrationهای `spatie/laravel-settings` نیز از همین مسیر اجرا می‌شوند
-5. اجرای Seeder نقش‌ها و دسترسی‌ها
-6. نصب و build کردن assetهای frontend
+## معماری UI
 
-## حساب Admin اولیه
+هر bounded context، class-based Livewire componentهای خودش را در مسیر زیر نگهداری می‌کند:
 
-مقادیر از `.env` خوانده می‌شوند:
-
-```env
-HELPDESK_ADMIN_NAME="Administrator"
-HELPDESK_ADMIN_EMAIL="admin@example.com"
-HELPDESK_ADMIN_PASSWORD="password"
+```text
+app-modules/<module>/src/Presentation/Livewire
 ```
 
-**قبل از استقرار واقعی حتماً این مقادیر را تغییر دهید.**
+namespaceهای UI ماژولی هستند؛ برای مثال:
+
+```text
+identity::users.index
+customers::form
+projects::index
+tasks::show
+tickets::create
+settings::smtp
+reports::index
+```
+
+صفحات، فرم‌ها، فیلترها و write actionهای UI با Livewire انجام می‌شوند. URL و route nameهای اصلی حفظ شده‌اند و navigation داخلی از `wire:navigate` استفاده می‌کند.
+
+Shared Design System در `resources/views/components/ui` قرار دارد و Domain/Application هیچ وابستگی‌ای به Livewire یا Blade ندارند.
+
+تنها exception عمدی، **دانلود attachment** است که برای streaming مستقیم فایل از HTTP GET احراز هویت‌شده استفاده می‌کند. Upload، delete، reply، comment، status و سایر interactionها Livewire هستند.
+
+## نقش‌ها
 
 دو Role سیستمی وجود دارد:
 
@@ -55,11 +64,11 @@ HELPDESK_ADMIN_PASSWORD="password"
 
 | Module | مسئولیت |
 | --- | --- |
-| `Identity` | ورود وب، کاربران تیم، Role/Permission، Dashboard، Notifications |
+| `Identity` | Livewire login/logout، کاربران تیم، Role/Permission، Dashboard، Notifications |
 | `Customers` | مشتری و حساب Client Portal |
 | `Projects` | پروژه، نوع/وضعیت، اعضای تیم و پیشرفت |
-| `Tasks` | Kanban، Assignment، Deadline، زمان، فایل و کامنت داخلی |
-| `Tickets` | تیکت، گفتگو، فایل، Assignment و وضعیت پشتیبانی |
+| `Tasks` | Livewire Kanban، Assignment، Deadline، زمان، upload، فایل و کامنت داخلی |
+| `Tickets` | Livewire تیکت، گفتگو، upload، Assignment و وضعیت پشتیبانی |
 | `Reports` | گزارش read-only مشتری، پروژه و تیم |
 | `Settings` | تنظیمات SMTP |
 
@@ -67,40 +76,33 @@ HELPDESK_ADMIN_PASSWORD="password"
 
 ## Client Portal
 
-مشتری پس از فعال شدن Portal می‌تواند:
-
-- پروژه‌های خودش را ببیند.
-- فقط Taskهایی را ببیند که `is_customer_visible` هستند.
-- تیکت‌های خودش را ایجاد، مشاهده و پاسخ دهد.
-- اعلان‌های خودش را مشاهده کند.
-
-کامنت داخلی Task، زمان تخمینی/مصرف‌شده و Taskهای داخلی برای مشتری نمایش داده نمی‌شوند.
+مشتری پس از فعال شدن Portal می‌تواند پروژه‌های خودش، Taskهای `is_customer_visible`، تیکت‌ها و اعلان‌های خودش را مشاهده کند و روی تیکت‌های خودش پاسخ بدهد. کامنت داخلی Task، زمان تخمینی/مصرف‌شده و Taskهای داخلی برای مشتری نمایش داده نمی‌شوند.
 
 ## فایل‌ها
 
-فایل‌های Task و Ticket با `spatie/laravel-medialibrary` روی disk محلی ذخیره می‌شوند. فایل‌ها URL عمومی ندارند و دانلود از route احراز هویت‌شده و scopeشده انجام می‌شود.
+فایل‌های Task و Ticket با `spatie/laravel-medialibrary` روی disk محلی ذخیره می‌شوند. فایل‌ها URL عمومی ندارند. Uploadها از `Livewire\WithFileUploads` و validation server-side عبور می‌کنند و download از route scopeشده stream می‌شود.
 
 ## SMTP
 
-SMTP از پنل تنظیمات مدیریت می‌شود. رمز SMTP با قابلیت encrypted settings پکیج `spatie/laravel-settings` رمزنگاری می‌شود. اگر SMTP غیرفعال باشد، Laravel از mailer محلی `log` استفاده می‌کند.
+SMTP از صفحه Livewire تنظیمات مدیریت می‌شود. رمز SMTP با encrypted settings پکیج `spatie/laravel-settings` نگهداری می‌شود. اگر SMTP غیرفعال باشد، Laravel از mailer محلی `log` استفاده می‌کند.
 
-## توسعه
-
-مستندات فنی در پوشه `docs/` قرار دارند:
+## مستندات
 
 - `docs/architecture.md`
 - `docs/database.md`
 - `docs/permissions.md`
 - `docs/development.md`
 - `docs/installation.md`
+- `docs/ui.md`
 - `docs/roadmap.md`
 
 ## تست و کیفیت
 
 ```bash
+php artisan view:cache
 php artisan test
 ./vendor/bin/pint --test
 npm run build
 ```
 
-CI همین مسیر را روی PHP 8.4 و SQLite اعتبارسنجی می‌کند.
+CI روی PHP 8.4 و SQLite، routeها، تمام Blade viewها، Livewire actionهای امنیتی، frontend build و deployable ZIP را اعتبارسنجی می‌کند.
