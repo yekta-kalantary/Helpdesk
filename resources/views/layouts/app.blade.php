@@ -69,14 +69,7 @@
             </nav>
 
             <div class="border-t border-slate-100 p-3">
-                @if(class_exists(\Livewire\Livewire::class))
-                    <livewire:identity::logout />
-                @else
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <x-ui.button class="w-full" variant="secondary" type="submit">{{ __('app.logout') }}</x-ui.button>
-                    </form>
-                @endif
+                <livewire:identity::logout />
             </div>
         @endauth
     </aside>
