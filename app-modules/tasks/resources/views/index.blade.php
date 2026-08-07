@@ -1,40 +1,32 @@
-@extends('layouts.app')
-
-@section('title', __('tasks::messages.tasks'))
-
-@section('content')
+<div>
     <x-ui.page-header :title="__('tasks::messages.tasks')">
         <x-slot:actions>
             @can('tasks.create')
-                <x-ui.button :href="route('tasks.create', ['project' => $projectId])">{{ __('tasks::messages.new_task') }}</x-ui.button>
+                <x-ui.button :href="route('tasks.create', ['project' => $projectId])" wire:navigate>{{ __('tasks::messages.new_task') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
 
-    <x-ui.filter-bar>
-        @if($projectId)
-            <input type="hidden" name="project" value="{{ $projectId }}">
-        @endif
-
+    <x-ui.filter-bar :livewire="true">
         <div class="min-w-0 flex-1">
-            <x-ui.input name="q" :value="request('q')" :placeholder="__('tasks::messages.search_placeholder')" />
+            <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('tasks::messages.search_placeholder')" />
         </div>
-        <x-ui.button variant="secondary" type="submit">{{ __('app.search') }}</x-ui.button>
+        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q">{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
     @php($grouped = collect($tasks)->groupBy('status'))
 
-    <div class="grid gap-4 xl:grid-cols-5">
-        @foreach($statuses as $status)
-            <section class="min-w-0 rounded-2xl border border-slate-200 bg-slate-100/80 p-3">
+    <div class="grid gap-4 xl:grid-cols-5" wire:loading.class="opacity-60" wire:target="q">
+        @foreach($statuses as $statusItem)
+            <section class="min-w-0 rounded-2xl border border-slate-200 bg-slate-100/80 p-3" wire:key="task-column-{{ $statusItem->value }}">
                 <div class="mb-3 flex items-center justify-between gap-3">
-                    <h2 class="font-bold text-slate-900">{{ __('tasks::messages.status.'.$status->value) }}</h2>
-                    <x-ui.badge>{{ $grouped->get($status->value, collect())->count() }}</x-ui.badge>
+                    <h2 class="font-bold text-slate-900">{{ __('tasks::messages.status.'.$statusItem->value) }}</h2>
+                    <x-ui.badge>{{ $grouped->get($statusItem->value, collect())->count() }}</x-ui.badge>
                 </div>
 
                 <div class="space-y-3">
-                    @forelse($grouped->get($status->value, collect()) as $task)
-                        <a href="{{ route('tasks.show', $task['id']) }}" class="group block">
+                    @forelse($grouped->get($statusItem->value, collect()) as $task)
+                        <a href="{{ route('tasks.show', $task['id']) }}" wire:navigate class="group block" wire:key="task-{{ $task['id'] }}">
                             <x-ui.card class="transition group-hover:-translate-y-0.5 group-hover:border-slate-300 group-hover:shadow-md">
                                 <div class="font-bold text-slate-950">{{ $task['title'] }}</div>
                                 <div class="mt-2 text-xs font-medium text-slate-500">{{ $task['project_title'] }}</div>
@@ -55,4 +47,4 @@
             </section>
         @endforeach
     </div>
-@endsection
+</div>
