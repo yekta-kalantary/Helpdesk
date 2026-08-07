@@ -4,6 +4,7 @@ namespace Modules\Identity\Presentation\Livewire\Auth;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -23,24 +24,26 @@ class Login extends Component
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $this->remember)) {
+        $user = User::query()
+            ->with('person')
+            ->whereHas('person', fn ($query) => $query->where('email', $credentials['email']))
+            ->first();
+
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             $this->addError('email', __('identity::messages.invalid_credentials'));
             $this->reset('password');
 
             return null;
         }
 
-        /** @var User $user */
-        $user = Auth::user();
-
         if (! $user->is_active) {
-            Auth::logout();
             $this->addError('email', __('identity::messages.inactive_account'));
             $this->reset('password');
 
             return null;
         }
 
+        Auth::login($user, $this->remember);
         request()->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));
