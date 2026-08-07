@@ -28,7 +28,7 @@ class CustomersServiceProvider extends ServiceProvider
             namespace: 'customers',
             classNamespace: 'Modules\\Customers\\Presentation\\Livewire',
             classPath: __DIR__.'/Presentation/Livewire',
-            classViewPath: __DIR__.'/../resources/views/livewire',
+            classViewPath: __DIR__.'/../resources/views',
         );
     }
 }
