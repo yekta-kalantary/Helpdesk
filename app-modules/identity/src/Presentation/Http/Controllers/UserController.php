@@ -39,8 +39,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
-            'roles' => ['array'],
-            'roles.*' => ['string', Rule::exists('roles', 'name')->where('guard_name', 'web')],
+            'role' => ['required', 'string', Rule::notIn(['admin', 'customer']), Rule::exists('roles', 'name')->where('guard_name', 'web')],
         ]);
 
         $this->users->create(
@@ -48,7 +47,7 @@ class UserController extends Controller
             $data['email'],
             $data['password'],
             $request->boolean('is_active'),
-            $data['roles'] ?? [],
+            $data['role'],
         );
 
         return redirect()->route('users.index')->with('success', __('app.created_successfully'));
@@ -69,8 +68,7 @@ class UserController extends Controller
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'is_active' => ['nullable', 'boolean'],
-            'roles' => ['array'],
-            'roles.*' => ['string', Rule::exists('roles', 'name')->where('guard_name', 'web')],
+            'role' => ['required', 'string', Rule::notIn(['admin', 'customer']), Rule::exists('roles', 'name')->where('guard_name', 'web')],
         ]);
 
         $this->users->update(
@@ -79,7 +77,7 @@ class UserController extends Controller
             $data['email'],
             $data['password'] ?? null,
             $request->boolean('is_active'),
-            $data['roles'] ?? [],
+            $data['role'],
         );
 
         return redirect()->route('users.index')->with('success', __('app.updated_successfully'));
@@ -98,7 +96,7 @@ class UserController extends Controller
     {
         return array_values(array_filter(
             $this->access->roles(),
-            static fn (array $role) => ! in_array($role['name'], ['admin', 'customer'], true),
+            static fn (array $role) => ! $role['system'],
         ));
     }
 }
