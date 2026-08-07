@@ -23,6 +23,7 @@ return [
     'view' => 'مشاهده',
     'actions' => 'عملیات',
     'search' => 'جستجو',
+    'loading' => 'در حال پردازش...',
     'status' => 'وضعیت',
     'title' => 'عنوان',
     'description' => 'توضیحات',
