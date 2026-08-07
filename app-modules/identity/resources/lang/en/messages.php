@@ -26,6 +26,6 @@ return [
     'active_projects' => 'Active projects',
     'open_tasks' => 'Open tasks',
     'open_tickets' => 'Open tickets',
-    'search_users' => 'Search by name or email',
+    'search_users' => 'Search by first name, last name, email or mobile',
     'login_title' => 'Sign in to panel',
 ];
