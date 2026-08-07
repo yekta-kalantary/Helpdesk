@@ -34,7 +34,7 @@ class TasksServiceProvider extends ServiceProvider
             namespace: 'tasks',
             classNamespace: 'Modules\\Tasks\\Presentation\\Livewire',
             classPath: __DIR__.'/Presentation/Livewire',
-            classViewPath: __DIR__.'/../resources/views/livewire',
+            classViewPath: __DIR__.'/../resources/views',
         );
     }
 }
