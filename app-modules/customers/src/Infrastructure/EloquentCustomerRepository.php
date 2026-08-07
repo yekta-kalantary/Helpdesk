@@ -72,7 +72,6 @@ class EloquentCustomerRepository implements CustomerRepository
             'email' => $customer->person->email,
             'mobile' => $customer->person->mobile,
             'notes' => $customer->notes,
-            'status' => $customer->status->value,
             'created_at' => $customer->created_at,
         ];
     }
