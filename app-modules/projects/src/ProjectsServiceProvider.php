@@ -25,7 +25,7 @@ class ProjectsServiceProvider extends ServiceProvider
             namespace: 'projects',
             classNamespace: 'Modules\\Projects\\Presentation\\Livewire',
             classPath: __DIR__.'/Presentation/Livewire',
-            classViewPath: __DIR__.'/../resources/views/livewire',
+            classViewPath: __DIR__.'/../resources/views',
         );
     }
 }
