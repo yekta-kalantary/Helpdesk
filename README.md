@@ -28,10 +28,9 @@ php artisan serve
 1. نصب dependencyهای Composer
 2. ایجاد فایل SQLite در `database/database.sqlite`
 3. تولید `APP_KEY`
-4. اجرای migrationهای Laravel
-5. اجرای migrationهای `spatie/laravel-settings`
-6. اجرای Seeder نقش‌ها و دسترسی‌ها
-7. نصب و build کردن assetهای frontend
+4. اجرای migrationهای Laravel؛ migrationهای `spatie/laravel-settings` نیز از همین مسیر اجرا می‌شوند
+5. اجرای Seeder نقش‌ها و دسترسی‌ها
+6. نصب و build کردن assetهای frontend
 
 ## حساب Admin اولیه
 
