@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceDir = resolve(root, 'resources/fonts/IRANYekanXVF.woff2.base64');
-const target = resolve(root, 'public/fonts/IRANYekanXVF.woff2');
+const target = resolve(root, 'resources/fonts/IRANYekanXVF.woff2');
+const legacyTarget = resolve(root, 'public/fonts/IRANYekanXVF.woff2');
 const expectedSha256 = '3a3a62a935a549584d610e38b4b27ea30053c6fe137ca0186687dec038cfcf88';
 const expectedSize = 95404;
 
@@ -30,5 +31,6 @@ if (font.length !== expectedSize || sha256 !== expectedSha256) {
 
 await mkdir(dirname(target), { recursive: true });
 await writeFile(target, font);
+await rm(legacyTarget, { force: true });
 
-console.log(`IRANYekan font prepared: ${font.length} bytes (${sha256})`);
+console.log(`IRANYekan font prepared for Vite: ${font.length} bytes (${sha256})`);
