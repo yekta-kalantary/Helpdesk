@@ -81,6 +81,20 @@ it('creates customers without a user account unless portal access is enabled', f
         ->and(User::query()->where('person_id', $person->id)->exists())->toBeFalse();
 });
 
+it('updates portal password controls immediately when portal access is toggled', function (): void {
+    $admin = User::query()->role('admin')->firstOrFail();
+
+    $component = Livewire::actingAs($admin)
+        ->test('customers::form')
+        ->assertSeeHtml('wire:model.live="portal_enabled"')
+        ->assertSeeHtml('aria-disabled="true"');
+
+    $component
+        ->set('portal_enabled', true)
+        ->assertSet('portal_enabled', true)
+        ->assertDontSeeHtml('aria-disabled="true"');
+});
+
 it('uses the same customer person when portal access is enabled', function (): void {
     $admin = User::query()->role('admin')->firstOrFail();
 

@@ -5,6 +5,7 @@
     'checked' => false,
     'hint' => null,
     'model' => null,
+    'live' => false,
 ])
 
 @php($id = $attributes->get('id', str_replace(['[', ']', '.'], ['-', '', '-'], $name)))
@@ -16,7 +17,7 @@
         type="checkbox"
         name="{{ $name }}"
         value="{{ $value }}"
-        @if($model) wire:model="{{ $model }}" @else @checked($checked) @endif
+        @if($model && $live) wire:model.live="{{ $model }}" @elseif($model) wire:model="{{ $model }}" @else @checked($checked) @endif
     >
     <span class="min-w-0">
         <span class="block text-sm font-semibold text-slate-800">{{ $label }}</span>

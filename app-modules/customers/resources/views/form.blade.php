@@ -14,7 +14,7 @@
                 <x-ui.textarea name="notes" :label="__('customers::messages.notes')" :value="$notes" wire:model="notes" />
 
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <x-ui.checkbox name="portal_enabled" :label="__('customers::messages.portal_enabled')" model="portal_enabled" />
+                    <x-ui.checkbox name="portal_enabled" :label="__('customers::messages.portal_enabled')" model="portal_enabled" :live="true" />
                     <div class="mt-4 grid gap-4 sm:grid-cols-2" @if(! $portal_enabled) aria-disabled="true" @endif>
                         <x-ui.input name="portal_password" :label="__('customers::messages.portal_password')" type="password" wire:model="portal_password" :disabled="! $portal_enabled" :required="$portal_enabled && ! $portalUserId" :hint="$portalUserId ? __('customers::messages.portal_password_hint') : null" />
                         <x-ui.input name="portal_password_confirmation" :label="__('customers::messages.portal_password_confirmation')" type="password" wire:model="portal_password_confirmation" :disabled="! $portal_enabled" :required="$portal_enabled && ! $portalUserId" />
