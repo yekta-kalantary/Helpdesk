@@ -21,6 +21,8 @@ app-modules/<module>/
     ├── Application/
     ├── Infrastructure/
     ├── Presentation/
+    │   ├── Livewire/
+    │   └── Http/Controllers/   # فقط boundaryهای لازم مثل دانلود فایل
     └── <Module>ServiceProvider.php
 ```
 
@@ -32,7 +34,7 @@ app-modules/<module>/
 - Contract/Portها
 - Ruleهای دامنه
 
-Domain نباید به Controller، Blade یا implementationهای Eloquent وابسته باشد.
+Domain نباید به Livewire، Controller، Blade یا implementationهای Eloquent وابسته باشد.
 
 ### Application
 
@@ -57,27 +59,41 @@ Application به Contractهای Domain وابسته است، نه implementation
 
 ### Presentation
 
-ورودی/خروجی وب:
+ورودی/خروجی وب بر پایه **Livewire 4 + Blade** است:
 
-- Controller
-- Route
-- Blade view
-- Validation نزدیک مرز HTTP
+- full-page Livewire componentها برای صفحات، فرم‌ها، فیلترها و actionهای تعاملی
+- `Route::livewire()` برای routeهای UI
+- Blade viewهای ماژولی و Shared `x-ui.*` Kit
+- Validation و authorization نزدیک مرز Presentation
+- HTTP Controller فقط جایی که response باینری/streaming مناسب‌تر است، مثل دانلود attachment
 
-Controller باید orchestration محدود داشته باشد و business persistence را مستقیم انجام ندهد.
+Livewire component باید orchestration محدود داشته باشد و business persistence را مستقیم پیاده‌سازی نکند؛ از Action/Query/Contractهای Application و Domain استفاده می‌کند.
 
 ## Dependency Rule
 
 جهت اصلی dependency:
 
 ```text
-Presentation -> Application -> Domain
-                       ^
-                       |
-               Infrastructure
+Livewire/Presentation -> Application -> Domain
+                                  ^
+                                  |
+                          Infrastructure
 ```
 
 Infrastructure از طریق Service Container به Contractهای Domain bind می‌شود.
+
+## Livewire boundaries
+
+هر ماژول namespace مستقل Livewire دارد؛ مانند `identity::`, `customers::`, `projects::`, `tasks::`, `tickets::`, `reports::`, `settings::`.
+
+قواعد اصلی:
+
+1. route middleware قابلیت کلی صفحه را کنترل می‌کند.
+2. هر mutating Livewire action دوباره permission را server-side بررسی می‌کند؛ چون update requestهای Livewire از route اصلی صفحه عبور نمی‌کنند.
+3. Row-level scope در Query/Repository باقی می‌ماند و به client state اعتماد نمی‌شود.
+4. Propertyهای شناسه‌ای حساس با `#[Locked]` قفل می‌شوند.
+5. upload فایل با `WithFileUploads` انجام می‌شود.
+6. download فایل از HTTP route احراز هویت‌شده stream می‌شود.
 
 ## ارتباط بین ماژول‌ها
 
@@ -108,21 +124,21 @@ Infrastructure از طریق Service Container به Contractهای Domain bind �
 - Mail: log، مگر SMTP از پنل فعال شود
 - Notifications: database
 
-بنابراین هیچ daemon یا سرویس زیرساختی جدا برای اجرای پایه لازم نیست.
+بنابراین هیچ daemon یا سرویس زیرساختی جدا برای اجرای پایه لازم نیست. Livewire نیز از همان Laravel web runtime استفاده می‌کند و سرویس جداگانه‌ای نیاز ندارد.
 
 ## Authorization
 
 Authorization دو سطح دارد:
 
-1. **Capability** با `spatie/laravel-permission` و middlewareهای permission.
+1. **Capability** با `spatie/laravel-permission`، route middleware و guard داخل Livewire action.
 2. **Row-level scope** داخل Query/Repository برای اطلاعات مشتری، Task و Ticket.
 
 `admin` با `Gate::before` دسترسی کامل دارد. `admin` و `customer` system role هستند و از مدیریت Roleهای پویا محافظت می‌شوند.
 
 ## Localization
 
-Locale پیش‌فرض `fa` است. در Blade/Controller متن قابل نمایش نباید hard-code شود. کلیدها انگلیسی هستند و ترجمه فارسی در `lang/fa` یا `resources/lang/fa` هر ماژول قرار می‌گیرد.
+Locale پیش‌فرض `fa` است. در Blade/Livewire متن قابل نمایش نباید hard-code شود. کلیدها انگلیسی هستند و ترجمه فارسی در `lang/fa` یا `resources/lang/fa` هر ماژول قرار می‌گیرد.
 
 ## امنیت فایل
 
-Media روی disk محلی نگهداری می‌شود. دانلود Task/Ticket تنها از route احراز هویت‌شده انجام می‌شود و قبل از stream کردن فایل، scope رکورد بررسی می‌شود.
+Media روی disk محلی نگهداری می‌شود. upload از Livewire validation عبور می‌کند. دانلود Task/Ticket تنها از route احراز هویت‌شده انجام می‌شود و قبل از stream کردن فایل، scope رکورد بررسی می‌شود.
