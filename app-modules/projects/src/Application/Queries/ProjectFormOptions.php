@@ -2,6 +2,7 @@
 
 namespace Modules\Projects\Application\Queries;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -12,17 +13,23 @@ class ProjectFormOptions
     {
         return [
             'customers' => DB::table('customers')
-                ->whereNull('deleted_at')
-                ->orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn (object $row) => ['id' => $row->id, 'name' => $row->name])
+                ->join('people', 'people.id', '=', 'customers.person_id')
+                ->whereNull('customers.deleted_at')
+                ->orderBy('people.first_name')
+                ->orderBy('people.last_name')
+                ->get(['customers.id', 'people.first_name', 'people.last_name'])
+                ->map(fn (object $row) => ['id' => $row->id, 'name' => trim($row->first_name.' '.$row->last_name)])
                 ->all(),
             'members' => User::query()
-                ->where('is_active', true)
+                ->select('users.*')
+                ->join('people', 'people.id', '=', 'users.person_id')
+                ->with('person')
+                ->where('users.is_active', true)
+                ->where('people.type', PersonType::Employee->value)
                 ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
-                ->orderBy('name')
-                ->orderBy('last_name')
-                ->get(['id', 'name', 'last_name'])
+                ->orderBy('people.first_name')
+                ->orderBy('people.last_name')
+                ->get()
                 ->map(fn (User $user) => ['id' => $user->id, 'name' => $user->full_name])
                 ->all(),
         ];

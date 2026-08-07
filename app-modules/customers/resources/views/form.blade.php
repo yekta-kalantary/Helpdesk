@@ -6,9 +6,9 @@
             <div class="space-y-5">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-ui.input name="name" :label="__('app.name_label')" :value="$name" wire:model="name" required />
-                    <x-ui.input name="company" :label="__('customers::messages.company')" :value="$company" wire:model="company" />
+                    <x-ui.input name="last_name" :label="__('app.last_name')" :value="$last_name" wire:model="last_name" required />
                     <x-ui.input name="email" :label="__('app.email')" type="email" dir="ltr" :value="$email" wire:model="email" required />
-                    <x-ui.input name="phone" :label="__('customers::messages.phone')" dir="ltr" :value="$phone" wire:model="phone" />
+                    <x-ui.input name="mobile" :label="__('app.mobile')" dir="ltr" :value="$mobile" wire:model="mobile" required />
                     <x-ui.select name="status" :label="__('app.status')" wire:model="status">
                         @foreach($statuses as $statusItem)
                             <option value="{{ $statusItem->value }}">{{ __('customers::messages.status.'.$statusItem->value) }}</option>
@@ -21,10 +21,8 @@
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <x-ui.checkbox name="portal_enabled" :label="__('customers::messages.portal_enabled')" model="portal_enabled" />
                     <div class="mt-4 grid gap-4 sm:grid-cols-2" @if(! $portal_enabled) aria-disabled="true" @endif>
-                        <x-ui.input name="portal_last_name" :label="__('app.last_name')" :value="$portal_last_name" wire:model="portal_last_name" :disabled="! $portal_enabled" :required="$portal_enabled" />
-                        <x-ui.input name="portal_mobile" :label="__('app.mobile')" dir="ltr" :value="$portal_mobile" wire:model="portal_mobile" :disabled="! $portal_enabled" :required="$portal_enabled" />
-                        <x-ui.input name="portal_password" :label="__('customers::messages.portal_password')" type="password" wire:model="portal_password" :disabled="! $portal_enabled" :hint="$customerId ? __('customers::messages.portal_password_hint') : null" />
-                        <x-ui.input name="portal_password_confirmation" :label="__('customers::messages.portal_password_confirmation')" type="password" wire:model="portal_password_confirmation" :disabled="! $portal_enabled" />
+                        <x-ui.input name="portal_password" :label="__('customers::messages.portal_password')" type="password" wire:model="portal_password" :disabled="! $portal_enabled" :required="$portal_enabled && ! $portalUserId" :hint="$portalUserId ? __('customers::messages.portal_password_hint') : null" />
+                        <x-ui.input name="portal_password_confirmation" :label="__('customers::messages.portal_password_confirmation')" type="password" wire:model="portal_password_confirmation" :disabled="! $portal_enabled" :required="$portal_enabled && ! $portalUserId" />
                     </div>
                 </div>
 

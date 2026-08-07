@@ -6,7 +6,6 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Modules\Customers\Application\Actions\SaveCustomer;
-use Modules\Customers\Domain\Contracts\CustomerPortalAccount;
 use Modules\Customers\Domain\Contracts\CustomerRepository;
 use Modules\Customers\Domain\Enums\CustomerStatus;
 
@@ -16,15 +15,18 @@ class Form extends Component
     public ?int $customerId = null;
 
     #[Locked]
+    public ?int $personId = null;
+
+    #[Locked]
     public ?int $portalUserId = null;
 
     public string $name = '';
 
-    public ?string $company = null;
+    public string $last_name = '';
 
     public string $email = '';
 
-    public ?string $phone = null;
+    public string $mobile = '';
 
     public ?string $notes = null;
 
@@ -32,27 +34,17 @@ class Form extends Component
 
     public bool $portal_enabled = false;
 
-    public string $portal_last_name = '';
-
-    public string $portal_mobile = '';
-
     public string $portal_password = '';
 
     public string $portal_password_confirmation = '';
 
     protected CustomerRepository $customers;
 
-    protected CustomerPortalAccount $portal;
-
     protected SaveCustomer $saveCustomer;
 
-    public function boot(
-        CustomerRepository $customers,
-        CustomerPortalAccount $portal,
-        SaveCustomer $saveCustomer,
-    ): void {
+    public function boot(CustomerRepository $customers, SaveCustomer $saveCustomer): void
+    {
         $this->customers = $customers;
-        $this->portal = $portal;
         $this->saveCustomer = $saveCustomer;
     }
 
@@ -65,20 +57,15 @@ class Form extends Component
         $item = $this->customers->find($customer);
 
         $this->customerId = $customer;
+        $this->personId = $item['person_id'];
         $this->portalUserId = $item['user_id'];
         $this->name = $item['name'];
-        $this->company = $item['company'];
+        $this->last_name = $item['last_name'];
         $this->email = $item['email'];
-        $this->phone = $item['phone'];
+        $this->mobile = $item['mobile'];
         $this->notes = $item['notes'];
         $this->status = $item['status'];
-        $this->portal_enabled = (bool) $item['user_id'];
-
-        if ($this->portalUserId) {
-            $profile = $this->portal->find($this->portalUserId);
-            $this->portal_last_name = $profile['last_name'];
-            $this->portal_mobile = $profile['mobile'];
-        }
+        $this->portal_enabled = $item['portal_active'];
     }
 
     public function save()
@@ -93,18 +80,16 @@ class Form extends Component
         $this->saveCustomer->execute(
             $this->customerId,
             [
-                'name' => $data['name'],
-                'company' => $data['company'] ?: null,
+                'first_name' => $data['name'],
+                'last_name' => $data['last_name'],
                 'email' => $data['email'],
-                'phone' => $data['phone'] ?: null,
+                'mobile' => $data['mobile'],
+            ],
+            [
                 'notes' => $data['notes'] ?: null,
                 'status' => $data['status'],
             ],
             $data['portal_enabled'],
-            [
-                'last_name' => $data['portal_last_name'] ?: '',
-                'mobile' => $data['portal_mobile'] ?: '',
-            ],
             $data['portal_password'] ?: null,
         );
 
@@ -115,22 +100,14 @@ class Form extends Component
 
     protected function rules(): array
     {
-        $emailRules = ['required', 'email', 'max:255', Rule::unique('customers', 'email')->ignore($this->customerId)];
-
-        if ($this->portal_enabled) {
-            $emailRules[] = Rule::unique('users', 'email')->ignore($this->portalUserId);
-        }
-
         return [
             'name' => ['required', 'string', 'max:255'],
-            'company' => ['nullable', 'string', 'max:255'],
-            'email' => $emailRules,
-            'phone' => ['nullable', 'string', 'max:50'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('people', 'email')->ignore($this->personId)],
+            'mobile' => ['required', 'string', 'max:32'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::enum(CustomerStatus::class)],
             'portal_enabled' => ['boolean'],
-            'portal_last_name' => [$this->portal_enabled ? 'required' : 'nullable', 'string', 'max:255'],
-            'portal_mobile' => [$this->portal_enabled ? 'required' : 'nullable', 'string', 'max:32'],
             'portal_password' => [$this->portal_enabled && ! $this->portalUserId ? 'required' : 'nullable', 'string', 'min:8', 'confirmed'],
         ];
     }

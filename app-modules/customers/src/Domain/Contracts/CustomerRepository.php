@@ -10,9 +10,9 @@ interface CustomerRepository
     /** @return array<string,mixed> */
     public function find(int $id): array;
 
-    public function create(array $attributes, ?int $userId): int;
+    public function create(array $personAttributes, array $customerAttributes): int;
 
-    public function update(int $id, array $attributes, ?int $userId): void;
+    public function update(int $id, array $personAttributes, array $customerAttributes): void;
 
     public function delete(int $id): void;
 }

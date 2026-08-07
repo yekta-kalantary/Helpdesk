@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PersonType;
+use App\Models\Person;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Modules\Identity\Domain\Access\PermissionCatalog;
@@ -39,12 +41,19 @@ class DatabaseSeeder extends Seeder
             'notifications.view',
         ]);
 
-        $admin = User::query()->updateOrCreate(
+        $person = Person::query()->updateOrCreate(
             ['email' => config('helpdesk.admin.email')],
             [
-                'name' => config('helpdesk.admin.name'),
+                'type' => PersonType::Employee,
+                'first_name' => config('helpdesk.admin.first_name'),
                 'last_name' => config('helpdesk.admin.last_name'),
                 'mobile' => config('helpdesk.admin.mobile'),
+            ],
+        );
+
+        $admin = User::query()->updateOrCreate(
+            ['person_id' => $person->id],
+            [
                 'password' => config('helpdesk.admin.password'),
                 'is_active' => true,
             ],

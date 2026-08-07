@@ -2,6 +2,8 @@
 
 namespace Modules\Identity\Infrastructure;
 
+use App\Enums\PersonType;
+use App\Models\Person;
 use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -14,14 +16,18 @@ class EloquentUserRepository implements UserRepository
     public function search(?string $term = null): array
     {
         return User::query()
-            ->with('roles:id,name')
+            ->select('users.*')
+            ->join('people', 'people.id', '=', 'users.person_id')
+            ->with(['person', 'roles:id,name'])
+            ->where('people.type', PersonType::Employee->value)
             ->when($term, fn ($query) => $query->where(fn ($nested) => $nested
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('last_name', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%")
-                ->orWhere('mobile', 'like', "%{$term}%")))
+                ->where('people.first_name', 'like', "%{$term}%")
+                ->orWhere('people.last_name', 'like', "%{$term}%")
+                ->orWhere('people.email', 'like', "%{$term}%")
+                ->orWhere('people.mobile', 'like', "%{$term}%")))
             ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', self::SYSTEM_ROLES))
-            ->latest('id')
+            ->orderBy('people.first_name')
+            ->orderBy('people.last_name')
             ->get()
             ->map(fn (User $user) => $this->map($user))
             ->all();
@@ -29,7 +35,7 @@ class EloquentUserRepository implements UserRepository
 
     public function find(int $id): array
     {
-        $user = User::query()->with('roles:id,name')->findOrFail($id);
+        $user = User::query()->with(['person', 'roles:id,name'])->findOrFail($id);
         $this->assertTeamUser($user);
 
         return $this->map($user);
@@ -47,11 +53,16 @@ class EloquentUserRepository implements UserRepository
         return DB::transaction(function () use ($name, $lastName, $email, $mobile, $password, $isActive, $role): int {
             $this->assertTeamRole($role);
 
-            $user = User::create([
-                'name' => $name,
+            $person = Person::create([
+                'type' => PersonType::Employee,
+                'first_name' => $name,
                 'last_name' => $lastName,
                 'email' => $email,
                 'mobile' => $mobile,
+            ]);
+
+            $user = User::create([
+                'person_id' => $person->id,
                 'password' => $password,
                 'is_active' => $isActive,
             ]);
@@ -73,17 +84,18 @@ class EloquentUserRepository implements UserRepository
         string $role,
     ): void {
         DB::transaction(function () use ($id, $name, $lastName, $email, $mobile, $password, $isActive, $role): void {
-            $user = User::findOrFail($id);
+            $user = User::query()->with('person')->findOrFail($id);
             $this->assertTeamUser($user);
             $this->assertTeamRole($role);
 
-            $attributes = [
-                'name' => $name,
+            $user->person->update([
+                'first_name' => $name,
                 'last_name' => $lastName,
                 'email' => $email,
                 'mobile' => $mobile,
-                'is_active' => $isActive,
-            ];
+            ]);
+
+            $attributes = ['is_active' => $isActive];
 
             if ($password !== null && $password !== '') {
                 $attributes['password'] = $password;
@@ -96,9 +108,14 @@ class EloquentUserRepository implements UserRepository
 
     public function delete(int $id): void
     {
-        $user = User::findOrFail($id);
-        $this->assertTeamUser($user);
-        $user->delete();
+        DB::transaction(function () use ($id): void {
+            $user = User::query()->with('person')->findOrFail($id);
+            $this->assertTeamUser($user);
+            $person = $user->person;
+
+            $user->delete();
+            $person->delete();
+        });
     }
 
     private function assertTeamRole(string $role): void
@@ -110,19 +127,23 @@ class EloquentUserRepository implements UserRepository
 
     private function assertTeamUser(User $user): void
     {
-        abort_if($user->hasAnyRole(self::SYSTEM_ROLES), 404);
+        abort_if(
+            $user->person?->type !== PersonType::Employee || $user->hasAnyRole(self::SYSTEM_ROLES),
+            404,
+        );
     }
 
-    /** @return array{id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
+    /** @return array{id:int,person_id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
     private function map(User $user): array
     {
         return [
             'id' => $user->id,
-            'name' => $user->name,
-            'last_name' => $user->last_name,
-            'full_name' => $user->full_name,
-            'email' => $user->email,
-            'mobile' => $user->mobile,
+            'person_id' => $user->person_id,
+            'name' => $user->person->first_name,
+            'last_name' => $user->person->last_name,
+            'full_name' => $user->person->full_name,
+            'email' => $user->person->email,
+            'mobile' => $user->person->mobile,
             'is_active' => (bool) $user->is_active,
             'role' => $user->roles->first()?->name,
         ];

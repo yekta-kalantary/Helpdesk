@@ -2,6 +2,7 @@
 
 namespace Modules\Identity\Application\Queries;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -11,9 +12,9 @@ class DashboardMetrics
     /** @return array<string,int> */
     public function for(User $user): array
     {
-        if ($user->hasRole('customer')) {
+        if ($user->person?->type === PersonType::Customer) {
             $customerId = Schema::hasTable('customers')
-                ? DB::table('customers')->where('user_id', $user->id)->whereNull('deleted_at')->value('id')
+                ? DB::table('customers')->where('person_id', $user->person_id)->whereNull('deleted_at')->value('id')
                 : null;
 
             return [

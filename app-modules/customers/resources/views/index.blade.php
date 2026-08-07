@@ -22,9 +22,8 @@
         <thead>
             <tr>
                 <th>{{ __('app.name_label') }}</th>
-                <th>{{ __('customers::messages.company') }}</th>
                 <th>{{ __('app.email') }}</th>
-                <th>{{ __('customers::messages.phone') }}</th>
+                <th>{{ __('app.mobile') }}</th>
                 <th>{{ __('app.status') }}</th>
                 <th>{{ __('customers::messages.portal') }}</th>
                 <th>{{ __('app.actions') }}</th>
@@ -33,10 +32,9 @@
         <tbody>
             @forelse($customers as $customer)
                 <tr wire:key="customer-{{ $customer['id'] }}">
-                    <td class="font-semibold">{{ $customer['name'] }}</td>
-                    <td>{{ $customer['company'] ?: '—' }}</td>
+                    <td class="font-semibold">{{ $customer['full_name'] }}</td>
                     <td dir="ltr" class="text-right">{{ $customer['email'] }}</td>
-                    <td dir="ltr" class="text-right">{{ $customer['phone'] ?: '—' }}</td>
+                    <td dir="ltr" class="text-right">{{ $customer['mobile'] }}</td>
                     <td><x-ui.badge>{{ __('customers::messages.status.'.$customer['status']) }}</x-ui.badge></td>
                     <td><x-ui.badge :tone="$customer['portal_active'] ? 'success' : 'neutral'">{{ $customer['portal_active'] ? __('app.active') : __('app.inactive') }}</x-ui.badge></td>
                     <td>
@@ -59,7 +57,7 @@
                     </td>
                 </tr>
             @empty
-                <x-ui.empty-row colspan="7" />
+                <x-ui.empty-row colspan="6" />
             @endforelse
         </tbody>
     </x-ui.table>

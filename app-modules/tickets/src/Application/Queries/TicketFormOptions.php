@@ -2,6 +2,7 @@
 
 namespace Modules\Tickets\Application\Queries;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -19,48 +20,63 @@ class TicketFormOptions
 
         $projects = DB::table('projects')
             ->join('customers', 'customers.id', '=', 'projects.customer_id')
+            ->join('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
             ->whereNull('projects.deleted_at')
             ->whereNull('customers.deleted_at')
             ->when($scope['customer_id'], fn ($query) => $query->where('projects.customer_id', $scope['customer_id']))
             ->when($accessibleProjectIds, fn ($query) => $query->whereIn('projects.id', $accessibleProjectIds))
-            ->orderBy('customers.name')
+            ->orderBy('customer_people.first_name')
+            ->orderBy('customer_people.last_name')
             ->orderBy('projects.title')
-            ->get(['projects.id', 'projects.customer_id', 'projects.title', 'customers.name as customer_name']);
+            ->get([
+                'projects.id', 'projects.customer_id', 'projects.title',
+                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
+            ]);
+
+        $customersQuery = DB::table('customers')
+            ->join('people', 'people.id', '=', 'customers.person_id')
+            ->whereNull('customers.deleted_at');
 
         if ($scope['customer_id']) {
-            $customers = DB::table('customers')
-                ->where('id', $scope['customer_id'])
-                ->whereNull('deleted_at')
-                ->get(['id', 'name']);
+            $customers = $customersQuery
+                ->where('customers.id', $scope['customer_id'])
+                ->get(['customers.id', 'people.first_name', 'people.last_name']);
         } elseif ($scope['manage_all']) {
-            $customers = DB::table('customers')
-                ->whereNull('deleted_at')
-                ->where('status', 'active')
-                ->orderBy('name')
-                ->get(['id', 'name']);
+            $customers = $customersQuery
+                ->where('customers.status', 'active')
+                ->orderBy('people.first_name')
+                ->orderBy('people.last_name')
+                ->get(['customers.id', 'people.first_name', 'people.last_name']);
         } else {
             $customerIds = $projects->pluck('customer_id')->unique()->values();
-            $customers = DB::table('customers')
-                ->whereIn('id', $customerIds)
-                ->whereNull('deleted_at')
-                ->where('status', 'active')
-                ->orderBy('name')
-                ->get(['id', 'name']);
+            $customers = $customersQuery
+                ->whereIn('customers.id', $customerIds)
+                ->where('customers.status', 'active')
+                ->orderBy('people.first_name')
+                ->orderBy('people.last_name')
+                ->get(['customers.id', 'people.first_name', 'people.last_name']);
         }
 
         $members = User::query()
-            ->where('is_active', true)
+            ->select('users.*')
+            ->join('people', 'people.id', '=', 'users.person_id')
+            ->with('person')
+            ->where('users.is_active', true)
+            ->where('people.type', PersonType::Employee->value)
             ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
-            ->orderBy('name')
-            ->orderBy('last_name')
-            ->get(['id', 'name', 'last_name']);
+            ->orderBy('people.first_name')
+            ->orderBy('people.last_name')
+            ->get();
 
         return [
-            'customers' => $customers->map(fn (object $row) => ['id' => $row->id, 'name' => $row->name])->all(),
+            'customers' => $customers->map(fn (object $row) => [
+                'id' => $row->id,
+                'name' => trim($row->first_name.' '.$row->last_name),
+            ])->all(),
             'projects' => $projects->map(fn (object $row) => [
                 'id' => $row->id,
                 'customer_id' => $row->customer_id,
-                'name' => $row->customer_name.' — '.$row->title,
+                'name' => trim($row->customer_first_name.' '.$row->customer_last_name).' — '.$row->title,
             ])->all(),
             'members' => $members->map(fn (User $member) => ['id' => $member->id, 'name' => $member->full_name])->all(),
         ];

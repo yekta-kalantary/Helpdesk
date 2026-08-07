@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PersonType;
+use App\Models\Person;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -7,19 +9,21 @@ use Spatie\Permission\Models\Role;
 
 function createPortalCustomer(string $email, string $name): array
 {
-    $user = User::factory()->create([
-        'name' => $name,
+    [$firstName, $lastName] = array_pad(explode(' ', $name, 2), 2, 'Customer');
+
+    $person = Person::create([
+        'type' => PersonType::Customer,
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'email' => $email,
-        'is_active' => true,
+        'mobile' => fake()->unique()->numerify('09#########'),
     ]);
+
+    $user = User::factory()->for($person)->create(['is_active' => true]);
     $user->assignRole('customer');
 
     $customerId = DB::table('customers')->insertGetId([
-        'user_id' => $user->id,
-        'name' => $name,
-        'company' => null,
-        'email' => $email,
-        'phone' => null,
+        'person_id' => $person->id,
         'status' => 'active',
         'notes' => null,
         'created_at' => now(),
@@ -179,10 +183,9 @@ it('prevents scoped staff from creating tickets for unrelated customers', functi
     $role = Role::findOrCreate('support-agent', 'web');
     $role->syncPermissions(['tickets.view', 'tickets.create', 'tickets.reply']);
 
-    $staff = User::factory()->create([
-        'email' => 'support-agent@example.com',
-        'is_active' => true,
-    ]);
+    $staff = User::factory()
+        ->for(Person::factory()->state(['email' => 'support-agent@example.com']))
+        ->create(['is_active' => true]);
     $staff->assignRole($role);
 
     DB::table('project_user')->insert([

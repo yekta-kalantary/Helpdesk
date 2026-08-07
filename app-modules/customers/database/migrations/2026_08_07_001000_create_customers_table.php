@@ -10,11 +10,7 @@ return new class extends Migration
     {
         Schema::create('customers', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->nullable()->unique()->constrained('users')->nullOnDelete();
-            $table->string('name');
-            $table->string('company')->nullable();
-            $table->string('email')->unique();
-            $table->string('phone', 50)->nullable();
+            $table->foreignId('person_id')->unique()->constrained('people')->restrictOnDelete();
             $table->string('status', 20)->default('active')->index();
             $table->text('notes')->nullable();
             $table->timestamps();

@@ -4,10 +4,10 @@ namespace Modules\Identity\Domain\Contracts;
 
 interface UserRepository
 {
-    /** @return array<int, array{id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string}> */
+    /** @return array<int, array{id:int,person_id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string}> */
     public function search(?string $term = null): array;
 
-    /** @return array{id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
+    /** @return array{id:int,person_id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
     public function find(int $id): array;
 
     public function create(
