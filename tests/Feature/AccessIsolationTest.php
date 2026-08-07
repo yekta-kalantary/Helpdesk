@@ -24,7 +24,6 @@ function createPortalCustomer(string $email, string $name): array
 
     $customerId = DB::table('customers')->insertGetId([
         'person_id' => $person->id,
-        'status' => 'active',
         'notes' => null,
         'created_at' => now(),
         'updated_at' => now(),

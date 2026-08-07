@@ -11,7 +11,4 @@ return [
     'portal_password_confirmation' => 'تکرار رمز عبور پنل',
     'portal_password_hint' => 'در ویرایش، برای حفظ رمز فعلی خالی بگذارید.',
     'search_placeholder' => 'جستجو در نام، نام خانوادگی، ایمیل یا موبایل',
-    'status.lead' => 'مشتری بالقوه',
-    'status.active' => 'فعال',
-    'status.inactive' => 'غیرفعال',
 ];

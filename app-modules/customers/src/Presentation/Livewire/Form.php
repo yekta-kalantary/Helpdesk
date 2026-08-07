@@ -7,7 +7,6 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Modules\Customers\Application\Actions\SaveCustomer;
 use Modules\Customers\Domain\Contracts\CustomerRepository;
-use Modules\Customers\Domain\Enums\CustomerStatus;
 
 class Form extends Component
 {
@@ -29,8 +28,6 @@ class Form extends Component
     public string $mobile = '';
 
     public ?string $notes = null;
-
-    public string $status = 'active';
 
     public bool $portal_enabled = false;
 
@@ -64,7 +61,6 @@ class Form extends Component
         $this->email = $item['email'];
         $this->mobile = $item['mobile'];
         $this->notes = $item['notes'];
-        $this->status = $item['status'];
         $this->portal_enabled = $item['portal_active'];
     }
 
@@ -87,7 +83,6 @@ class Form extends Component
             ],
             [
                 'notes' => $data['notes'] ?: null,
-                'status' => $data['status'],
             ],
             $data['portal_enabled'],
             $data['portal_password'] ?: null,
@@ -106,7 +101,6 @@ class Form extends Component
             'email' => ['required', 'email', 'max:255', Rule::unique('people', 'email')->ignore($this->personId)],
             'mobile' => ['required', 'string', 'max:32'],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'status' => ['required', Rule::enum(CustomerStatus::class)],
             'portal_enabled' => ['boolean'],
             'portal_password' => [$this->portal_enabled && ! $this->portalUserId ? 'required' : 'nullable', 'string', 'min:8', 'confirmed'],
         ];
@@ -114,8 +108,7 @@ class Form extends Component
 
     public function render()
     {
-        return view('customers::form', [
-            'statuses' => CustomerStatus::cases(),
-        ])->title($this->customerId ? __('customers::messages.edit_customer') : __('customers::messages.new_customer'));
+        return view('customers::form')
+            ->title($this->customerId ? __('customers::messages.edit_customer') : __('customers::messages.new_customer'));
     }
 }

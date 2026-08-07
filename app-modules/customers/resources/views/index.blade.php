@@ -24,7 +24,6 @@
                 <th>{{ __('app.name_label') }}</th>
                 <th>{{ __('app.email') }}</th>
                 <th>{{ __('app.mobile') }}</th>
-                <th>{{ __('app.status') }}</th>
                 <th>{{ __('customers::messages.portal') }}</th>
                 <th>{{ __('app.actions') }}</th>
             </tr>
@@ -35,7 +34,6 @@
                     <td class="font-semibold">{{ $customer['full_name'] }}</td>
                     <td dir="ltr" class="text-right">{{ $customer['email'] }}</td>
                     <td dir="ltr" class="text-right">{{ $customer['mobile'] }}</td>
-                    <td><x-ui.badge>{{ __('customers::messages.status.'.$customer['status']) }}</x-ui.badge></td>
                     <td><x-ui.badge :tone="$customer['portal_active'] ? 'success' : 'neutral'">{{ $customer['portal_active'] ? __('app.active') : __('app.inactive') }}</x-ui.badge></td>
                     <td>
                         <div class="flex flex-wrap gap-2">
@@ -57,7 +55,7 @@
                     </td>
                 </tr>
             @empty
-                <x-ui.empty-row colspan="6" />
+                <x-ui.empty-row colspan="5" />
             @endforelse
         </tbody>
     </x-ui.table>

@@ -11,7 +11,4 @@ return [
     'portal_password_confirmation' => 'Portal password confirmation',
     'portal_password_hint' => 'When editing, leave blank to keep the current password.',
     'search_placeholder' => 'Search first name, last name, email or mobile',
-    'status.lead' => 'Lead',
-    'status.active' => 'Active',
-    'status.inactive' => 'Inactive',
 ];
