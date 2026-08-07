@@ -3,6 +3,7 @@
 namespace Modules\Tickets;
 
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Modules\Tickets\Domain\Contracts\TicketAttachmentStore;
 use Modules\Tickets\Domain\Contracts\TicketNotifier;
 use Modules\Tickets\Domain\Contracts\TicketRepository;
@@ -25,5 +26,12 @@ class TicketsServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'tickets');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'tickets');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        Livewire::addNamespace(
+            namespace: 'tickets',
+            classNamespace: 'Modules\\Tickets\\Presentation\\Livewire',
+            classPath: __DIR__.'/Presentation/Livewire',
+            classViewPath: __DIR__.'/../resources/views/livewire',
+        );
     }
 }
