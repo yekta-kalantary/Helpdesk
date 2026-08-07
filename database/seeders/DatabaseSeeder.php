@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Modules\Identity\Domain\Access\PermissionCatalog;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -14,43 +15,16 @@ class DatabaseSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = [
-            'customers.view',
-            'customers.create',
-            'customers.update',
-            'customers.delete',
-            'projects.view',
-            'projects.create',
-            'projects.update',
-            'projects.delete',
-            'tasks.view',
-            'tasks.create',
-            'tasks.update',
-            'tasks.delete',
-            'tasks.comment',
-            'tasks.manage_all',
-            'tickets.view',
-            'tickets.create',
-            'tickets.reply',
-            'tickets.manage',
-            'tickets.delete',
-            'tickets.manage_all',
-            'users.view',
-            'users.create',
-            'users.update',
-            'users.delete',
-            'roles.view',
-            'roles.create',
-            'roles.update',
-            'roles.delete',
-            'reports.view',
-            'settings.manage',
-            'notifications.view',
-        ];
+        $permissions = PermissionCatalog::all();
 
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
+
+        Permission::query()
+            ->where('guard_name', 'web')
+            ->whereNotIn('name', $permissions)
+            ->delete();
 
         $adminRole = Role::findOrCreate('admin', 'web');
         $customerRole = Role::findOrCreate('customer', 'web');
