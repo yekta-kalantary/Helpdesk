@@ -12,6 +12,7 @@ return [
     'due_at' => 'Due at',
     'estimated_minutes' => 'Estimated minutes',
     'spent_minutes' => 'Spent minutes',
+    'customer_visible' => 'Visible to customer',
     'attachments' => 'Attachments',
     'add_attachments' => 'Add files',
     'comments' => 'Comments',
