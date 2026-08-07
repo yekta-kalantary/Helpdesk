@@ -20,9 +20,22 @@ class EloquentProjectRepository implements ProjectRepository
             ]);
 
         if (Schema::hasTable('tasks')) {
+            $tasksCount = DB::table('tasks')
+                ->selectRaw('count(*)')
+                ->whereColumn('tasks.project_id', 'projects.id')
+                ->whereNull('tasks.deleted_at')
+                ->when($customerId, fn ($builder) => $builder->where('tasks.is_customer_visible', true));
+
+            $tasksDone = DB::table('tasks')
+                ->selectRaw('count(*)')
+                ->whereColumn('tasks.project_id', 'projects.id')
+                ->whereNull('tasks.deleted_at')
+                ->where('tasks.status', 'done')
+                ->when($customerId, fn ($builder) => $builder->where('tasks.is_customer_visible', true));
+
             $query->addSelect([
-                'tasks_count' => DB::table('tasks')->selectRaw('count(*)')->whereColumn('tasks.project_id', 'projects.id')->whereNull('tasks.deleted_at'),
-                'tasks_done' => DB::table('tasks')->selectRaw('count(*)')->whereColumn('tasks.project_id', 'projects.id')->whereNull('tasks.deleted_at')->where('tasks.status', 'done'),
+                'tasks_count' => $tasksCount,
+                'tasks_done' => $tasksDone,
             ]);
         }
 
