@@ -106,18 +106,6 @@ class EloquentUserRepository implements UserRepository
         });
     }
 
-    public function delete(int $id): void
-    {
-        DB::transaction(function () use ($id): void {
-            $user = User::query()->with('person')->findOrFail($id);
-            $this->assertTeamUser($user);
-            $person = $user->person;
-
-            $user->delete();
-            $person->delete();
-        });
-    }
-
     private function assertTeamRole(string $role): void
     {
         if (in_array($role, self::SYSTEM_ROLES, true)) {
