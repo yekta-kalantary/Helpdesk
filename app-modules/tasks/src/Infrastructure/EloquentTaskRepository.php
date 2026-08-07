@@ -20,8 +20,8 @@ class EloquentTaskRepository implements TaskRepository
             ->whereNull('projects.deleted_at')
             ->select([
                 'tasks.id', 'tasks.project_id', 'tasks.title', 'tasks.priority', 'tasks.status', 'tasks.due_at',
-                'tasks.assigned_to', 'projects.title as project_title', 'customers.name as customer_name',
-                'assignees.name as assignee_name',
+                'tasks.is_customer_visible', 'tasks.assigned_to', 'projects.title as project_title',
+                'customers.name as customer_name', 'assignees.name as assignee_name',
             ]);
 
         $this->applyDbScope($query, $scope);
@@ -40,7 +40,8 @@ class EloquentTaskRepository implements TaskRepository
     {
         $query = Task::query()
             ->with(['assignee:id,name', 'creator:id,name', 'comments.user:id,name'])
-            ->whereKey($id);
+            ->whereKey($id)
+            ->whereIn('project_id', DB::table('projects')->whereNull('deleted_at')->select('id'));
 
         $this->applyEloquentScope($query, $scope);
 
@@ -63,6 +64,7 @@ class EloquentTaskRepository implements TaskRepository
             'creator_name' => $task->creator?->name,
             'priority' => $task->priority->value,
             'status' => $task->status->value,
+            'is_customer_visible' => (bool) $task->is_customer_visible,
             'due_at' => $task->due_at?->format('Y-m-d\TH:i'),
             'estimated_minutes' => $task->estimated_minutes,
             'spent_minutes' => $task->spent_minutes,
@@ -104,7 +106,8 @@ class EloquentTaskRepository implements TaskRepository
     private function applyDbScope($query, array $scope): void
     {
         if ($scope['customer_id']) {
-            $query->where('projects.customer_id', $scope['customer_id']);
+            $query->where('projects.customer_id', $scope['customer_id'])
+                ->where('tasks.is_customer_visible', true);
             return;
         }
 
@@ -121,7 +124,8 @@ class EloquentTaskRepository implements TaskRepository
     private function applyEloquentScope(EloquentBuilder $query, array $scope): void
     {
         if ($scope['customer_id']) {
-            $query->whereIn('project_id', DB::table('projects')->where('customer_id', $scope['customer_id'])->whereNull('deleted_at')->select('id'));
+            $query->where('is_customer_visible', true)
+                ->whereIn('project_id', DB::table('projects')->where('customer_id', $scope['customer_id'])->whereNull('deleted_at')->select('id'));
             return;
         }
 
