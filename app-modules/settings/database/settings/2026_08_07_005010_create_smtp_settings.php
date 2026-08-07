@@ -15,4 +15,4 @@ return new class extends SettingsMigration
         $this->migrator->add('smtp.from_address', 'helpdesk@example.com');
         $this->migrator->add('smtp.from_name', 'Helpdesk');
     }
-}
+};
