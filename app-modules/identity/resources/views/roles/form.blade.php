@@ -1,18 +1,12 @@
-@extends('layouts.app')
+<div>
+    <x-ui.page-header :title="$roleId ? __('identity::messages.edit_role') : __('identity::messages.new_role')" />
 
-@section('title', $role ? __('identity::messages.edit_role') : __('identity::messages.new_role'))
-
-@section('content')
-    @php($pageTitle = $role ? __('identity::messages.edit_role') : __('identity::messages.new_role'))
-    <x-ui.page-header :title="$pageTitle" />
-
-    <form class="max-w-5xl" method="POST" action="{{ $role ? route('roles.update', $role['id']) : route('roles.store') }}">
-        @csrf
-        @if($role) @method('PUT') @endif
-
+    <form class="max-w-5xl" wire:submit="save">
         <x-ui.card>
             <div class="space-y-5">
-                <div class="max-w-md"><x-ui.input name="name" :label="__('identity::messages.role')" dir="ltr" :value="$role['name'] ?? ''" required /></div>
+                <div class="max-w-md">
+                    <x-ui.input name="name" :label="__('identity::messages.role')" dir="ltr" :value="$name" wire:model="name" required />
+                </div>
 
                 <div>
                     <div class="mb-4">
@@ -21,24 +15,28 @@
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
-                        @foreach(collect($permissions)->groupBy('module') as $module => $modulePermissions)
+                        @foreach(collect($permissionCatalog)->groupBy('module') as $module => $modulePermissions)
                             <section class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                 <h2 class="mb-3 font-bold text-slate-900">{{ __('identity::messages.permission_modules.'.$module) }}</h2>
                                 <div class="space-y-2">
                                     @foreach($modulePermissions as $permission)
-                                        <x-ui.checkbox name="permissions[]" :label="$permission['name']" :value="$permission['name']" :checked="in_array($permission['name'], old('permissions', $role['permissions'] ?? []), true)" dir="ltr" />
+                                        <x-ui.checkbox name="permissions[]" :label="$permission['name']" :value="$permission['name']" model="permissions" dir="ltr" />
                                     @endforeach
                                 </div>
                             </section>
                         @endforeach
                     </div>
+                    @error('permissions.*')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
                 </div>
 
                 <x-ui.form-actions>
-                    <x-ui.button type="submit">{{ __('app.save') }}</x-ui.button>
-                    <x-ui.button variant="secondary" :href="route('roles.index')">{{ __('app.cancel') }}</x-ui.button>
+                    <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">
+                        <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
+                        <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
+                    </x-ui.button>
+                    <x-ui.button variant="secondary" :href="route('roles.index')" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
                 </x-ui.form-actions>
             </div>
         </x-ui.card>
     </form>
-@endsection
+</div>
