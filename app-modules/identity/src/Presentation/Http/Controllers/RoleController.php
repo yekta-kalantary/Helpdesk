@@ -79,6 +79,15 @@ class RoleController extends Controller
 
     public function destroy(int $role): RedirectResponse
     {
+        $item = collect($this->access->roles())->firstWhere('id', $role);
+        abort_if(! $item, 404);
+
+        if ($item['system']) {
+            return back()->withErrors([
+                'role' => __('identity::messages.system_role_immutable'),
+            ]);
+        }
+
         try {
             $this->access->deleteRole($role);
         } catch (DomainException $exception) {
