@@ -22,6 +22,7 @@
         "modules/customers": "*",
         "modules/identity": "*",
         "modules/projects": "*",
+        "modules/reports": "*",
         "modules/settings": "*",
         "modules/tasks": "*",
         "modules/tickets": "*",
@@ -87,7 +88,7 @@
             "@php artisan migrate --graceful --ansi"
         ],
         "pre-package-uninstall": [
-            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+            "Composer\\Config::disableProcessTimeout"
         ]
     },
     "extra": {
