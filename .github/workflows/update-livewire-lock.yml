@@ -7,6 +7,7 @@ on:
     paths:
       - composer.json
       - .github/workflows/update-livewire-lock.yml
+  workflow_dispatch:
 
 permissions:
   contents: write
