@@ -2,6 +2,7 @@
 
 namespace Modules\Tickets\Presentation\Livewire;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -95,7 +96,7 @@ class Show extends Component
 
         if (! empty($data['assigned_to'])) {
             $assignee = User::query()->findOrFail($data['assigned_to']);
-            abort_if(! $assignee->is_active || $assignee->hasRole('customer'), 422);
+            abort_if(! $assignee->is_active || $assignee->person?->type !== PersonType::Employee, 422);
         }
 
         $this->tickets->updateManagement($this->ticketId, $data['status'], $data['assigned_to'] ?: null);
