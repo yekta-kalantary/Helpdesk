@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -37,22 +37,11 @@ jobs:
           cache: npm
           package-manager-cache: false
 
-      - name: Resolve PHP dependencies
-        run: composer update --no-interaction --prefer-dist --no-progress
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Validate Composer
         run: composer validate --no-check-publish
-
-      - name: Commit refreshed Composer lock
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/agent/')
-        run: |
-          if ! git diff --quiet -- composer.lock; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add composer.lock
-            git commit -m "Refresh Composer lock"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
 
       - name: Prepare environment
         run: |
