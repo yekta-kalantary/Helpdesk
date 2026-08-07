@@ -3,6 +3,7 @@
 namespace Modules\Tasks;
 
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Modules\Tasks\Domain\Contracts\TaskAttachmentReader;
 use Modules\Tasks\Domain\Contracts\TaskAttachmentStore;
 use Modules\Tasks\Domain\Contracts\TaskNotifier;
@@ -28,5 +29,12 @@ class TasksServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'tasks');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'tasks');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        Livewire::addNamespace(
+            namespace: 'tasks',
+            classNamespace: 'Modules\\Tasks\\Presentation\\Livewire',
+            classPath: __DIR__.'/Presentation/Livewire',
+            classViewPath: __DIR__.'/../resources/views/livewire',
+        );
     }
 }
