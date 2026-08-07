@@ -20,23 +20,50 @@
         @auth
             <nav class="space-y-1 p-3">
                 <x-ui.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('app.dashboard') }}</x-ui.nav-link>
-                @can('customers.view')<x-ui.nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">{{ __('app.customers') }}</x-ui.nav-link>@endcan
-                @can('projects.view')<x-ui.nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">{{ __('app.projects') }}</x-ui.nav-link>@endcan
-                @can('tasks.view')<x-ui.nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">{{ __('app.tasks') }}</x-ui.nav-link>@endcan
-                @can('tickets.view')<x-ui.nav-link :href="route('tickets.index')" :active="request()->routeIs('tickets.*')">{{ __('app.tickets') }}</x-ui.nav-link>@endcan
-                @can('reports.view')<x-ui.nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">{{ __('reports::messages.reports') }}</x-ui.nav-link>@endcan
+
+                @can('customers.view')
+                    <x-ui.nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">{{ __('app.customers') }}</x-ui.nav-link>
+                @endcan
+
+                @can('projects.view')
+                    <x-ui.nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">{{ __('app.projects') }}</x-ui.nav-link>
+                @endcan
+
+                @can('tasks.view')
+                    <x-ui.nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">{{ __('app.tasks') }}</x-ui.nav-link>
+                @endcan
+
+                @can('tickets.view')
+                    <x-ui.nav-link :href="route('tickets.index')" :active="request()->routeIs('tickets.*')">{{ __('app.tickets') }}</x-ui.nav-link>
+                @endcan
+
+                @can('reports.view')
+                    <x-ui.nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">{{ __('reports::messages.reports') }}</x-ui.nav-link>
+                @endcan
+
                 @can('notifications.view')
                     @php($unreadNotifications = auth()->user()->unreadNotifications()->count())
                     <x-ui.nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
                         {{ __('identity::notifications.title') }}
-                        @if($unreadNotifications > 0)
-                            <x-slot:meta><x-ui.badge :tone="request()->routeIs('notifications.*') ? 'neutral' : 'info'">{{ $unreadNotifications }}</x-ui.badge></x-slot:meta>
-                        @endif
+                        <x-slot:meta>
+                            @if($unreadNotifications > 0)
+                                <x-ui.badge :tone="request()->routeIs('notifications.*') ? 'neutral' : 'info'">{{ $unreadNotifications }}</x-ui.badge>
+                            @endif
+                        </x-slot:meta>
                     </x-ui.nav-link>
                 @endcan
-                @can('users.view')<x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('app.users') }}</x-ui.nav-link>@endcan
-                @can('roles.view')<x-ui.nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">{{ __('app.roles_permissions') }}</x-ui.nav-link>@endcan
-                @can('settings.manage')<x-ui.nav-link :href="route('settings.smtp.edit')" :active="request()->routeIs('settings.*')">{{ __('app.settings') }}</x-ui.nav-link>@endcan
+
+                @can('users.view')
+                    <x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('app.users') }}</x-ui.nav-link>
+                @endcan
+
+                @can('roles.view')
+                    <x-ui.nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">{{ __('app.roles_permissions') }}</x-ui.nav-link>
+                @endcan
+
+                @can('settings.manage')
+                    <x-ui.nav-link :href="route('settings.smtp.edit')" :active="request()->routeIs('settings.*')">{{ __('app.settings') }}</x-ui.nav-link>
+                @endcan
             </nav>
 
             <div class="border-t border-slate-100 p-3">
@@ -56,7 +83,9 @@
         @if($errors->any())
             <x-ui.alert class="mb-5" tone="danger">
                 <ul class="list-inside list-disc space-y-1">
-                    @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
                 </ul>
             </x-ui.alert>
         @endif
