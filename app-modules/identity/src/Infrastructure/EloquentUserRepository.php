@@ -17,7 +17,9 @@ class EloquentUserRepository implements UserRepository
             ->with('roles:id,name')
             ->when($term, fn ($query) => $query->where(fn ($nested) => $nested
                 ->where('name', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%")))
+                ->orWhere('last_name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('mobile', 'like', "%{$term}%")))
             ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', self::SYSTEM_ROLES))
             ->latest('id')
             ->get()
@@ -33,14 +35,23 @@ class EloquentUserRepository implements UserRepository
         return $this->map($user);
     }
 
-    public function create(string $name, string $email, string $password, bool $isActive, string $role): int
-    {
-        return DB::transaction(function () use ($name, $email, $password, $isActive, $role): int {
+    public function create(
+        string $name,
+        string $lastName,
+        string $email,
+        string $mobile,
+        string $password,
+        bool $isActive,
+        string $role,
+    ): int {
+        return DB::transaction(function () use ($name, $lastName, $email, $mobile, $password, $isActive, $role): int {
             $this->assertTeamRole($role);
 
             $user = User::create([
                 'name' => $name,
+                'last_name' => $lastName,
                 'email' => $email,
+                'mobile' => $mobile,
                 'password' => $password,
                 'is_active' => $isActive,
             ]);
@@ -51,14 +62,29 @@ class EloquentUserRepository implements UserRepository
         });
     }
 
-    public function update(int $id, string $name, string $email, ?string $password, bool $isActive, string $role): void
-    {
-        DB::transaction(function () use ($id, $name, $email, $password, $isActive, $role): void {
+    public function update(
+        int $id,
+        string $name,
+        string $lastName,
+        string $email,
+        string $mobile,
+        ?string $password,
+        bool $isActive,
+        string $role,
+    ): void {
+        DB::transaction(function () use ($id, $name, $lastName, $email, $mobile, $password, $isActive, $role): void {
             $user = User::findOrFail($id);
             $this->assertTeamUser($user);
             $this->assertTeamRole($role);
 
-            $attributes = ['name' => $name, 'email' => $email, 'is_active' => $isActive];
+            $attributes = [
+                'name' => $name,
+                'last_name' => $lastName,
+                'email' => $email,
+                'mobile' => $mobile,
+                'is_active' => $isActive,
+            ];
+
             if ($password !== null && $password !== '') {
                 $attributes['password'] = $password;
             }
@@ -87,13 +113,16 @@ class EloquentUserRepository implements UserRepository
         abort_if($user->hasAnyRole(self::SYSTEM_ROLES), 404);
     }
 
-    /** @return array{id:int,name:string,email:string,is_active:bool,role:?string} */
+    /** @return array{id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
     private function map(User $user): array
     {
         return [
             'id' => $user->id,
             'name' => $user->name,
+            'last_name' => $user->last_name,
+            'full_name' => $user->full_name,
             'email' => $user->email,
+            'mobile' => $user->mobile,
             'is_active' => (bool) $user->is_active,
             'role' => $user->roles->first()?->name,
         ];
