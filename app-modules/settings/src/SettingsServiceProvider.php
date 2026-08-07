@@ -4,6 +4,7 @@ namespace Modules\Settings;
 
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Modules\Settings\Infrastructure\Settings\SmtpSettings;
 use Throwable;
 
@@ -15,6 +16,13 @@ class SettingsServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'settings');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'settings');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
+        Livewire::addNamespace(
+            namespace: 'settings',
+            classNamespace: 'Modules\\Settings\\Presentation\\Livewire',
+            classPath: __DIR__.'/Presentation/Livewire',
+            classViewPath: __DIR__.'/../resources/views/livewire',
+        );
 
         try {
             if (! Schema::hasTable('settings')) {
