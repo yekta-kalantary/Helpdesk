@@ -14,13 +14,17 @@ class EloquentTicketRepository implements TicketRepository
     {
         $query = DB::table('tickets')
             ->join('customers', 'customers.id', '=', 'tickets.customer_id')
+            ->join('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
             ->leftJoin('projects', 'projects.id', '=', 'tickets.project_id')
             ->leftJoin('users as assignees', 'assignees.id', '=', 'tickets.assigned_to')
+            ->leftJoin('people as assignee_people', 'assignee_people.id', '=', 'assignees.person_id')
             ->whereNull('tickets.deleted_at')
             ->select([
                 'tickets.id', 'tickets.customer_id', 'tickets.project_id', 'tickets.subject', 'tickets.category',
-                'tickets.priority', 'tickets.status', 'tickets.updated_at', 'customers.name as customer_name',
-                'projects.title as project_title', 'assignees.name as assignee_name',
+                'tickets.priority', 'tickets.status', 'tickets.updated_at', 'tickets.assigned_to',
+                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
+                'projects.title as project_title',
+                'assignee_people.first_name as assignee_first_name', 'assignee_people.last_name as assignee_last_name',
             ]);
 
         $this->applyDbScope($query, $scope);
@@ -30,32 +34,49 @@ class EloquentTicketRepository implements TicketRepository
             ->when($term, fn ($builder) => $builder->where('tickets.subject', 'like', "%{$term}%"))
             ->orderByDesc('tickets.updated_at')
             ->get()
-            ->map(fn (object $row) => (array) $row)
+            ->map(fn (object $row) => [
+                'id' => $row->id,
+                'customer_id' => $row->customer_id,
+                'project_id' => $row->project_id,
+                'subject' => $row->subject,
+                'category' => $row->category,
+                'priority' => $row->priority,
+                'status' => $row->status,
+                'updated_at' => $row->updated_at,
+                'customer_name' => trim($row->customer_first_name.' '.$row->customer_last_name),
+                'project_title' => $row->project_title,
+                'assignee_name' => $row->assigned_to
+                    ? trim(($row->assignee_first_name ?? '').' '.($row->assignee_last_name ?? ''))
+                    : null,
+            ])
             ->all();
     }
 
     public function findAccessible(int $id, array $scope): array
     {
         $query = Ticket::query()
-            ->with(['assignee:id,name', 'creator:id,name', 'messages.user:id,name'])
+            ->with(['assignee.person', 'creator.person', 'messages.user.person'])
             ->whereKey($id);
 
         $this->applyEloquentScope($query, $scope);
         $ticket = $query->firstOrFail();
 
-        $customerName = DB::table('customers')->where('id', $ticket->customer_id)->value('name');
+        $customer = DB::table('customers')
+            ->join('people', 'people.id', '=', 'customers.person_id')
+            ->where('customers.id', $ticket->customer_id)
+            ->first(['people.first_name', 'people.last_name']);
         $projectTitle = $ticket->project_id ? DB::table('projects')->where('id', $ticket->project_id)->value('title') : null;
 
         return [
             'id' => $ticket->id,
             'customer_id' => $ticket->customer_id,
-            'customer_name' => $customerName,
+            'customer_name' => $customer ? trim($customer->first_name.' '.$customer->last_name) : null,
             'project_id' => $ticket->project_id,
             'project_title' => $projectTitle,
             'created_by' => $ticket->created_by,
-            'creator_name' => $ticket->creator?->name,
+            'creator_name' => $ticket->creator?->full_name,
             'assigned_to' => $ticket->assigned_to,
-            'assignee_name' => $ticket->assignee?->name,
+            'assignee_name' => $ticket->assignee?->full_name,
             'subject' => $ticket->subject,
             'category' => $ticket->category->value,
             'priority' => $ticket->priority->value,
@@ -63,7 +84,7 @@ class EloquentTicketRepository implements TicketRepository
             'messages' => $ticket->messages->map(fn (TicketMessage $message) => [
                 'id' => $message->id,
                 'user_id' => $message->user_id,
-                'user_name' => $message->user?->name,
+                'user_name' => $message->user?->full_name,
                 'body' => $message->body,
                 'created_at' => $message->created_at,
                 'attachments' => $message->getMedia('attachments')->map(fn ($media) => [
