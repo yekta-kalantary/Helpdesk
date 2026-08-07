@@ -99,7 +99,7 @@ class UserController extends Controller
     {
         return array_values(array_filter(
             $this->access->roles(),
-            static fn (array $role) => $role['name'] !== 'customer'
+            static fn (array $role) => ! in_array($role['name'], ['admin', 'customer'], true),
         ));
     }
 }
