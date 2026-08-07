@@ -7,6 +7,7 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->beforeEach(function (): void {
+        $this->withoutVite();
         $this->seed(DatabaseSeeder::class);
     })
     ->in('Feature');
