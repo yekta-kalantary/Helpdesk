@@ -31,7 +31,11 @@ class DatabaseTicketNotifier implements TicketNotifier
             return;
         }
 
-        $customerUserId = DB::table('customers')->where('id', $ticket->customer_id)->value('user_id');
+        $customerPersonId = DB::table('customers')->where('id', $ticket->customer_id)->value('person_id');
+        $customerUserId = $customerPersonId
+            ? DB::table('users')->where('person_id', $customerPersonId)->where('is_active', true)->value('id')
+            : null;
+
         if ($customerUserId && (int) $customerUserId !== $actorId) {
             User::query()->find($customerUserId)?->notify(new TicketReplyNotification($ticketId, $subject));
         }
