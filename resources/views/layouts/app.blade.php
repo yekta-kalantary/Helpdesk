@@ -4,14 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', __('app.name')) - {{ __('app.name') }}</title>
+    @php($resolvedTitle = $title ?? trim($__env->yieldContent('title')) ?: __('app.name'))
+    <title>{{ $resolvedTitle }} - {{ __('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body>
 <div class="min-h-screen lg:flex">
     <aside class="border-b border-slate-200 bg-white lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-l">
         <div class="border-b border-slate-200 p-5">
-            <a href="{{ route('dashboard') }}" class="text-lg font-black tracking-tight text-slate-950">{{ __('app.name') }}</a>
+            <a href="{{ route('dashboard') }}" wire:navigate class="text-lg font-black tracking-tight text-slate-950">{{ __('app.name') }}</a>
             @auth
                 <p class="mt-1 text-xs font-medium text-slate-500">{{ auth()->user()->name }}</p>
             @endauth
@@ -67,10 +69,14 @@
             </nav>
 
             <div class="border-t border-slate-100 p-3">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <x-ui.button class="w-full" variant="secondary" type="submit">{{ __('app.logout') }}</x-ui.button>
-                </form>
+                @if(class_exists(\Livewire\Livewire::class))
+                    <livewire:identity::logout />
+                @else
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <x-ui.button class="w-full" variant="secondary" type="submit">{{ __('app.logout') }}</x-ui.button>
+                    </form>
+                @endif
             </div>
         @endauth
     </aside>
@@ -90,8 +96,13 @@
             </x-ui.alert>
         @endif
 
-        @yield('content')
+        @isset($slot)
+            {{ $slot }}
+        @else
+            @yield('content')
+        @endisset
     </main>
 </div>
+@livewireScripts
 </body>
 </html>
