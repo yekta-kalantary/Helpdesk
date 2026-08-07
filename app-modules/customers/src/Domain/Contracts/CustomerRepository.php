@@ -13,6 +13,4 @@ interface CustomerRepository
     public function create(array $personAttributes, array $customerAttributes): int;
 
     public function update(int $id, array $personAttributes, array $customerAttributes): void;
-
-    public function delete(int $id): void;
 }
