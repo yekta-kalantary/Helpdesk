@@ -3,6 +3,7 @@
 namespace Modules\Identity\Infrastructure;
 
 use App\Models\User;
+use DomainException;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Domain\Contracts\UserRepository;
 
@@ -32,9 +33,11 @@ class EloquentUserRepository implements UserRepository
         return $this->map($user);
     }
 
-    public function create(string $name, string $email, string $password, bool $isActive, array $roles): int
+    public function create(string $name, string $email, string $password, bool $isActive, string $role): int
     {
-        return DB::transaction(function () use ($name, $email, $password, $isActive, $roles): int {
+        return DB::transaction(function () use ($name, $email, $password, $isActive, $role): int {
+            $this->assertTeamRole($role);
+
             $user = User::create([
                 'name' => $name,
                 'email' => $email,
@@ -42,17 +45,18 @@ class EloquentUserRepository implements UserRepository
                 'is_active' => $isActive,
             ]);
 
-            $user->syncRoles($this->sanitizeTeamRoles($roles));
+            $user->syncRoles([$role]);
 
             return $user->id;
         });
     }
 
-    public function update(int $id, string $name, string $email, ?string $password, bool $isActive, array $roles): void
+    public function update(int $id, string $name, string $email, ?string $password, bool $isActive, string $role): void
     {
-        DB::transaction(function () use ($id, $name, $email, $password, $isActive, $roles): void {
+        DB::transaction(function () use ($id, $name, $email, $password, $isActive, $role): void {
             $user = User::findOrFail($id);
             $this->assertTeamUser($user);
+            $this->assertTeamRole($role);
 
             $attributes = ['name' => $name, 'email' => $email, 'is_active' => $isActive];
             if ($password !== null && $password !== '') {
@@ -60,7 +64,7 @@ class EloquentUserRepository implements UserRepository
             }
 
             $user->update($attributes);
-            $user->syncRoles($this->sanitizeTeamRoles($roles));
+            $user->syncRoles([$role]);
         });
     }
 
@@ -71,12 +75,11 @@ class EloquentUserRepository implements UserRepository
         $user->delete();
     }
 
-    private function sanitizeTeamRoles(array $roles): array
+    private function assertTeamRole(string $role): void
     {
-        return array_values(array_filter(
-            $roles,
-            static fn (string $role) => ! in_array($role, self::SYSTEM_ROLES, true),
-        ));
+        if (in_array($role, self::SYSTEM_ROLES, true)) {
+            throw new DomainException('system_role_immutable');
+        }
     }
 
     private function assertTeamUser(User $user): void
@@ -84,7 +87,7 @@ class EloquentUserRepository implements UserRepository
         abort_if($user->hasAnyRole(self::SYSTEM_ROLES), 404);
     }
 
-    /** @return array{id:int,name:string,email:string,is_active:bool,roles:array<int,string>} */
+    /** @return array{id:int,name:string,email:string,is_active:bool,role:?string} */
     private function map(User $user): array
     {
         return [
@@ -92,7 +95,7 @@ class EloquentUserRepository implements UserRepository
             'name' => $user->name,
             'email' => $user->email,
             'is_active' => (bool) $user->is_active,
-            'roles' => $user->roles->pluck('name')->all(),
+            'role' => $user->roles->first()?->name,
         ];
     }
 }
