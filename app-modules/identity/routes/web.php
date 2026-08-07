@@ -36,7 +36,5 @@ Route::middleware('web')->group(function (): void {
         Route::get('/roles/{role}/edit', [RoleController::class, 'edit'])->middleware('permission:roles.update')->name('roles.edit');
         Route::put('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:roles.update')->name('roles.update');
         Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:roles.delete')->name('roles.destroy');
-        Route::post('/permissions', [RoleController::class, 'storePermission'])->middleware('permission:roles.create')->name('permissions.store');
-        Route::delete('/permissions/{permission}', [RoleController::class, 'destroyPermission'])->middleware('permission:roles.delete')->name('permissions.destroy');
     });
 });
