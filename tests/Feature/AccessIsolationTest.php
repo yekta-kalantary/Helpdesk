@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 
 function createPortalCustomer(string $email, string $name): array
@@ -53,6 +54,7 @@ it('shows a customer only their own projects', function (): void {
     $this->actingAs($customerUser)
         ->get('/projects')
         ->assertOk()
+        ->assertSeeLivewire('projects::index')
         ->assertSee('Visible Customer Project')
         ->assertDontSee('Hidden Other Project');
 });
@@ -116,11 +118,12 @@ it('shows a customer only explicitly visible tasks in their own projects', funct
     $this->actingAs($customerUser)
         ->get('/tasks')
         ->assertOk()
+        ->assertSeeLivewire('tasks::index')
         ->assertSee('Visible Portal Task')
         ->assertDontSee('Internal Team Task')
         ->assertDontSee('Other Customer Visible Task');
 
-    $this->actingAs($customerUser)->get("/tasks/{$visibleTaskId}")->assertOk();
+    $this->actingAs($customerUser)->get("/tasks/{$visibleTaskId}")->assertOk()->assertSeeLivewire('tasks::show');
     $this->actingAs($customerUser)->get("/tasks/{$internalTaskId}")->assertNotFound();
 });
 
@@ -161,6 +164,7 @@ it('shows a customer only their own tickets', function (): void {
     $this->actingAs($customerUser)
         ->get('/tickets')
         ->assertOk()
+        ->assertSeeLivewire('tickets::index')
         ->assertSee('My Visible Ticket')
         ->assertDontSee('Other Customer Ticket');
 });
@@ -188,15 +192,15 @@ it('prevents scoped staff from creating tickets for unrelated customers', functi
         'updated_at' => now(),
     ]);
 
-    $this->actingAs($staff)
-        ->post(route('tickets.store'), [
-            'customer_id' => $blockedCustomerId,
-            'project_id' => $blockedProjectId,
-            'subject' => 'Forged Ticket',
-            'category' => 'technical',
-            'priority' => 'medium',
-            'body' => 'This request must be rejected by server-side scope enforcement.',
-        ])
+    Livewire::actingAs($staff)
+        ->test('tickets::create')
+        ->set('customer_id', $blockedCustomerId)
+        ->set('project_id', $blockedProjectId)
+        ->set('subject', 'Forged Ticket')
+        ->set('category', 'technical')
+        ->set('priority', 'medium')
+        ->set('body', 'This request must be rejected by server-side scope enforcement.')
+        ->call('save')
         ->assertForbidden();
 
     expect(DB::table('tickets')->where('subject', 'Forged Ticket')->exists())->toBeFalse();
