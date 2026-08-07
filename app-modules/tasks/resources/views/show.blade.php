@@ -5,7 +5,7 @@
 @section('content')
     <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-            <div class="mb-2 flex flex-wrap gap-2"><span class="badge">{{ __('tasks::messages.status.'.$task['status']) }}</span><span class="badge">{{ __('tasks::messages.priority.'.$task['priority']) }}</span></div>
+            <div class="mb-2 flex flex-wrap gap-2"><span class="badge">{{ __('tasks::messages.status.'.$task['status']) }}</span><span class="badge">{{ __('tasks::messages.priority.'.$task['priority']) }}</span>@if(! $customerView && $task['is_customer_visible'])<span class="badge">{{ __('tasks::messages.customer_visible') }}</span>@endif</div>
             <h1 class="text-2xl font-black">{{ $task['title'] }}</h1>
             <p class="mt-1 text-sm text-slate-500">{{ $task['project_title'] }} · {{ $task['customer_name'] }}</p>
         </div>
@@ -36,19 +36,21 @@
                 </div>
             </section>
 
-            <section class="card">
-                <h2 class="mb-4 font-bold">{{ __('tasks::messages.comments') }}</h2>
-                @can('tasks.comment')
-                    <form class="mb-5 space-y-3" method="POST" action="{{ route('tasks.comments.store', $task['id']) }}">@csrf<textarea name="body" placeholder="{{ __('tasks::messages.comment_placeholder') }}" required></textarea><button class="btn-primary" type="submit">{{ __('tasks::messages.new_comment') }}</button></form>
-                @endcan
-                <div class="space-y-3">
-                    @forelse($task['comments'] as $comment)
-                        <article class="rounded-xl border border-slate-200 p-4"><div class="flex justify-between gap-3 text-xs text-slate-500"><span class="font-semibold text-slate-700">{{ $comment['user_name'] }}</span><span dir="ltr">{{ $comment['created_at']?->format('Y-m-d H:i') }}</span></div><div class="mt-3 whitespace-pre-line text-sm leading-7">{{ $comment['body'] }}</div></article>
-                    @empty
-                        <p class="text-sm text-slate-500">{{ __('app.no_records') }}</p>
-                    @endforelse
-                </div>
-            </section>
+            @if(! $customerView)
+                <section class="card">
+                    <h2 class="mb-4 font-bold">{{ __('tasks::messages.comments') }}</h2>
+                    @can('tasks.comment')
+                        <form class="mb-5 space-y-3" method="POST" action="{{ route('tasks.comments.store', $task['id']) }}">@csrf<textarea name="body" placeholder="{{ __('tasks::messages.comment_placeholder') }}" required></textarea><button class="btn-primary" type="submit">{{ __('tasks::messages.new_comment') }}</button></form>
+                    @endcan
+                    <div class="space-y-3">
+                        @forelse($task['comments'] as $comment)
+                            <article class="rounded-xl border border-slate-200 p-4"><div class="flex justify-between gap-3 text-xs text-slate-500"><span class="font-semibold text-slate-700">{{ $comment['user_name'] }}</span><span dir="ltr">{{ $comment['created_at']?->format('Y-m-d H:i') }}</span></div><div class="mt-3 whitespace-pre-line text-sm leading-7">{{ $comment['body'] }}</div></article>
+                        @empty
+                            <p class="text-sm text-slate-500">{{ __('app.no_records') }}</p>
+                        @endforelse
+                    </div>
+                </section>
+            @endif
         </div>
 
         <aside class="space-y-4">
@@ -57,10 +59,12 @@
             @endcan
             <div class="card space-y-4 text-sm">
                 <div><div class="text-xs text-slate-500">{{ __('tasks::messages.assignee') }}</div><div class="mt-1 font-medium">{{ $task['assignee_name'] ?: __('tasks::messages.unassigned') }}</div></div>
-                <div><div class="text-xs text-slate-500">{{ __('tasks::messages.creator') }}</div><div class="mt-1 font-medium">{{ $task['creator_name'] }}</div></div>
                 <div><div class="text-xs text-slate-500">{{ __('tasks::messages.due_at') }}</div><div class="mt-1" dir="ltr">{{ $task['due_at'] ? str_replace('T', ' ', $task['due_at']) : '—' }}</div></div>
-                <div><div class="text-xs text-slate-500">{{ __('tasks::messages.estimated_minutes') }}</div><div class="mt-1">{{ $task['estimated_minutes'] ?? '—' }}</div></div>
-                <div><div class="text-xs text-slate-500">{{ __('tasks::messages.spent_minutes') }}</div><div class="mt-1">{{ $task['spent_minutes'] ?? '—' }}</div></div>
+                @if(! $customerView)
+                    <div><div class="text-xs text-slate-500">{{ __('tasks::messages.creator') }}</div><div class="mt-1 font-medium">{{ $task['creator_name'] }}</div></div>
+                    <div><div class="text-xs text-slate-500">{{ __('tasks::messages.estimated_minutes') }}</div><div class="mt-1">{{ $task['estimated_minutes'] ?? '—' }}</div></div>
+                    <div><div class="text-xs text-slate-500">{{ __('tasks::messages.spent_minutes') }}</div><div class="mt-1">{{ $task['spent_minutes'] ?? '—' }}</div></div>
+                @endif
             </div>
         </aside>
     </div>
