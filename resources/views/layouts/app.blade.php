@@ -11,48 +11,56 @@
 <div class="min-h-screen lg:flex">
     <aside class="border-b border-slate-200 bg-white lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-l">
         <div class="border-b border-slate-200 p-5">
-            <a href="{{ route('dashboard') }}" class="text-lg font-black text-slate-900">{{ __('app.name') }}</a>
+            <a href="{{ route('dashboard') }}" class="text-lg font-black tracking-tight text-slate-950">{{ __('app.name') }}</a>
             @auth
-                <p class="mt-1 text-xs text-slate-500">{{ auth()->user()->name }}</p>
+                <p class="mt-1 text-xs font-medium text-slate-500">{{ auth()->user()->name }}</p>
             @endauth
         </div>
+
         @auth
-            <nav class="space-y-1 p-3 text-sm">
-                <a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('dashboard') }}">{{ __('app.dashboard') }}</a>
-                @can('customers.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('customers.index') }}">{{ __('app.customers') }}</a>@endcan
-                @can('projects.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('projects.index') }}">{{ __('app.projects') }}</a>@endcan
-                @can('tasks.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('tasks.index') }}">{{ __('app.tasks') }}</a>@endcan
-                @can('tickets.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('tickets.index') }}">{{ __('app.tickets') }}</a>@endcan
-                @can('reports.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('reports.index') }}">{{ __('reports::messages.reports') }}</a>@endcan
+            <nav class="space-y-1 p-3">
+                <x-ui.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">{{ __('app.dashboard') }}</x-ui.nav-link>
+                @can('customers.view')<x-ui.nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">{{ __('app.customers') }}</x-ui.nav-link>@endcan
+                @can('projects.view')<x-ui.nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">{{ __('app.projects') }}</x-ui.nav-link>@endcan
+                @can('tasks.view')<x-ui.nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')">{{ __('app.tasks') }}</x-ui.nav-link>@endcan
+                @can('tickets.view')<x-ui.nav-link :href="route('tickets.index')" :active="request()->routeIs('tickets.*')">{{ __('app.tickets') }}</x-ui.nav-link>@endcan
+                @can('reports.view')<x-ui.nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">{{ __('reports::messages.reports') }}</x-ui.nav-link>@endcan
                 @can('notifications.view')
-                    <a class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('notifications.index') }}">
-                        <span>{{ __('identity::notifications.title') }}</span>
-                        @php($unreadNotifications = auth()->user()->unreadNotifications()->count())
-                        @if($unreadNotifications > 0)<span class="badge">{{ $unreadNotifications }}</span>@endif
-                    </a>
+                    @php($unreadNotifications = auth()->user()->unreadNotifications()->count())
+                    <x-ui.nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
+                        {{ __('identity::notifications.title') }}
+                        @if($unreadNotifications > 0)
+                            <x-slot:meta><x-ui.badge :tone="request()->routeIs('notifications.*') ? 'neutral' : 'info'">{{ $unreadNotifications }}</x-ui.badge></x-slot:meta>
+                        @endif
+                    </x-ui.nav-link>
                 @endcan
-                @can('users.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('users.index') }}">{{ __('app.users') }}</a>@endcan
-                @can('roles.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('roles.index') }}">{{ __('app.roles_permissions') }}</a>@endcan
-                @can('settings.manage')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('settings.smtp.edit') }}">{{ __('app.settings') }}</a>@endcan
+                @can('users.view')<x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">{{ __('app.users') }}</x-ui.nav-link>@endcan
+                @can('roles.view')<x-ui.nav-link :href="route('roles.index')" :active="request()->routeIs('roles.*')">{{ __('app.roles_permissions') }}</x-ui.nav-link>@endcan
+                @can('settings.manage')<x-ui.nav-link :href="route('settings.smtp.edit')" :active="request()->routeIs('settings.*')">{{ __('app.settings') }}</x-ui.nav-link>@endcan
             </nav>
-            <div class="p-3">
+
+            <div class="border-t border-slate-100 p-3">
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button class="btn-secondary w-full" type="submit">{{ __('app.logout') }}</button>
+                    <x-ui.button class="w-full" variant="secondary" type="submit">{{ __('app.logout') }}</x-ui.button>
                 </form>
             </div>
         @endauth
     </aside>
 
     <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
-        @if (session('success'))
-            <div class="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('success') }}</div>
+        @if(session('success'))
+            <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
         @endif
-        @if ($errors->any())
-            <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                <ul class="list-inside list-disc space-y-1">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
-            </div>
+
+        @if($errors->any())
+            <x-ui.alert class="mb-5" tone="danger">
+                <ul class="list-inside list-disc space-y-1">
+                    @foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach
+                </ul>
+            </x-ui.alert>
         @endif
+
         @yield('content')
     </main>
 </div>
