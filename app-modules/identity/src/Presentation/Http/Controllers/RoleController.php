@@ -12,9 +12,7 @@ use Modules\Identity\Domain\Contracts\AccessControl;
 
 class RoleController extends Controller
 {
-    public function __construct(private readonly AccessControl $access)
-    {
-    }
+    public function __construct(private readonly AccessControl $access) {}
 
     public function index(): View
     {

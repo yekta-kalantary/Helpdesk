@@ -108,6 +108,7 @@ class EloquentTaskRepository implements TaskRepository
         if ($scope['customer_id']) {
             $query->where('projects.customer_id', $scope['customer_id'])
                 ->where('tasks.is_customer_visible', true);
+
             return;
         }
 
@@ -126,6 +127,7 @@ class EloquentTaskRepository implements TaskRepository
         if ($scope['customer_id']) {
             $query->where('is_customer_visible', true)
                 ->whereIn('project_id', DB::table('projects')->where('customer_id', $scope['customer_id'])->whereNull('deleted_at')->select('id'));
+
             return;
         }
 

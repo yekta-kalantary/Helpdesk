@@ -19,6 +19,7 @@ class DatabaseTicketNotifier implements TicketNotifier
         if ($customerActor) {
             if ($ticket->assigned_to && (int) $ticket->assigned_to !== $actorId) {
                 User::query()->find($ticket->assigned_to)?->notify(new TicketReplyNotification($ticketId, $subject));
+
                 return;
             }
 
@@ -26,6 +27,7 @@ class DatabaseTicketNotifier implements TicketNotifier
             $managers = User::query()->permission('tickets.manage_all')->get();
             $admins->merge($managers)->unique('id')->reject(fn (User $user) => $user->id === $actorId)
                 ->each(fn (User $user) => $user->notify(new TicketReplyNotification($ticketId, $subject)));
+
             return;
         }
 

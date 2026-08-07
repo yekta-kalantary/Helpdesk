@@ -89,6 +89,7 @@ class EloquentProjectRepository implements ProjectRepository
         return DB::transaction(function () use ($attributes, $memberIds): int {
             $project = Project::create($attributes);
             $project->members()->sync($memberIds);
+
             return $project->id;
         });
     }

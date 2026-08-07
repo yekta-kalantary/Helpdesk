@@ -16,8 +16,7 @@ class CustomerController extends Controller
     public function __construct(
         private readonly CustomerRepository $customers,
         private readonly SaveCustomer $saveCustomer,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {

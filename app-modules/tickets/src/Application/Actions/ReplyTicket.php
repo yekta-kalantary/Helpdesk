@@ -13,8 +13,7 @@ class ReplyTicket
         private readonly TicketRepository $tickets,
         private readonly TicketAttachmentStore $attachments,
         private readonly TicketNotifier $notifier,
-    ) {
-    }
+    ) {}
 
     public function execute(int $ticketId, int $userId, string $body, array $files, bool $customerActor, string $subject): void
     {

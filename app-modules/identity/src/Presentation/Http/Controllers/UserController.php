@@ -15,8 +15,7 @@ class UserController extends Controller
     public function __construct(
         private readonly UserRepository $users,
         private readonly AccessControl $access,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Modules\Tasks\Application\Actions\SaveTask;
@@ -27,8 +28,7 @@ class TaskController extends Controller
         private readonly TaskFormOptions $formOptions,
         private readonly TaskAttachmentReader $attachmentReader,
         private readonly TaskAttachmentStore $attachmentStore,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -188,6 +188,7 @@ class TaskController extends Controller
     {
         /** @var User $user */
         $user = auth()->user();
+
         return $this->scopeBuilder->for($user);
     }
 
@@ -200,7 +201,7 @@ class TaskController extends Controller
         }
 
         abort_unless(
-            \Illuminate\Support\Facades\DB::table('project_user')->where('project_id', $projectId)->where('user_id', $scope['actor_id'])->exists(),
+            DB::table('project_user')->where('project_id', $projectId)->where('user_id', $scope['actor_id'])->exists(),
             403,
         );
     }

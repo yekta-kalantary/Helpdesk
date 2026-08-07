@@ -12,8 +12,7 @@ class SaveTask
         private readonly TaskRepository $tasks,
         private readonly TaskAttachmentStore $attachments,
         private readonly TaskNotifier $notifier,
-    ) {
-    }
+    ) {}
 
     public function execute(?int $id, array $attributes, array $files = [], ?int $previousAssignee = null): int
     {

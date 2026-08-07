@@ -29,8 +29,7 @@ class TicketController extends Controller
         private readonly CreateTicket $createTicket,
         private readonly ReplyTicket $replyTicket,
         private readonly TicketAttachmentStore $attachments,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {

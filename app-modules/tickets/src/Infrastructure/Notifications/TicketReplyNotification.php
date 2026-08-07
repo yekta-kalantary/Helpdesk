@@ -12,8 +12,7 @@ class TicketReplyNotification extends Notification
     public function __construct(
         private readonly int $ticketId,
         private readonly string $subject,
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {

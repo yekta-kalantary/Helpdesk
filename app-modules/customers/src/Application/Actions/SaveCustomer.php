@@ -11,8 +11,7 @@ class SaveCustomer
     public function __construct(
         private readonly CustomerRepository $customers,
         private readonly CustomerPortalAccount $portal,
-    ) {
-    }
+    ) {}
 
     public function execute(?int $id, array $attributes, bool $portalEnabled, ?string $portalPassword): int
     {
@@ -32,6 +31,7 @@ class SaveCustomer
 
             if ($id) {
                 $this->customers->update($id, $attributes, $userId);
+
                 return $id;
             }
 

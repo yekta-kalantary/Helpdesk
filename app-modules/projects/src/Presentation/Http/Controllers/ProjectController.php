@@ -21,8 +21,7 @@ class ProjectController extends Controller
         private readonly ProjectRepository $projects,
         private readonly SaveProject $saveProject,
         private readonly ProjectFormOptions $options,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {

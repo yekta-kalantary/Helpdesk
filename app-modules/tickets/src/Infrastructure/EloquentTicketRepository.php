@@ -107,6 +107,7 @@ class EloquentTicketRepository implements TicketRepository
     {
         if ($scope['customer_id']) {
             $query->where('tickets.customer_id', $scope['customer_id']);
+
             return;
         }
 
@@ -124,6 +125,7 @@ class EloquentTicketRepository implements TicketRepository
     {
         if ($scope['customer_id']) {
             $query->where('customer_id', $scope['customer_id']);
+
             return;
         }
 
