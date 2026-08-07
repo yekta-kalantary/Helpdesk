@@ -10,7 +10,16 @@
             "type": "path",
             "url": "./app-modules/*",
             "options": {
-                "symlink": true
+                "symlink": true,
+                "versions": {
+                    "modules/customers": "1.0.0",
+                    "modules/identity": "1.0.0",
+                    "modules/projects": "1.0.0",
+                    "modules/reports": "1.0.0",
+                    "modules/settings": "1.0.0",
+                    "modules/tasks": "1.0.0",
+                    "modules/tickets": "1.0.0"
+                }
             }
         }
     ],
