@@ -62,6 +62,7 @@ return [
         'ends_at' => 'تاریخ پایان',
         'assigned_to' => 'مسئول انجام',
         'priority' => 'اولویت',
+        'is_customer_visible' => 'نمایش برای مشتری',
         'due_at' => 'مهلت انجام',
         'estimated_minutes' => 'زمان تخمینی',
         'spent_minutes' => 'زمان صرف‌شده',
