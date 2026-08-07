@@ -9,11 +9,6 @@
                     <x-ui.input name="last_name" :label="__('app.last_name')" :value="$last_name" wire:model="last_name" required />
                     <x-ui.input name="email" :label="__('app.email')" type="email" dir="ltr" :value="$email" wire:model="email" required />
                     <x-ui.input name="mobile" :label="__('app.mobile')" dir="ltr" :value="$mobile" wire:model="mobile" required />
-                    <x-ui.select name="status" :label="__('app.status')" wire:model="status">
-                        @foreach($statuses as $statusItem)
-                            <option value="{{ $statusItem->value }}">{{ __('customers::messages.status.'.$statusItem->value) }}</option>
-                        @endforeach
-                    </x-ui.select>
                 </div>
 
                 <x-ui.textarea name="notes" :label="__('customers::messages.notes')" :value="$notes" wire:model="notes" />
