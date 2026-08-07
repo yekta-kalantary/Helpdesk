@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Livewire\Livewire;
 use Modules\Identity\Domain\Access\PermissionCatalog;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -14,16 +15,10 @@ it('keeps admin and customer as protected system roles', function (): void {
     $this->actingAs($admin)->get(route('roles.edit', $adminRole->id))->assertNotFound();
     $this->actingAs($admin)->get(route('roles.edit', $customerRole->id))->assertNotFound();
 
-    $this->actingAs($admin)
-        ->put(route('roles.update', $adminRole->id), [
-            'name' => 'renamed-admin',
-            'permissions' => ['projects.view'],
-        ])
-        ->assertNotFound();
-
-    $this->actingAs($admin)
-        ->delete(route('roles.destroy', $adminRole->id))
-        ->assertSessionHasErrors('role');
+    Livewire::actingAs($admin)
+        ->test('identity::roles.index')
+        ->call('delete', $adminRole->id)
+        ->assertHasErrors('role');
 
     expect(Role::findByName('admin', 'web'))->not->toBeNull()
         ->and(Role::findByName('customer', 'web'))->not->toBeNull();
@@ -60,12 +55,12 @@ it('uses the code permission catalog as the source of truth', function (): void 
 it('allows admin to create a dynamic role with catalog permissions only', function (): void {
     $admin = User::query()->role('admin')->firstOrFail();
 
-    $this->actingAs($admin)
-        ->post(route('roles.store'), [
-            'name' => 'seo-manager',
-            'permissions' => ['projects.view', 'tasks.view', 'reports.view'],
-        ])
-        ->assertRedirect(route('roles.index'));
+    Livewire::actingAs($admin)
+        ->test('identity::roles.form')
+        ->set('name', 'seo-manager')
+        ->set('permissions', ['projects.view', 'tasks.view', 'reports.view'])
+        ->call('save')
+        ->assertRedirectToRoute('roles.index');
 
     $role = Role::findByName('seo-manager', 'web');
 
@@ -75,12 +70,12 @@ it('allows admin to create a dynamic role with catalog permissions only', functi
 
     Permission::findOrCreate('reports.export', 'web');
 
-    $this->actingAs($admin)
-        ->post(route('roles.store'), [
-            'name' => 'invalid-role',
-            'permissions' => ['reports.export'],
-        ])
-        ->assertSessionHasErrors('permissions.0');
+    Livewire::actingAs($admin)
+        ->test('identity::roles.form')
+        ->set('name', 'invalid-role')
+        ->set('permissions', ['reports.export'])
+        ->call('save')
+        ->assertHasErrors('permissions.0');
 
     expect(Role::query()->where('name', 'invalid-role')->exists())->toBeFalse();
 });
@@ -90,17 +85,16 @@ it('assigns exactly one non-system role to each staff member', function (): void
     Role::findOrCreate('seo-manager', 'web');
     Role::findOrCreate('developer', 'web');
 
-    $this->actingAs($admin)
-        ->post(route('users.store'), [
-            'name' => 'Staff Member',
-            'email' => 'staff@example.test',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'is_active' => true,
-            'role' => 'seo-manager',
-            'roles' => ['seo-manager', 'developer'],
-        ])
-        ->assertRedirect(route('users.index'));
+    Livewire::actingAs($admin)
+        ->test('identity::users.form')
+        ->set('name', 'Staff Member')
+        ->set('email', 'staff@example.test')
+        ->set('password', 'password123')
+        ->set('password_confirmation', 'password123')
+        ->set('is_active', true)
+        ->set('role', 'seo-manager')
+        ->call('save')
+        ->assertRedirectToRoute('users.index');
 
     $staff = User::query()->where('email', 'staff@example.test')->firstOrFail();
 
@@ -108,14 +102,11 @@ it('assigns exactly one non-system role to each staff member', function (): void
         ->and($staff->hasRole('seo-manager'))->toBeTrue()
         ->and($staff->hasRole('developer'))->toBeFalse();
 
-    $this->actingAs($admin)
-        ->put(route('users.update', $staff->id), [
-            'name' => $staff->name,
-            'email' => $staff->email,
-            'is_active' => true,
-            'role' => 'admin',
-        ])
-        ->assertSessionHasErrors('role');
+    Livewire::actingAs($admin)
+        ->test('identity::users.form', ['user' => $staff->id])
+        ->set('role', 'admin')
+        ->call('save')
+        ->assertHasErrors('role');
 
     expect($staff->fresh()->hasRole('seo-manager'))->toBeTrue();
 });
