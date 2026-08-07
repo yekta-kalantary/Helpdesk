@@ -1,24 +1,24 @@
-@extends('layouts.app')
+<div>
+    @if(session('success'))
+        <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
+    @endif
 
-@section('title', __('projects::messages.projects'))
-
-@section('content')
     <x-ui.page-header :title="__('projects::messages.projects')">
         <x-slot:actions>
             @can('projects.create')
-                <x-ui.button :href="route('projects.create')">{{ __('projects::messages.new_project') }}</x-ui.button>
+                <x-ui.button :href="route('projects.create')" wire:navigate>{{ __('projects::messages.new_project') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
 
-    <x-ui.filter-bar>
+    <x-ui.filter-bar :livewire="true">
         <div class="min-w-0 flex-1">
-            <x-ui.input name="q" :value="request('q')" :placeholder="__('projects::messages.search_placeholder')" />
+            <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('projects::messages.search_placeholder')" />
         </div>
-        <x-ui.button variant="secondary" type="submit">{{ __('app.search') }}</x-ui.button>
+        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q">{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
-    <x-ui.table>
+    <x-ui.table wire:loading.class="opacity-60" wire:target="q,delete">
         <thead>
             <tr>
                 <th>{{ __('app.title') }}</th>
@@ -31,7 +31,7 @@
         </thead>
         <tbody>
             @forelse($projects as $project)
-                <tr>
+                <tr wire:key="project-{{ $project['id'] }}">
                     <td class="font-semibold">{{ $project['title'] }}</td>
                     <td>{{ $project['customer_name'] }}</td>
                     <td><x-ui.badge>{{ __('projects::messages.type.'.$project['type']) }}</x-ui.badge></td>
@@ -40,23 +40,16 @@
                     <td>
                         <div class="flex flex-wrap gap-2">
                             @can('tasks.view')
-                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.index', ['project' => $project['id']])">{{ __('app.tasks') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tasks') }}</x-ui.button>
                             @endcan
-
                             @can('tickets.view')
-                                <x-ui.button size="sm" variant="secondary" :href="route('tickets.index', ['project' => $project['id']])">{{ __('app.tickets') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" :href="route('tickets.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tickets') }}</x-ui.button>
                             @endcan
-
                             @can('projects.update')
-                                <x-ui.button size="sm" variant="secondary" :href="route('projects.edit', $project['id'])">{{ __('app.edit') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" :href="route('projects.edit', $project['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                             @endcan
-
                             @can('projects.delete')
-                                <form method="POST" action="{{ route('projects.destroy', $project['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >
-                                    @csrf
-                                    @method('DELETE')
-                                    <x-ui.button size="sm" variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button>
-                                </form>
+                                <x-ui.button size="sm" variant="danger" wire:click="delete({{ $project['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $project['id'] }})">{{ __('app.delete') }}</x-ui.button>
                             @endcan
                         </div>
                     </td>
@@ -66,4 +59,4 @@
             @endforelse
         </tbody>
     </x-ui.table>
-@endsection
+</div>
