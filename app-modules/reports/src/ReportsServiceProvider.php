@@ -17,7 +17,7 @@ class ReportsServiceProvider extends ServiceProvider
             namespace: 'reports',
             classNamespace: 'Modules\\Reports\\Presentation\\Livewire',
             classPath: __DIR__.'/Presentation/Livewire',
-            classViewPath: __DIR__.'/../resources/views/livewire',
+            classViewPath: __DIR__.'/../resources/views',
         );
     }
 }
