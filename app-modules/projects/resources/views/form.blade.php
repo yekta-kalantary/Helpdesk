@@ -6,12 +6,39 @@
             <div class="space-y-5">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-ui.input name="title" :label="__('app.title')" :value="$title" wire:model="title" required />
-                    <x-ui.select name="customer_id" :label="__('projects::messages.customer')" wire:model.number="customer_id" required>
-                        <option value="">—</option>
-                        @foreach($options['customers'] as $customer)
-                            <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
+
+                    <x-ui.select name="category" :label="__('projects::messages.category')" wire:model.live="category" required>
+                        @foreach($categories as $categoryItem)
+                            <option value="{{ $categoryItem->value }}">{{ __('projects::messages.category.'.$categoryItem->value) }}</option>
                         @endforeach
                     </x-ui.select>
+
+                    @if($category === 'customer')
+                        <div>
+                            <x-ui.input
+                                name="customerSearch"
+                                :label="__('projects::messages.customer_search')"
+                                :value="$customerSearch"
+                                wire:model.live.debounce.300ms="customerSearch"
+                                :placeholder="__('projects::messages.customer_search_placeholder')"
+                                autocomplete="off"
+                            />
+                            <div class="mt-2">
+                                <x-ui.select name="customer_id" :label="__('projects::messages.customer')" wire:model.number="customer_id" required>
+                                    <option value="">—</option>
+                                    @foreach($options['customers'] as $customer)
+                                        <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
+                                    @endforeach
+                                </x-ui.select>
+                            </div>
+                            <p class="mt-1.5 text-xs text-slate-500" wire:loading wire:target="customerSearch">{{ __('app.loading') }}</p>
+                        </div>
+                    @else
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                            {{ __('projects::messages.internal_project_hint') }}
+                        </div>
+                    @endif
+
                     <x-ui.select name="type" :label="__('projects::messages.type')" wire:model="type" required>
                         @foreach($types as $typeItem)
                             <option value="{{ $typeItem->value }}">{{ __('projects::messages.type.'.$typeItem->value) }}</option>
