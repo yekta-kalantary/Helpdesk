@@ -12,6 +12,7 @@ return [
     'due_at' => 'مهلت انجام',
     'estimated_minutes' => 'زمان تخمینی (دقیقه)',
     'spent_minutes' => 'زمان صرف‌شده (دقیقه)',
+    'customer_visible' => 'برای مشتری قابل مشاهده باشد',
     'attachments' => 'فایل‌های پیوست',
     'add_attachments' => 'افزودن فایل',
     'comments' => 'کامنت‌ها',
