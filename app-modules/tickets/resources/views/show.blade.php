@@ -3,19 +3,21 @@
 @section('title', $ticket['subject'])
 
 @section('content')
-    <div class="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-            <div class="mb-2 flex flex-wrap gap-2"><span class="badge">{{ __('tickets::messages.status.'.$ticket['status']) }}</span><span class="badge">{{ __('tickets::messages.priority.'.$ticket['priority']) }}</span><span class="badge">{{ __('tickets::messages.category.'.$ticket['category']) }}</span></div>
-            <h1 class="text-2xl font-black">#{{ $ticket['id'] }} — {{ $ticket['subject'] }}</h1>
-            <p class="mt-1 text-sm text-slate-500">{{ $ticket['customer_name'] }} @if($ticket['project_title']) · {{ $ticket['project_title'] }} @endif</p>
-        </div>
-        @can('tickets.delete')<form method="POST" action="{{ route('tickets.destroy', $ticket['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >@csrf @method('DELETE')<button class="btn-danger" type="submit">{{ __('app.delete') }}</button></form>@endcan
+    <x-ui.page-header :title="'#'.$ticket['id'].' — '.$ticket['subject']" :subtitle="$ticket['customer_name'].($ticket['project_title'] ? ' · '.$ticket['project_title'] : '')">
+        @can('tickets.delete')
+            <x-slot:actions><form method="POST" action="{{ route('tickets.destroy', $ticket['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >@csrf @method('DELETE')<x-ui.button variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button></form></x-slot:actions>
+        @endcan
+    </x-ui.page-header>
+
+    <div class="mb-5 flex flex-wrap gap-2">
+        <x-ui.badge>{{ __('tickets::messages.status.'.$ticket['status']) }}</x-ui.badge>
+        <x-ui.badge>{{ __('tickets::messages.priority.'.$ticket['priority']) }}</x-ui.badge>
+        <x-ui.badge>{{ __('tickets::messages.category.'.$ticket['category']) }}</x-ui.badge>
     </div>
 
     <div class="grid gap-6 xl:grid-cols-3">
         <div class="space-y-5 xl:col-span-2">
-            <section class="card">
-                <h2 class="mb-4 font-bold">{{ __('tickets::messages.conversation') }}</h2>
+            <x-ui.card :title="__('tickets::messages.conversation')">
                 <div class="space-y-4">
                     @foreach($ticket['messages'] as $message)
                         <article class="rounded-xl border border-slate-200 p-4">
@@ -24,41 +26,55 @@
                             @if($message['attachments'])
                                 <div class="mt-4 flex flex-wrap gap-2">
                                     @foreach($message['attachments'] as $attachment)
-                                        <a class="btn-secondary" href="{{ route('tickets.attachments.download', [$ticket['id'], $message['id'], $attachment['id']]) }}">{{ __('tickets::messages.download') }}: {{ $attachment['name'] }}</a>
+                                        <x-ui.button size="sm" variant="secondary" :href="route('tickets.attachments.download', [$ticket['id'], $message['id'], $attachment['id']])">{{ __('tickets::messages.download') }}: {{ $attachment['name'] }}</x-ui.button>
                                     @endforeach
                                 </div>
                             @endif
                         </article>
                     @endforeach
                 </div>
-            </section>
+            </x-ui.card>
 
             @can('tickets.reply')
-                <form class="card space-y-4" method="POST" enctype="multipart/form-data" action="{{ route('tickets.reply', $ticket['id']) }}">
+                <form method="POST" enctype="multipart/form-data" action="{{ route('tickets.reply', $ticket['id']) }}">
                     @csrf
-                    <div><label for="body">{{ __('tickets::messages.reply') }}</label><textarea id="body" name="body" required>{{ old('body') }}</textarea></div>
-                    <div><label for="attachments">{{ __('tickets::messages.attachments') }}</label><input id="attachments" name="attachments[]" type="file" multiple></div>
-                    <button class="btn-primary" type="submit">{{ __('tickets::messages.reply') }}</button>
+                    <x-ui.card :title="__('tickets::messages.reply')">
+                        <div class="space-y-4">
+                            <x-ui.textarea name="body" :label="__('tickets::messages.reply')" :value="old('body')" required />
+                            <x-ui.input name="attachments[]" :label="__('tickets::messages.attachments')" type="file" multiple />
+                            <x-ui.button type="submit">{{ __('tickets::messages.reply') }}</x-ui.button>
+                        </div>
+                    </x-ui.card>
                 </form>
             @endcan
         </div>
 
         <aside class="space-y-4">
             @can('tickets.manage')
-                <form class="card space-y-4" method="POST" action="{{ route('tickets.manage', $ticket['id']) }}">
+                <form method="POST" action="{{ route('tickets.manage', $ticket['id']) }}">
                     @csrf @method('PATCH')
-                    <h2 class="font-bold">{{ __('tickets::messages.manage_ticket') }}</h2>
-                    <div><label for="status">{{ __('app.status') }}</label><select id="status" name="status">@foreach($statuses as $status)<option value="{{ $status->value }}" @selected($ticket['status'] === $status->value)>{{ __('tickets::messages.status.'.$status->value) }}</option>@endforeach</select></div>
-                    <div><label for="assigned_to">{{ __('tickets::messages.assignee') }}</label><select id="assigned_to" name="assigned_to"><option value="">{{ __('tickets::messages.unassigned') }}</option>@foreach($options['members'] as $member)<option value="{{ $member['id'] }}" @selected((string) $ticket['assigned_to'] === (string) $member['id'])>{{ $member['name'] }}</option>@endforeach</select></div>
-                    <button class="btn-primary w-full" type="submit">{{ __('app.save') }}</button>
+                    <x-ui.card :title="__('tickets::messages.manage_ticket')">
+                        <div class="space-y-4">
+                            <x-ui.select name="status" :label="__('app.status')">
+                                @foreach($statuses as $status)<option value="{{ $status->value }}" @selected($ticket['status'] === $status->value)>{{ __('tickets::messages.status.'.$status->value) }}</option>@endforeach
+                            </x-ui.select>
+                            <x-ui.select name="assigned_to" :label="__('tickets::messages.assignee')">
+                                <option value="">{{ __('tickets::messages.unassigned') }}</option>
+                                @foreach($options['members'] as $member)<option value="{{ $member['id'] }}" @selected((string) $ticket['assigned_to'] === (string) $member['id'])>{{ $member['name'] }}</option>@endforeach
+                            </x-ui.select>
+                            <x-ui.button class="w-full" type="submit">{{ __('app.save') }}</x-ui.button>
+                        </div>
+                    </x-ui.card>
                 </form>
             @endcan
 
-            <div class="card space-y-4 text-sm">
-                <div><div class="text-xs text-slate-500">{{ __('tickets::messages.customer') }}</div><div class="mt-1 font-medium">{{ $ticket['customer_name'] }}</div></div>
-                <div><div class="text-xs text-slate-500">{{ __('tickets::messages.project') }}</div><div class="mt-1">{{ $ticket['project_title'] ?: __('tickets::messages.no_project') }}</div></div>
-                <div><div class="text-xs text-slate-500">{{ __('tickets::messages.assignee') }}</div><div class="mt-1">{{ $ticket['assignee_name'] ?: __('tickets::messages.unassigned') }}</div></div>
-            </div>
+            <x-ui.card>
+                <div class="space-y-4">
+                    <x-ui.meta-item :label="__('tickets::messages.customer')">{{ $ticket['customer_name'] }}</x-ui.meta-item>
+                    <x-ui.meta-item :label="__('tickets::messages.project')">{{ $ticket['project_title'] ?: __('tickets::messages.no_project') }}</x-ui.meta-item>
+                    <x-ui.meta-item :label="__('tickets::messages.assignee')">{{ $ticket['assignee_name'] ?: __('tickets::messages.unassigned') }}</x-ui.meta-item>
+                </div>
+            </x-ui.card>
         </aside>
     </div>
 @endsection
