@@ -6,6 +6,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Modules\Customers\Application\Actions\SaveCustomer;
+use Modules\Customers\Domain\Contracts\CustomerPortalAccount;
 use Modules\Customers\Domain\Contracts\CustomerRepository;
 use Modules\Customers\Domain\Enums\CustomerStatus;
 
@@ -31,17 +32,27 @@ class Form extends Component
 
     public bool $portal_enabled = false;
 
+    public string $portal_last_name = '';
+
+    public string $portal_mobile = '';
+
     public string $portal_password = '';
 
     public string $portal_password_confirmation = '';
 
     protected CustomerRepository $customers;
 
+    protected CustomerPortalAccount $portal;
+
     protected SaveCustomer $saveCustomer;
 
-    public function boot(CustomerRepository $customers, SaveCustomer $saveCustomer): void
-    {
+    public function boot(
+        CustomerRepository $customers,
+        CustomerPortalAccount $portal,
+        SaveCustomer $saveCustomer,
+    ): void {
         $this->customers = $customers;
+        $this->portal = $portal;
         $this->saveCustomer = $saveCustomer;
     }
 
@@ -62,6 +73,12 @@ class Form extends Component
         $this->notes = $item['notes'];
         $this->status = $item['status'];
         $this->portal_enabled = (bool) $item['user_id'];
+
+        if ($this->portalUserId) {
+            $profile = $this->portal->find($this->portalUserId);
+            $this->portal_last_name = $profile['last_name'];
+            $this->portal_mobile = $profile['mobile'];
+        }
     }
 
     public function save()
@@ -84,6 +101,10 @@ class Form extends Component
                 'status' => $data['status'],
             ],
             $data['portal_enabled'],
+            [
+                'last_name' => $data['portal_last_name'] ?: '',
+                'mobile' => $data['portal_mobile'] ?: '',
+            ],
             $data['portal_password'] ?: null,
         );
 
@@ -108,6 +129,8 @@ class Form extends Component
             'notes' => ['nullable', 'string', 'max:5000'],
             'status' => ['required', Rule::enum(CustomerStatus::class)],
             'portal_enabled' => ['boolean'],
+            'portal_last_name' => [$this->portal_enabled ? 'required' : 'nullable', 'string', 'max:255'],
+            'portal_mobile' => [$this->portal_enabled ? 'required' : 'nullable', 'string', 'max:32'],
             'portal_password' => [$this->portal_enabled && ! $this->portalUserId ? 'required' : 'nullable', 'string', 'min:8', 'confirmed'],
         ];
     }
