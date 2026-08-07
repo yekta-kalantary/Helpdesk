@@ -28,7 +28,7 @@ class IdentityServiceProvider extends ServiceProvider
             namespace: 'identity',
             classNamespace: 'Modules\\Identity\\Presentation\\Livewire',
             classPath: __DIR__.'/Presentation/Livewire',
-            classViewPath: __DIR__.'/../resources/views/livewire',
+            classViewPath: __DIR__.'/../resources/views',
         );
     }
 }
