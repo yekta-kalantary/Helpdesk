@@ -2,7 +2,6 @@
 
 namespace Modules\Settings;
 
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Modules\Settings\Infrastructure\Settings\SmtpSettings;
@@ -23,9 +22,6 @@ class SettingsServiceProvider extends ServiceProvider
 
         try {
             $settings = app(SmtpSettings::class);
-            $password = $settings->password_encrypted
-                ? Crypt::decryptString($settings->password_encrypted)
-                : null;
 
             config([
                 'mail.default' => $settings->enabled ? 'smtp' : 'log',
@@ -34,12 +30,12 @@ class SettingsServiceProvider extends ServiceProvider
                 'mail.mailers.smtp.host' => $settings->host ?: '127.0.0.1',
                 'mail.mailers.smtp.port' => $settings->port,
                 'mail.mailers.smtp.username' => $settings->username,
-                'mail.mailers.smtp.password' => $password,
+                'mail.mailers.smtp.password' => $settings->password,
                 'mail.from.address' => $settings->from_address,
                 'mail.from.name' => $settings->from_name,
             ]);
         } catch (Throwable) {
-            // During first installation/migration, settings may not exist yet.
+            // First-install commands can boot before settings migrations have run.
         }
     }
 }
