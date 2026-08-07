@@ -23,15 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        $columns = array_values(array_filter(
-            ['last_name', 'mobile'],
-            static fn (string $column): bool => Schema::hasColumn('users', $column),
-        ));
-
-        if ($columns !== []) {
-            Schema::table('users', function (Blueprint $table) use ($columns): void {
-                $table->dropColumn($columns);
-            });
-        }
+        // Intentionally irreversible: these columns are part of the canonical users schema.
     }
 };
