@@ -15,13 +15,13 @@
 
     <div class="table-wrap">
         <table class="table">
-            <thead><tr><th>{{ __('app.name_label') }}</th><th>{{ __('app.email') }}</th><th>{{ __('identity::messages.roles') }}</th><th>{{ __('app.status') }}</th><th>{{ __('app.actions') }}</th></tr></thead>
+            <thead><tr><th>{{ __('app.name_label') }}</th><th>{{ __('app.email') }}</th><th>{{ __('identity::messages.role') }}</th><th>{{ __('app.status') }}</th><th>{{ __('app.actions') }}</th></tr></thead>
             <tbody>
             @forelse($users as $user)
                 <tr>
                     <td>{{ $user['name'] }}</td>
                     <td dir="ltr" class="text-right">{{ $user['email'] }}</td>
-                    <td><div class="flex flex-wrap gap-1">@foreach($user['roles'] as $role)<span class="badge">{{ $role }}</span>@endforeach</div></td>
+                    <td>@if($user['role'])<span class="badge">{{ $user['role'] }}</span>@else<span class="text-xs text-slate-500">—</span>@endif</td>
                     <td><span class="badge">{{ $user['is_active'] ? __('app.active') : __('app.inactive') }}</span></td>
                     <td><div class="flex flex-wrap gap-2">
                         @can('users.update')<a class="btn-secondary" href="{{ route('users.edit', $user['id']) }}">{{ __('app.edit') }}</a>@endcan
