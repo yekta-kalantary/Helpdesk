@@ -13,6 +13,9 @@ class Form extends Component
     #[Locked]
     public ?int $userId = null;
 
+    #[Locked]
+    public ?int $personId = null;
+
     public string $name = '';
 
     public string $last_name = '';
@@ -47,6 +50,7 @@ class Form extends Component
 
         $item = $this->users->find($user);
         $this->userId = $user;
+        $this->personId = $item['person_id'];
         $this->name = $item['name'];
         $this->last_name = $item['last_name'];
         $this->email = $item['email'];
@@ -94,7 +98,7 @@ class Form extends Component
         return [
             'name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('people', 'email')->ignore($this->personId)],
             'mobile' => ['required', 'string', 'max:32'],
             'password' => [$this->userId ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['boolean'],
