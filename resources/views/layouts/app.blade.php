@@ -15,7 +15,7 @@
         <div class="border-b border-slate-200 p-5">
             <a href="{{ route('dashboard') }}" wire:navigate class="text-lg font-black tracking-tight text-slate-950">{{ __('app.name') }}</a>
             @auth
-                <p class="mt-1 text-xs font-medium text-slate-500">{{ auth()->user()->name }}</p>
+                <p class="mt-1 text-xs font-medium text-slate-500">{{ auth()->user()->full_name }}</p>
             @endauth
         </div>
 
