@@ -1,24 +1,24 @@
-@extends('layouts.app')
+<div>
+    @if(session('success'))
+        <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
+    @endif
 
-@section('title', __('identity::messages.users'))
-
-@section('content')
     <x-ui.page-header :title="__('identity::messages.users')">
         <x-slot:actions>
             @can('users.create')
-                <x-ui.button :href="route('users.create')">{{ __('identity::messages.new_user') }}</x-ui.button>
+                <x-ui.button :href="route('users.create')" wire:navigate>{{ __('identity::messages.new_user') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
 
-    <x-ui.filter-bar>
+    <x-ui.filter-bar :livewire="true">
         <div class="min-w-0 flex-1">
-            <x-ui.input name="q" :value="request('q')" :placeholder="__('identity::messages.search_users')" />
+            <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('identity::messages.search_users')" />
         </div>
-        <x-ui.button variant="secondary" type="submit">{{ __('app.search') }}</x-ui.button>
+        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q">{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
-    <x-ui.table>
+    <x-ui.table wire:loading.class="opacity-60" wire:target="q,delete">
         <thead>
             <tr>
                 <th>{{ __('app.name_label') }}</th>
@@ -30,7 +30,7 @@
         </thead>
         <tbody>
             @forelse($users as $user)
-                <tr>
+                <tr wire:key="user-{{ $user['id'] }}">
                     <td class="font-semibold">{{ $user['name'] }}</td>
                     <td dir="ltr" class="text-right">{{ $user['email'] }}</td>
                     <td>
@@ -44,16 +44,12 @@
                     <td>
                         <div class="flex flex-wrap gap-2">
                             @can('users.update')
-                                <x-ui.button size="sm" variant="secondary" :href="route('users.edit', $user['id'])">{{ __('app.edit') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" :href="route('users.edit', $user['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                             @endcan
 
                             @can('users.delete')
                                 @if(auth()->id() !== $user['id'])
-                                    <form method="POST" action="{{ route('users.destroy', $user['id']) }}" onsubmit="return confirm(@js(__('app.confirm_delete')))" >
-                                        @csrf
-                                        @method('DELETE')
-                                        <x-ui.button size="sm" variant="danger" type="submit">{{ __('app.delete') }}</x-ui.button>
-                                    </form>
+                                    <x-ui.button size="sm" variant="danger" wire:click="delete({{ $user['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $user['id'] }})">{{ __('app.delete') }}</x-ui.button>
                                 @endif
                             @endcan
                         </div>
@@ -64,4 +60,4 @@
             @endforelse
         </tbody>
     </x-ui.table>
-@endsection
+</div>
