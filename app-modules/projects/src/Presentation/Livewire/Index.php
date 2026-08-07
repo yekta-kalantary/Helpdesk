@@ -2,6 +2,7 @@
 
 namespace Modules\Projects\Presentation\Livewire;
 
+use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
@@ -31,8 +32,8 @@ class Index extends Component
     {
         /** @var User $user */
         $user = auth()->user();
-        $customerId = $user->hasRole('customer')
-            ? DB::table('customers')->where('user_id', $user->id)->whereNull('deleted_at')->value('id')
+        $customerId = $user->person?->type === PersonType::Customer
+            ? DB::table('customers')->where('person_id', $user->person_id)->whereNull('deleted_at')->value('id')
             : null;
 
         return view('projects::index', [
