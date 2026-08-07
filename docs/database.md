@@ -3,6 +3,10 @@
 ## ERD سطح بالا
 
 ```text
+people
+  ├── users (0..1, account/login)
+  └── customers (0..1, only when type=customer)
+
 users
   ├── model_has_roles -> roles -> role_has_permissions -> permissions
   ├── project_user -> projects
@@ -13,7 +17,7 @@ users
   └── notifications
 
 customers
-  ├── user_id -> users (Client Portal, nullable/unique)
+  ├── person_id -> people (unique)
   ├── projects
   └── tickets
 
@@ -23,32 +27,40 @@ projects
   ├── tasks
   └── tickets
 
-tasks
-  ├── project_id -> projects
-  ├── task_comments
-  └── media (polymorphic)
-
-tickets
-  ├── customer_id -> customers
-  ├── project_id -> projects (nullable)
-  └── ticket_messages -> media (polymorphic)
-
 settings
 ```
 
-## جداول اصلی
+## منبع حقیقت اطلاعات افراد
+
+`people` تنها منبع اطلاعات هویتی است:
+
+- `type`: `customer | employee`
+- `first_name`
+- `last_name`
+- `email`
+- `mobile`
+
+نام، ایمیل و موبایل در `users` یا `customers` تکرار نمی‌شوند.
 
 ### `users`
 
-کاربران داخلی و حساب‌های Portal مشتری در یک identity store قرار دارند. تشخیص نوع دسترسی از Role انجام می‌شود.
+`users` فقط حساب احراز هویت و مجوزدهی است و با `person_id` به `people` متصل می‌شود.
 
-فیلد مهم: `is_active`.
+- Employee باید User داشته باشد.
+- Customer می‌تواند User نداشته باشد.
+- ایجاد User برای Customer فقط دسترسی Portal را فعال می‌کند و هویت Customer را تغییر نمی‌دهد.
+- Role فقط Authorization است؛ Customer/Employee بودن از `people.type` و رابطه دامنه تعیین می‌شود.
 
 ### `customers`
 
-- `user_id`: حساب Portal اختیاری و unique
+`customers` اطلاعات مخصوص رابطه مشتری را نگه می‌دارد:
+
+- `person_id`: یکتا و متعلق به Person از نوع `customer`
 - `status`: `lead | active | inactive`
+- `notes`
 - soft delete
+
+حساب Portal از `users.person_id = customers.person_id` resolve می‌شود و FK مستقیمی از Customer به User وجود ندارد.
 
 ### `projects`
 
@@ -61,7 +73,7 @@ settings
 ### `tasks`
 
 - متعلق به یک Project
-- assignee اختیاری
+- assignee اختیاری و باید Employee فعال باشد
 - creator اجباری
 - `priority`: `low | medium | high | urgent`
 - `status`: `todo | in_progress | review | done | cancelled`
@@ -80,6 +92,7 @@ settings
 - متعلق به Customer
 - Project اختیاری
 - creator و assignee
+- assignee باید Employee فعال باشد
 - category، priority، status
 - soft delete
 
@@ -102,10 +115,10 @@ Repository پکیج `spatie/laravel-settings`. رمز SMTP encrypted setting ا�
 ## قواعد حذف
 
 - Customer و Project و Task و Ticket soft delete دارند.
-- حذف Customer در وضعیت وابستگی Project با FK محدود شده است؛ قبل از تغییر سیاست حذف، lifecycle پروژه‌ها بررسی شود.
-- حذف Project باعث cascade شدن Taskهای فیزیکی در سطح FK فقط در delete واقعی می‌شود؛ در flow معمول Project soft-delete می‌شود.
-- Portal user مشتری هنگام حذف/غیرفعال‌سازی Customer حذف نمی‌شود و فقط غیرفعال می‌شود تا audit/history از بین نرود.
+- حذف Customer حساب Portal را حذف نمی‌کند؛ حساب همان Person غیرفعال می‌شود تا audit/history باقی بماند.
+- حذف Employee از مسیر مدیریت کاربران، User و Person همان Employee را در یک transaction حذف می‌کند.
+- قبل از تغییر سیاست حذف، وابستگی Project/Task/Ticket بررسی شود.
 
 ## تغییر schema
 
-برای تغییر schema موجود، migration جدید اضافه کنید و migrationهای قبلی را پس از انتشار production بازنویسی نکنید. migrationهای Settings با migrationهای Laravel متفاوت‌اند و در `app-modules/settings/database/settings` قرار می‌گیرند.
+برای نصب‌های موجود migration سازگاری داده‌ها را از ستون‌های legacy به `people` منتقل می‌کند و سپس ستون‌های تکراری را حذف می‌کند. این migration forward-only است؛ rollback نباید دوباره دو source of truth ایجاد کند.
