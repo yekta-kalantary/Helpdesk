@@ -16,7 +16,7 @@ class EloquentProjectRepository implements ProjectRepository
             ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
             ->whereNull('projects.deleted_at')
             ->select([
-                'projects.id', 'projects.customer_id', 'projects.title', 'projects.type', 'projects.status',
+                'projects.id', 'projects.customer_id', 'projects.category', 'projects.title', 'projects.type', 'projects.status',
                 'projects.starts_at', 'projects.ends_at', 'projects.created_at',
                 'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
             ]);
@@ -53,11 +53,13 @@ class EloquentProjectRepository implements ProjectRepository
         return $rows->map(function (object $row): array {
             $count = (int) ($row->tasks_count ?? 0);
             $done = (int) ($row->tasks_done ?? 0);
+            $customerName = trim(($row->customer_first_name ?? '').' '.($row->customer_last_name ?? ''));
 
             return [
                 'id' => $row->id,
                 'customer_id' => $row->customer_id,
-                'customer_name' => trim($row->customer_first_name.' '.$row->customer_last_name),
+                'customer_name' => $customerName !== '' ? $customerName : null,
+                'category' => $row->category,
                 'title' => $row->title,
                 'type' => $row->type,
                 'status' => $row->status,
@@ -71,15 +73,18 @@ class EloquentProjectRepository implements ProjectRepository
     public function find(int $id): array
     {
         $project = Project::query()->findOrFail($id);
-        $customer = DB::table('customers')
-            ->join('people', 'people.id', '=', 'customers.person_id')
-            ->where('customers.id', $project->customer_id)
-            ->first(['people.first_name', 'people.last_name']);
+        $customer = $project->customer_id
+            ? DB::table('customers')
+                ->join('people', 'people.id', '=', 'customers.person_id')
+                ->where('customers.id', $project->customer_id)
+                ->first(['people.first_name', 'people.last_name'])
+            : null;
 
         return [
             'id' => $project->id,
             'customer_id' => $project->customer_id,
             'customer_name' => $customer ? trim($customer->first_name.' '.$customer->last_name) : null,
+            'category' => $project->category->value,
             'title' => $project->title,
             'type' => $project->type->value,
             'description' => $project->description,
