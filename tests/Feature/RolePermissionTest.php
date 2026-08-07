@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PersonType;
+use App\Models\Person;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
@@ -98,9 +100,11 @@ it('assigns exactly one non-system role to each staff member', function (): void
         ->call('save')
         ->assertRedirectToRoute('users.index');
 
-    $staff = User::query()->where('email', 'staff@example.test')->firstOrFail();
+    $person = Person::query()->where('email', 'staff@example.test')->firstOrFail();
+    $staff = User::query()->where('person_id', $person->id)->firstOrFail();
 
-    expect($staff->roles()->count())->toBe(1)
+    expect($person->type)->toBe(PersonType::Employee)
+        ->and($staff->roles()->count())->toBe(1)
         ->and($staff->hasRole('seo-manager'))->toBeTrue()
         ->and($staff->hasRole('developer'))->toBeFalse()
         ->and($staff->full_name)->toBe('Staff Member')
