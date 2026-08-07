@@ -22,7 +22,15 @@
                 @can('customers.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('customers.index') }}">{{ __('app.customers') }}</a>@endcan
                 @can('projects.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('projects.index') }}">{{ __('app.projects') }}</a>@endcan
                 @can('tasks.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('tasks.index') }}">{{ __('app.tasks') }}</a>@endcan
-                <a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('tickets.index') }}">{{ __('app.tickets') }}</a>
+                @can('tickets.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('tickets.index') }}">{{ __('app.tickets') }}</a>@endcan
+                @can('reports.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('reports.index') }}">{{ __('reports::messages.reports') }}</a>@endcan
+                @can('notifications.view')
+                    <a class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('notifications.index') }}">
+                        <span>{{ __('identity::notifications.title') }}</span>
+                        @php($unreadNotifications = auth()->user()->unreadNotifications()->count())
+                        @if($unreadNotifications > 0)<span class="badge">{{ $unreadNotifications }}</span>@endif
+                    </a>
+                @endcan
                 @can('users.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('users.index') }}">{{ __('app.users') }}</a>@endcan
                 @can('roles.view')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('roles.index') }}">{{ __('app.roles_permissions') }}</a>@endcan
                 @can('settings.manage')<a class="block rounded-lg px-3 py-2 hover:bg-slate-100" href="{{ route('settings.smtp.edit') }}">{{ __('app.settings') }}</a>@endcan
