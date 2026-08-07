@@ -51,11 +51,6 @@ class EloquentCustomerRepository implements CustomerRepository
         $customer->update($customerAttributes);
     }
 
-    public function delete(int $id): void
-    {
-        Customer::query()->findOrFail($id)->delete();
-    }
-
     /** @return array<string,mixed> */
     private function map(Customer $customer): array
     {
