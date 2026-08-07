@@ -18,7 +18,7 @@
         <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q">{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
-    <x-ui.table wire:loading.class="opacity-60" wire:target="q,delete">
+    <x-ui.table wire:loading.class="opacity-60" wire:target="q">
         <thead>
             <tr>
                 <th>{{ __('app.name_label') }}</th>
@@ -39,17 +39,6 @@
                         <div class="flex flex-wrap gap-2">
                             @can('customers.update')
                                 <x-ui.button size="sm" variant="secondary" :href="route('customers.edit', $customer['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
-                            @endcan
-
-                            @can('customers.delete')
-                                <x-ui.button
-                                    size="sm"
-                                    variant="danger"
-                                    wire:click="delete({{ $customer['id'] }})"
-                                    wire:confirm="{{ __('app.confirm_delete') }}"
-                                    wire:loading.attr="disabled"
-                                    wire:target="delete({{ $customer['id'] }})"
-                                >{{ __('app.delete') }}</x-ui.button>
                             @endcan
                         </div>
                     </td>
