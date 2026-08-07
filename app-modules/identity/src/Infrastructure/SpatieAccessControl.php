@@ -3,6 +3,7 @@
 namespace Modules\Identity\Infrastructure;
 
 use DomainException;
+use Modules\Identity\Domain\Access\PermissionCatalog;
 use Modules\Identity\Domain\Contracts\AccessControl;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -27,7 +28,31 @@ class SpatieAccessControl implements AccessControl
 
     public function permissions(): array
     {
-        return Permission::query()->orderBy('name')->get(['id', 'name'])->toArray();
+        $permissions = Permission::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', PermissionCatalog::all())
+            ->get(['id', 'name'])
+            ->keyBy('name');
+
+        $result = [];
+
+        foreach (PermissionCatalog::groups() as $module => $names) {
+            foreach ($names as $name) {
+                $permission = $permissions->get($name);
+
+                if (! $permission) {
+                    continue;
+                }
+
+                $result[] = [
+                    'id' => $permission->id,
+                    'name' => $permission->name,
+                    'module' => $module,
+                ];
+            }
+        }
+
+        return $result;
     }
 
     public function createRole(string $name, array $permissions): void
@@ -61,15 +86,5 @@ class SpatieAccessControl implements AccessControl
         }
 
         $role->delete();
-    }
-
-    public function createPermission(string $name): void
-    {
-        Permission::create(['name' => $name, 'guard_name' => 'web']);
-    }
-
-    public function deletePermission(int $permissionId): void
-    {
-        Permission::findOrFail($permissionId)->delete();
     }
 }
