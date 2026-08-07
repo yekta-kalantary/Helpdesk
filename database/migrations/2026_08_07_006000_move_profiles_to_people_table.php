@@ -82,7 +82,7 @@ return new class extends Migration
                 $existing = DB::table('people')->where('email', $email)->first();
 
                 if ($existing) {
-                    throw new \RuntimeException("Cannot migrate customer {$customer->id}: email {$email} is already assigned to another person.");
+                    throw new RuntimeException("Cannot migrate customer {$customer->id}: email {$email} is already assigned to another person.");
                 }
 
                 $personId = DB::table('people')->insertGetId([
@@ -118,7 +118,7 @@ return new class extends Migration
                 $existing = DB::table('people')->where('email', $email)->first();
 
                 if ($existing) {
-                    throw new \RuntimeException("Cannot migrate user {$user->id}: email {$email} already belongs to a customer person. Resolve the duplicate identity before migrating.");
+                    throw new RuntimeException("Cannot migrate user {$user->id}: email {$email} already belongs to a customer person. Resolve the duplicate identity before migrating.");
                 }
 
                 $personId = DB::table('people')->insertGetId([
@@ -143,7 +143,7 @@ return new class extends Migration
             }
 
             if (DB::table($tableName)->whereNull('person_id')->exists()) {
-                throw new \RuntimeException("Cannot finalize {$tableName}.person_id: some rows could not be mapped to people.");
+                throw new RuntimeException("Cannot finalize {$tableName}.person_id: some rows could not be mapped to people.");
             }
 
             Schema::table($tableName, function (Blueprint $table): void {
