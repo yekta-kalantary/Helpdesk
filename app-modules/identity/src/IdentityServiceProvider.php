@@ -4,6 +4,8 @@ namespace Modules\Identity;
 
 use Illuminate\Support\ServiceProvider;
 use Modules\Identity\Domain\Contracts\AccessControl;
+use Modules\Identity\Domain\Contracts\UserRepository;
+use Modules\Identity\Infrastructure\EloquentUserRepository;
 use Modules\Identity\Infrastructure\SpatieAccessControl;
 
 class IdentityServiceProvider extends ServiceProvider
@@ -11,6 +13,7 @@ class IdentityServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AccessControl::class, SpatieAccessControl::class);
+        $this->app->bind(UserRepository::class, EloquentUserRepository::class);
     }
 
     public function boot(): void
