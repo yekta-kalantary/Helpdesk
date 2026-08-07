@@ -1,0 +1,18 @@
+<?php
+
+namespace Modules\Identity\Domain\Contracts;
+
+interface UserRepository
+{
+    /** @return array<int, array{id:int,name:string,email:string,is_active:bool,roles:array<int,string>}> */
+    public function search(?string $term = null): array;
+
+    /** @return array{id:int,name:string,email:string,is_active:bool,roles:array<int,string>} */
+    public function find(int $id): array;
+
+    public function create(string $name, string $email, string $password, bool $isActive, array $roles): int;
+
+    public function update(int $id, string $name, string $email, ?string $password, bool $isActive, array $roles): void;
+
+    public function delete(int $id): void;
+}
