@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Tickets\Presentation\Http\Controllers\TicketController;
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/tickets', [TicketController::class, 'index'])->middleware('permission:tickets.view')->name('tickets.index');
     Route::get('/tickets/create', [TicketController::class, 'create'])->middleware('permission:tickets.create')->name('tickets.create');
     Route::post('/tickets', [TicketController::class, 'store'])->middleware('permission:tickets.create')->name('tickets.store');
