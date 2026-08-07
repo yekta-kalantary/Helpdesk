@@ -17,15 +17,14 @@
         </div>
 
         <div>
-            <label>{{ __('identity::messages.roles') }}</label>
-            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <label for="role">{{ __('identity::messages.role') }}</label>
+            <select id="role" name="role" required>
+                <option value="">{{ __('identity::messages.select_role') }}</option>
                 @foreach($roles as $role)
-                    <label class="flex items-center gap-2 rounded-lg border border-slate-200 p-3">
-                        <input class="h-4 w-4" type="checkbox" name="roles[]" value="{{ $role['name'] }}" @checked(in_array($role['name'], old('roles', $user['roles'] ?? []), true))>
-                        <span dir="ltr">{{ $role['name'] }}</span>
-                    </label>
+                    <option value="{{ $role['name'] }}" @selected(old('role', $user['role'] ?? '') === $role['name'])>{{ $role['name'] }}</option>
                 @endforeach
-            </div>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">{{ __('identity::messages.single_role_hint') }}</p>
         </div>
 
         <label class="flex items-center gap-2"><input class="h-4 w-4" type="checkbox" name="is_active" value="1" @checked(old('is_active', $user['is_active'] ?? true))><span>{{ __('identity::messages.is_active') }}</span></label>
