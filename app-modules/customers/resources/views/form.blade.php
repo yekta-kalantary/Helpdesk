@@ -3,30 +3,40 @@
 @section('title', $customer ? __('customers::messages.edit_customer') : __('customers::messages.new_customer'))
 
 @section('content')
-    <div class="mb-6"><h1 class="text-2xl font-black">{{ $customer ? __('customers::messages.edit_customer') : __('customers::messages.new_customer') }}</h1></div>
+    @php($pageTitle = $customer ? __('customers::messages.edit_customer') : __('customers::messages.new_customer'))
+    <x-ui.page-header :title="$pageTitle" />
 
-    <form class="card max-w-4xl space-y-5" method="POST" action="{{ $customer ? route('customers.update', $customer['id']) : route('customers.store') }}">
+    <form class="max-w-4xl" method="POST" action="{{ $customer ? route('customers.update', $customer['id']) : route('customers.store') }}">
         @csrf
         @if($customer) @method('PUT') @endif
 
-        <div class="grid gap-4 sm:grid-cols-2">
-            <div><label for="name">{{ __('app.name_label') }}</label><input id="name" name="name" value="{{ old('name', $customer['name'] ?? '') }}" required></div>
-            <div><label for="company">{{ __('customers::messages.company') }}</label><input id="company" name="company" value="{{ old('company', $customer['company'] ?? '') }}"></div>
-            <div><label for="email">{{ __('app.email') }}</label><input id="email" name="email" type="email" dir="ltr" value="{{ old('email', $customer['email'] ?? '') }}" required></div>
-            <div><label for="phone">{{ __('customers::messages.phone') }}</label><input id="phone" name="phone" dir="ltr" value="{{ old('phone', $customer['phone'] ?? '') }}"></div>
-            <div><label for="status">{{ __('app.status') }}</label><select id="status" name="status">@foreach($statuses as $status)<option value="{{ $status->value }}" @selected(old('status', $customer['status'] ?? 'active') === $status->value)>{{ __('customers::messages.status.'.$status->value) }}</option>@endforeach</select></div>
-        </div>
+        <x-ui.card>
+            <div class="space-y-5">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <x-ui.input name="name" :label="__('app.name_label')" :value="$customer['name'] ?? ''" required />
+                    <x-ui.input name="company" :label="__('customers::messages.company')" :value="$customer['company'] ?? ''" />
+                    <x-ui.input name="email" :label="__('app.email')" type="email" dir="ltr" :value="$customer['email'] ?? ''" required />
+                    <x-ui.input name="phone" :label="__('customers::messages.phone')" dir="ltr" :value="$customer['phone'] ?? ''" />
+                    <x-ui.select name="status" :label="__('app.status')">
+                        @foreach($statuses as $status)<option value="{{ $status->value }}" @selected(old('status', $customer['status'] ?? 'active') === $status->value)>{{ __('customers::messages.status.'.$status->value) }}</option>@endforeach
+                    </x-ui.select>
+                </div>
 
-        <div><label for="notes">{{ __('customers::messages.notes') }}</label><textarea id="notes" name="notes">{{ old('notes', $customer['notes'] ?? '') }}</textarea></div>
+                <x-ui.textarea name="notes" :label="__('customers::messages.notes')" :value="$customer['notes'] ?? ''" />
 
-        <div class="rounded-xl border border-slate-200 p-4">
-            <label class="flex items-center gap-2"><input class="h-4 w-4" type="checkbox" name="portal_enabled" value="1" @checked(old('portal_enabled', (bool) ($customer['user_id'] ?? false)))><span>{{ __('customers::messages.portal_enabled') }}</span></label>
-            <div class="mt-4 grid gap-4 sm:grid-cols-2">
-                <div><label for="portal_password">{{ __('customers::messages.portal_password') }}</label><input id="portal_password" name="portal_password" type="password">@if($customer)<p class="mt-1 text-xs text-slate-500">{{ __('customers::messages.portal_password_hint') }}</p>@endif</div>
-                <div><label for="portal_password_confirmation">{{ __('customers::messages.portal_password_confirmation') }}</label><input id="portal_password_confirmation" name="portal_password_confirmation" type="password"></div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <x-ui.checkbox name="portal_enabled" :label="__('customers::messages.portal_enabled')" :checked="(bool) old('portal_enabled', (bool) ($customer['user_id'] ?? false))" />
+                    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                        <x-ui.input name="portal_password" :label="__('customers::messages.portal_password')" type="password" :hint="$customer ? __('customers::messages.portal_password_hint') : null" />
+                        <x-ui.input name="portal_password_confirmation" :label="__('customers::messages.portal_password_confirmation')" type="password" />
+                    </div>
+                </div>
+
+                <x-ui.form-actions>
+                    <x-ui.button type="submit">{{ __('app.save') }}</x-ui.button>
+                    <x-ui.button variant="secondary" :href="route('customers.index')">{{ __('app.cancel') }}</x-ui.button>
+                </x-ui.form-actions>
             </div>
-        </div>
-
-        <div class="flex gap-2"><button class="btn-primary" type="submit">{{ __('app.save') }}</button><a class="btn-secondary" href="{{ route('customers.index') }}">{{ __('app.cancel') }}</a></div>
+        </x-ui.card>
     </form>
 @endsection
