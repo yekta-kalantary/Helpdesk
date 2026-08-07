@@ -44,9 +44,11 @@
                             @can('tasks.view')
                                 <x-ui.button size="sm" variant="secondary" :href="route('tasks.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tasks') }}</x-ui.button>
                             @endcan
-                            @can('tickets.view')
-                                <x-ui.button size="sm" variant="secondary" :href="route('tickets.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tickets') }}</x-ui.button>
-                            @endcan
+                            @if($project['category'] === 'customer')
+                                @can('tickets.view')
+                                    <x-ui.button size="sm" variant="secondary" :href="route('tickets.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tickets') }}</x-ui.button>
+                                @endcan
+                            @endif
                             @can('projects.update')
                                 <x-ui.button size="sm" variant="secondary" :href="route('projects.edit', $project['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                             @endcan
