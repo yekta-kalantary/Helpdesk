@@ -10,7 +10,7 @@ class SmtpSettings extends Settings
     public ?string $host;
     public int $port;
     public ?string $username;
-    public ?string $password_encrypted;
+    public ?string $password;
     public ?string $scheme;
     public string $from_address;
     public string $from_name;
