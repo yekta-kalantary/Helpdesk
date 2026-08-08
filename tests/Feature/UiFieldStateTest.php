@@ -1,9 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ViewErrorBag;
+
+function renderUi(string $template): string
+{
+    return Blade::render($template, ['errors' => new ViewErrorBag]);
+}
 
 it('renders semantic left-to-right inputs with left aligned text', function (string $name, string $type): void {
-    $html = Blade::render('<x-ui.input name="'.$name.'" type="'.$type.'" />');
+    $html = renderUi('<x-ui.input name="'.$name.'" type="'.$type.'" />');
 
     expect($html)
         ->toContain('dir="ltr"')
@@ -19,7 +25,7 @@ it('renders semantic left-to-right inputs with left aligned text', function (str
 ]);
 
 it('does not force ordinary text inputs to left-to-right', function (): void {
-    $html = Blade::render('<x-ui.input name="name" type="text" />');
+    $html = renderUi('<x-ui.input name="name" type="text" />');
 
     expect($html)
         ->not->toContain('dir="ltr"')
@@ -27,7 +33,7 @@ it('does not force ordinary text inputs to left-to-right', function (): void {
 });
 
 it('respects an explicit direction override', function (): void {
-    $html = Blade::render('<x-ui.input name="email" type="email" dir="rtl" />');
+    $html = renderUi('<x-ui.input name="email" type="email" dir="rtl" />');
 
     expect($html)
         ->toContain('dir="rtl"')
@@ -35,10 +41,10 @@ it('respects an explicit direction override', function (): void {
 });
 
 it('renders a distinct disabled state for shared form fields', function (): void {
-    $input = Blade::render('<x-ui.input name="email" type="email" disabled />');
-    $select = Blade::render('<x-ui.select name="role" disabled><option value="">Role</option></x-ui.select>');
-    $textarea = Blade::render('<x-ui.textarea name="notes" disabled />');
-    $checkbox = Blade::render('<x-ui.checkbox name="active" label="Active" disabled />');
+    $input = renderUi('<x-ui.input name="email" type="email" disabled />');
+    $select = renderUi('<x-ui.select name="role" disabled><option value="">Role</option></x-ui.select>');
+    $textarea = renderUi('<x-ui.textarea name="notes" disabled />');
+    $checkbox = renderUi('<x-ui.checkbox name="active" label="Active" disabled />');
 
     expect($input)
         ->toContain('disabled')
