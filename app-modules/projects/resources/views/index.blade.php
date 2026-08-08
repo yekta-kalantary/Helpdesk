@@ -22,6 +22,7 @@
         <thead>
             <tr>
                 <th>{{ __('app.title') }}</th>
+                <th>{{ __('projects::messages.category') }}</th>
                 <th>{{ __('projects::messages.customer') }}</th>
                 <th>{{ __('projects::messages.type') }}</th>
                 <th>{{ __('app.status') }}</th>
@@ -33,7 +34,8 @@
             @forelse($projects as $project)
                 <tr wire:key="project-{{ $project['id'] }}">
                     <td class="font-semibold">{{ $project['title'] }}</td>
-                    <td>{{ $project['customer_name'] }}</td>
+                    <td><x-ui.badge>{{ __('projects::messages.category.'.$project['category']) }}</x-ui.badge></td>
+                    <td>{{ $project['customer_name'] ?: '—' }}</td>
                     <td><x-ui.badge>{{ __('projects::messages.type.'.$project['type']) }}</x-ui.badge></td>
                     <td><x-ui.badge>{{ __('projects::messages.status.'.$project['status']) }}</x-ui.badge></td>
                     <td><x-ui.progress class="w-32" :value="$project['progress']" /></td>
@@ -42,9 +44,11 @@
                             @can('tasks.view')
                                 <x-ui.button size="sm" variant="secondary" :href="route('tasks.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tasks') }}</x-ui.button>
                             @endcan
-                            @can('tickets.view')
-                                <x-ui.button size="sm" variant="secondary" :href="route('tickets.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tickets') }}</x-ui.button>
-                            @endcan
+                            @if($project['category'] === 'customer')
+                                @can('tickets.view')
+                                    <x-ui.button size="sm" variant="secondary" :href="route('tickets.index', ['project' => $project['id']])" wire:navigate>{{ __('app.tickets') }}</x-ui.button>
+                                @endcan
+                            @endif
                             @can('projects.update')
                                 <x-ui.button size="sm" variant="secondary" :href="route('projects.edit', $project['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                             @endcan
@@ -55,7 +59,7 @@
                     </td>
                 </tr>
             @empty
-                <x-ui.empty-row colspan="6" />
+                <x-ui.empty-row colspan="7" />
             @endforelse
         </tbody>
     </x-ui.table>
