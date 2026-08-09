@@ -63,6 +63,53 @@ async function findEntryByName(directory, targetName, expectedType) {
     return null;
 }
 
+function mergeBase64Parts(contents, filename) {
+    let merged = '';
+
+    for (const rawContent of contents) {
+        const part = rawContent.replace(/\s+/g, '');
+
+        if (part.length === 0) {
+            continue;
+        }
+
+        if (merged.length === 0) {
+            merged = part;
+            continue;
+        }
+
+        if (merged.includes(part)) {
+            continue;
+        }
+
+        const markerLength = Math.min(128, part.length);
+        const marker = part.slice(0, markerLength);
+        const searchFrom = Math.max(0, merged.length - part.length);
+        const start = merged.indexOf(marker, searchFrom);
+
+        if (start !== -1) {
+            const overlapLength = merged.length - start;
+            const comparableLength = Math.min(overlapLength, part.length);
+
+            if (
+                overlapLength >= markerLength
+                && merged.slice(start, start + comparableLength) === part.slice(0, comparableLength)
+            ) {
+                merged += part.slice(overlapLength);
+                continue;
+            }
+        }
+
+        merged += part;
+    }
+
+    if (merged.length === 0) {
+        throw new Error(`Font Awesome source parts are empty: ${filename}`);
+    }
+
+    return merged;
+}
+
 function normalizeWoff2(font, filename, expectedSize, expectedSha256) {
     if (font.length < 12 || font.subarray(0, 4).toString('ascii') !== 'wOF2') {
         throw new Error(`${filename} is not a valid WOFF2 file.`);
@@ -74,9 +121,6 @@ function normalizeWoff2(font, filename, expectedSize, expectedSha256) {
         throw new Error(`${filename} integrity check failed: declared=${declaredLength}, actual=${font.length}`);
     }
 
-    // Some historical source chunks contain trailing duplicated bytes after the
-    // complete WOFF2 payload. The WOFF2 header is authoritative for file length;
-    // trim only that trailing data, then verify against the known original hash.
     const normalized = declaredLength === font.length
         ? font
         : font.subarray(0, declaredLength);
@@ -95,10 +139,12 @@ const fontAwesomeWebfontsTarget = resolve(fontAwesomeRoot, 'webfonts');
 const fontAwesomeFonts = {
     'fa-brands-400.woff2': {
         size: 115380,
+        base64Length: 153840,
         sha256: '57f8508ef396d096c48c6ad56257e0fcc510a5560bb220c13339be93543ff868',
     },
     'fa-light-300.woff2': {
         size: 380172,
+        base64Length: 506896,
         sha256: '4bf8e8608d8ddb833c06b636235b13f3d6926de361fbf590f369405fb06c4707',
     },
 };
@@ -131,16 +177,21 @@ for (const [filename, expected] of Object.entries(fontAwesomeFonts)) {
     }
 
     const parts = (await readdir(sourceDir))
-        .filter((file) => file.endsWith('.txt'))
+        .filter((file) => /^part-.*\.txt$/.test(file))
         .sort();
 
     if (parts.length === 0) {
         throw new Error(`Font Awesome source parts are empty: ${filename}`);
     }
 
-    const base64 = (await Promise.all(
+    const contents = await Promise.all(
         parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')),
-    )).join('').replace(/\s+/g, '');
+    );
+    const base64 = mergeBase64Parts(contents, filename);
+
+    if (base64.length !== expected.base64Length) {
+        throw new Error(`${filename} Base64 reconstruction failed: expected=${expected.base64Length}, actual=${base64.length}`);
+    }
 
     const decoded = Buffer.from(base64, 'base64');
     const { font, sha256 } = normalizeWoff2(decoded, filename, expected.size, expected.sha256);
