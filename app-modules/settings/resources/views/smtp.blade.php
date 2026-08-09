@@ -27,7 +27,7 @@
                 </div>
 
                 <x-ui.form-actions>
-                    <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">
+                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">
                         <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
                         <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
                     </x-ui.button>
