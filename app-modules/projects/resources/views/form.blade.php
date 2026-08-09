@@ -14,25 +14,17 @@
                     </x-ui.select>
 
                     @if($category === 'customer')
-                        <div>
-                            <x-ui.input
-                                name="customerSearch"
-                                :label="__('projects::messages.customer_search')"
-                                :value="$customerSearch"
-                                wire:model.live.debounce.300ms="customerSearch"
-                                :placeholder="__('projects::messages.customer_search_placeholder')"
-                                autocomplete="off"
-                            />
-                            <div class="mt-2">
-                                <x-ui.select name="customer_id" :label="__('projects::messages.customer')" wire:model.number="customer_id" required>
-                                    <option value="">—</option>
-                                    @foreach($options['customers'] as $customer)
-                                        <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
-                                    @endforeach
-                                </x-ui.select>
-                            </div>
-                            <p class="mt-1.5 text-xs text-slate-500" wire:loading wire:target="customerSearch">{{ __('app.loading') }}</p>
-                        </div>
+                        <x-ui.searchable-select
+                            name="customer_id"
+                            :label="__('projects::messages.customer')"
+                            :options="$options['customers']"
+                            :value="$customer_id"
+                            wire:model.number="customer_id"
+                            search-model="customerSearch"
+                            :search-value="$customerSearch"
+                            :search-placeholder="__('projects::messages.customer_search_placeholder')"
+                            required
+                        />
                     @else
                         <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
                             {{ __('projects::messages.internal_project_hint') }}
