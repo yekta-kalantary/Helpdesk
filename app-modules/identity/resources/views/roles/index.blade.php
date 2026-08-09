@@ -10,7 +10,7 @@
     <x-ui.page-header :title="__('app.roles_permissions')">
         <x-slot:actions>
             @can('roles.create')
-                <x-ui.button :href="route('roles.create')" wire:navigate>{{ __('identity::messages.new_role') }}</x-ui.button>
+                <x-ui.button :href="route('roles.create')" icon="fa-plus" wire:navigate>{{ __('identity::messages.new_role') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
@@ -44,14 +44,17 @@
                             @if(! $role['system'])
                                 <div class="flex flex-wrap gap-2">
                                     @can('roles.update')
-                                        <x-ui.button size="sm" variant="secondary" :href="route('roles.edit', $role['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
+                                        <x-ui.button size="sm" variant="secondary" :href="route('roles.edit', $role['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                                     @endcan
                                     @can('roles.delete')
-                                        <x-ui.button size="sm" variant="danger" wire:click="delete({{ $role['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $role['id'] }})">{{ __('app.delete') }}</x-ui.button>
+                                        <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="delete({{ $role['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $role['id'] }})">{{ __('app.delete') }}</x-ui.button>
                                     @endcan
                                 </div>
                             @else
-                                <span class="text-xs text-slate-500">{{ __('identity::messages.system_role_locked') }}</span>
+                                <span class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                                    <i class="fa-light fa-lock" aria-hidden="true"></i>
+                                    {{ __('identity::messages.system_role_locked') }}
+                                </span>
                             @endif
                         </td>
                     </tr>
@@ -63,7 +66,10 @@
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @foreach(collect($permissions)->groupBy('module') as $module => $modulePermissions)
                     <section class="rounded-xl border border-slate-200 p-4">
-                        <h3 class="mb-3 font-bold text-slate-900">{{ __('identity::messages.permission_modules.'.$module) }}</h3>
+                        <h3 class="mb-3 flex items-center gap-2 font-bold text-slate-900">
+                            <i class="fa-light fa-shield-check text-slate-400" aria-hidden="true"></i>
+                            <span>{{ __('identity::messages.permission_modules.'.$module) }}</span>
+                        </h3>
                         <div class="flex flex-wrap gap-2">
                             @foreach($modulePermissions as $permission)
                                 <x-ui.badge dir="ltr">{{ $permission['name'] }}</x-ui.badge>
