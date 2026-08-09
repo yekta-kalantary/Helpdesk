@@ -3,7 +3,10 @@
 
     <div class="space-y-8" wire:loading.class="opacity-60">
         <section>
-            <h2 class="mb-3 text-lg font-bold text-slate-950">{{ __('reports::messages.customers') }}</h2>
+            <h2 class="mb-3 flex items-center gap-2 text-lg font-bold text-slate-950">
+                <i class="fa-light fa-address-book text-slate-400" aria-hidden="true"></i>
+                <span>{{ __('reports::messages.customers') }}</span>
+            </h2>
             <x-ui.table>
                 <thead><tr><th>{{ __('app.name_label') }}</th><th>{{ __('app.status') }}</th><th>{{ __('reports::messages.projects_count') }}</th><th>{{ __('reports::messages.open_tickets') }}</th></tr></thead>
                 <tbody>
@@ -15,7 +18,10 @@
         </section>
 
         <section>
-            <h2 class="mb-3 text-lg font-bold text-slate-950">{{ __('reports::messages.projects') }}</h2>
+            <h2 class="mb-3 flex items-center gap-2 text-lg font-bold text-slate-950">
+                <i class="fa-light fa-diagram-project text-slate-400" aria-hidden="true"></i>
+                <span>{{ __('reports::messages.projects') }}</span>
+            </h2>
             <x-ui.table>
                 <thead><tr><th>{{ __('app.title') }}</th><th>{{ __('projects::messages.customer') }}</th><th>{{ __('app.status') }}</th><th>{{ __('reports::messages.tasks_count') }}</th><th>{{ __('reports::messages.done_tasks') }}</th><th>{{ __('reports::messages.overdue_tasks') }}</th><th>{{ __('reports::messages.progress') }}</th></tr></thead>
                 <tbody>
@@ -28,7 +34,10 @@
         </section>
 
         <section>
-            <h2 class="mb-3 text-lg font-bold text-slate-950">{{ __('reports::messages.team') }}</h2>
+            <h2 class="mb-3 flex items-center gap-2 text-lg font-bold text-slate-950">
+                <i class="fa-light fa-users text-slate-400" aria-hidden="true"></i>
+                <span>{{ __('reports::messages.team') }}</span>
+            </h2>
             <x-ui.table>
                 <thead><tr><th>{{ __('app.name_label') }}</th><th>{{ __('app.email') }}</th><th>{{ __('reports::messages.assigned_tasks') }}</th><th>{{ __('reports::messages.done_tasks') }}</th><th>{{ __('reports::messages.overdue_tasks') }}</th></tr></thead>
                 <tbody>
