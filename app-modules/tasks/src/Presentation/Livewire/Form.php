@@ -88,12 +88,6 @@ class Form extends Component
         $this->assertProjectAllowed((int) $data['project_id'], $scope);
         $this->assertAssigneeAllowed($data['assigned_to'] ?? null);
 
-        $currentAssignedTo = null;
-        if ($this->taskId) {
-            $current = $this->tasks->findAccessible($this->taskId, $scope);
-            $currentAssignedTo = $current['assigned_to'];
-        }
-
         $taskId = $this->saveTask->execute(
             $this->taskId,
             [
@@ -109,7 +103,6 @@ class Form extends Component
                 ...($this->taskId ? [] : ['created_by' => $user->id]),
             ],
             $this->attachments,
-            $currentAssignedTo,
         );
 
         session()->flash('success', $this->taskId ? __('app.updated_successfully') : __('app.created_successfully'));
