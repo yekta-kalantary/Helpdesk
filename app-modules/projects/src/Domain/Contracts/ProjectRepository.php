@@ -5,7 +5,7 @@ namespace Modules\Projects\Domain\Contracts;
 interface ProjectRepository
 {
     /** @return array<int, array<string,mixed>> */
-    public function search(?string $term = null, ?int $customerId = null): array;
+    public function search(?string $term = null, ?int $contactId = null): array;
 
     /** @return array<string,mixed> */
     public function find(int $id): array;
