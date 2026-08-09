@@ -116,7 +116,7 @@ Infrastructure از طریق Service Container به Contractهای Domain bind �
 
 پیش‌فرض‌ها:
 
-- Database: SQLite
+- Database: MariaDB
 - Filesystem: local
 - Cache: file
 - Session: file
@@ -124,7 +124,7 @@ Infrastructure از طریق Service Container به Contractهای Domain bind �
 - Mail: log، مگر SMTP از پنل فعال شود
 - Notifications: database
 
-بنابراین هیچ daemon یا سرویس زیرساختی جدا برای اجرای پایه لازم نیست. Livewire نیز از همان Laravel web runtime استفاده می‌کند و سرویس جداگانه‌ای نیاز ندارد.
+بنابراین برای اجرای پایه، MariaDB تنها سرویس زیرساختی اجباری خارج از PHP runtime است. Livewire نیز از همان Laravel web runtime استفاده می‌کند و سرویس جداگانه‌ای نیاز ندارد.
 
 ## Authorization
 
