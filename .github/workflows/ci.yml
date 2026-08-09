@@ -61,8 +61,18 @@ jobs:
           cache: npm
           package-manager-cache: false
 
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Refresh PHP dependencies
+        env:
+          COMPOSER_MINIMAL_CHANGES: '1'
+        run: composer update --no-interaction --prefer-dist --no-progress --minimal-changes
+
+      - name: Upload refreshed Composer lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: composer-lock-refresh
+          path: composer.lock
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Validate Composer
         run: composer validate --no-check-publish
