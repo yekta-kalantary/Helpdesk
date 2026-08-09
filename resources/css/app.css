@@ -21,6 +21,7 @@
 
 @layer base {
     html {
+        min-width: 320px;
         direction: rtl;
         font-family: 'IRANYekanXVF';
     }
@@ -30,11 +31,31 @@
     }
 
     body {
+        min-width: 0;
         @apply bg-slate-50 text-slate-900 antialiased;
+    }
+
+    main,
+    section,
+    form,
+    fieldset {
+        min-width: 0;
+    }
+
+    img,
+    video,
+    canvas {
+        max-width: 100%;
     }
 }
 
 @layer components {
+    .ui-table-shell {
+        max-width: 100%;
+        overscroll-behavior-inline: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .ui-table {
         @apply min-w-full divide-y divide-slate-200 text-sm;
     }
@@ -49,9 +70,29 @@
 
     .ui-table th {
         @apply px-4 py-3 text-right font-semibold text-slate-600;
+        white-space: nowrap;
     }
 
     .ui-table td {
         @apply px-4 py-3 align-top text-slate-700;
+        overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 639px) {
+        .ui-table th,
+        .ui-table td {
+            min-width: 7.5rem;
+            padding-inline: 0.75rem;
+        }
+
+        .ui-table th:first-child,
+        .ui-table td:first-child {
+            min-width: 9rem;
+        }
+
+        .ui-table th:last-child,
+        .ui-table td:last-child {
+            min-width: 10rem;
+        }
     }
 }
