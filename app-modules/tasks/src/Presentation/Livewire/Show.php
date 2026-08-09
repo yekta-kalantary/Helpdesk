@@ -17,13 +17,10 @@ class Show extends Component
     public int $taskId;
 
     public string $commentBody = '';
-
     public string $status = 'todo';
 
     protected TaskRepository $tasks;
-
     protected TaskAccessScope $scopeBuilder;
-
     protected TaskAttachmentStore $attachments;
 
     public function boot(
@@ -91,12 +88,10 @@ class Show extends Component
 
     public function render()
     {
-        $scope = $this->scope();
-        $task = $this->tasks->findAccessible($this->taskId, $scope);
+        $task = $this->tasks->findAccessible($this->taskId, $this->scope());
 
         return view('tasks::show', [
             'task' => $task,
-            'customerView' => (bool) $scope['customer_id'],
             'statuses' => TaskStatus::cases(),
         ])->title($task['title']);
     }
