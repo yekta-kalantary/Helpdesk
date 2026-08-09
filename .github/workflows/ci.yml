@@ -98,19 +98,19 @@ jobs:
       - name: Verify Vite font assets
         run: |
           IRANYEKAN_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'IRANYekanXVF-*.woff2' -print -quit)"
-          FA_BRANDS_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'fa-brands-400-*.woff2' -print -quit)"
           FA_LIGHT_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'fa-light-300-*.woff2' -print -quit)"
 
           test -n "$IRANYEKAN_ASSET"
-          test -n "$FA_BRANDS_ASSET"
           test -n "$FA_LIGHT_ASSET"
 
           cmp resources/fonts/IRANYekanXVF/IRANYekanXVF.woff2 "$IRANYEKAN_ASSET"
-          cmp resources/fonts/fontawesome/webfonts/fa-brands-400.woff2 "$FA_BRANDS_ASSET"
-          cmp resources/fonts/fontawesome/webfonts/fa-light-300.woff2 "$FA_LIGHT_ASSET"
+          cmp resources/fonts/fontawesome/fa-light-300.woff2 "$FA_LIGHT_ASSET"
 
+          grep -q '\.fa-house' resources/css/fontawesome.css
           ! grep -R "data:font/woff2;base64" public/build resources/css
           ! grep -R "fonts.bunny.net" public/build resources/css vite.config.js
+          ! grep -R "../webfonts/" resources/css
+          ! grep -R "../fonts/fontawesome/css/" resources/css/app.css
           ! grep -R "/fonts/IRANYekanXVF.woff2" resources/css resources/views/layouts/app.blade.php
           ! grep -R "asset('fontawesome/" resources/views/layouts/app.blade.php
 
