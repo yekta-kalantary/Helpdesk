@@ -8,12 +8,6 @@ Route::middleware('web')->group(function (): void {
     });
 
     Route::middleware('auth')->group(function (): void {
-        Route::livewire('/dashboard', 'identity::dashboard')->name('dashboard');
-
-        Route::livewire('/notifications', 'identity::notifications.index')
-            ->middleware('permission:notifications.view')
-            ->name('notifications.index');
-
         Route::livewire('/users', 'identity::users.index')
             ->middleware('permission:users.view')
             ->name('users.index');
