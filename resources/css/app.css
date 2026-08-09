@@ -1,4 +1,7 @@
 @import 'tailwindcss';
+@import '../fonts/fontawesome/css/base.css';
+@import '../fonts/fontawesome/css/light.css';
+@import '../fonts/fontawesome/css/brands.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -7,7 +10,7 @@
 
 @font-face {
     font-family: 'IRANYekanXVF';
-    src: url('/fonts/IRANYekanXVF.woff2') format('woff2');
+    src: url('../fonts/IRANYekanXVF/IRANYekanXVF.woff2') format('woff2');
     font-style: normal;
     font-weight: 100 1000;
     font-display: swap;
