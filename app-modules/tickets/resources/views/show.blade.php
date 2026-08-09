@@ -6,7 +6,7 @@
     <x-ui.page-header :title="'#'.$ticket['id'].' — '.$ticket['subject']" :subtitle="$ticket['customer_name'].($ticket['project_title'] ? ' · '.$ticket['project_title'] : '')">
         <x-slot:actions>
             @can('tickets.delete')
-                <x-ui.button variant="danger" wire:click="deleteTicket" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteTicket">{{ __('app.delete') }}</x-ui.button>
+                <x-ui.button variant="danger" icon="fa-trash" wire:click="deleteTicket" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteTicket">{{ __('app.delete') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
@@ -32,7 +32,7 @@
                             @if($message['attachments'])
                                 <div class="mt-4 flex flex-wrap gap-2">
                                     @foreach($message['attachments'] as $attachment)
-                                        <x-ui.button size="sm" variant="secondary" :href="route('tickets.attachments.download', [$ticket['id'], $message['id'], $attachment['id']])">{{ __('tickets::messages.download') }}: {{ $attachment['name'] }}</x-ui.button>
+                                        <x-ui.button size="sm" variant="secondary" icon="fa-download" :href="route('tickets.attachments.download', [$ticket['id'], $message['id'], $attachment['id']])">{{ __('tickets::messages.download') }}: {{ $attachment['name'] }}</x-ui.button>
                                     @endforeach
                                 </div>
                             @endif
@@ -48,7 +48,7 @@
                             <x-ui.textarea name="replyBody" :label="__('tickets::messages.reply')" :value="$replyBody" wire:model="replyBody" required />
                             <x-ui.input name="replyAttachments" :label="__('tickets::messages.attachments')" type="file" wire:model="replyAttachments" multiple />
                             @error('replyAttachments.*')<p class="text-xs font-medium text-red-600">{{ $message }}</p>@enderror
-                            <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="reply,replyAttachments">
+                            <x-ui.button type="submit" icon="fa-paper-plane" wire:loading.attr="disabled" wire:target="reply,replyAttachments">
                                 <span wire:loading.remove wire:target="reply">{{ __('tickets::messages.reply') }}</span>
                                 <span wire:loading wire:target="reply">{{ __('app.loading') }}</span>
                             </x-ui.button>
@@ -74,7 +74,7 @@
                                     <option value="{{ $member['id'] }}">{{ $member['name'] }}</option>
                                 @endforeach
                             </x-ui.select>
-                            <x-ui.button class="w-full" type="submit" wire:loading.attr="disabled" wire:target="manage">
+                            <x-ui.button class="w-full" type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="manage">
                                 <span wire:loading.remove wire:target="manage">{{ __('app.save') }}</span>
                                 <span wire:loading wire:target="manage">{{ __('app.loading') }}</span>
                             </x-ui.button>
