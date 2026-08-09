@@ -1,6 +1,14 @@
 name: Font Assets Check
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/prepare-font.mjs'
+      - 'resources/fonts/**'
+      - 'resources/css/fontawesome/**'
+      - '.github/workflows/font-assets-check.yml'
   pull_request:
     paths:
       - 'scripts/prepare-font.mjs'
