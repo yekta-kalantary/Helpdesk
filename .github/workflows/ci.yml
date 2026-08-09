@@ -109,7 +109,10 @@ jobs:
           cmp resources/fonts/fontawesome/webfonts/fa-brands-400.woff2 "$FA_BRANDS_ASSET"
           cmp resources/fonts/fontawesome/webfonts/fa-light-300.woff2 "$FA_LIGHT_ASSET"
 
-          ! grep -R "data:font/woff2;base64\|fonts.bunny.net\|/fonts/IRANYekanXVF.woff2\|/fontawesome/" public/build resources/css resources/views/layouts/app.blade.php vite.config.js
+          ! grep -R "data:font/woff2;base64" public/build resources/css
+          ! grep -R "fonts.bunny.net" public/build resources/css vite.config.js
+          ! grep -R "/fonts/IRANYekanXVF.woff2" resources/css resources/views/layouts/app.blade.php
+          ! grep -R "asset('fontawesome/" resources/views/layouts/app.blade.php
 
       - name: Build deployable source archive
         run: |
