@@ -2,7 +2,6 @@
 
 namespace Modules\Tasks\Presentation\Livewire;
 
-use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -24,33 +23,19 @@ class Form extends Component
     public ?int $taskId = null;
 
     public ?int $project_id = null;
-
     public string $title = '';
-
     public ?string $description = null;
-
     public ?int $assigned_to = null;
-
     public string $priority = 'medium';
-
     public string $status = 'todo';
-
-    public bool $is_customer_visible = false;
-
     public ?string $due_at = null;
-
     public ?int $estimated_minutes = null;
-
     public ?int $spent_minutes = null;
-
     public array $attachments = [];
 
     protected TaskRepository $tasks;
-
     protected SaveTask $saveTask;
-
     protected TaskAccessScope $scopeBuilder;
-
     protected TaskFormOptions $formOptions;
 
     public function boot(
@@ -86,7 +71,6 @@ class Form extends Component
         $this->assigned_to = $item['assigned_to'] ? (int) $item['assigned_to'] : null;
         $this->priority = $item['priority'];
         $this->status = $item['status'];
-        $this->is_customer_visible = (bool) $item['is_customer_visible'];
         $this->due_at = $item['due_at'];
         $this->estimated_minutes = $item['estimated_minutes'];
         $this->spent_minutes = $item['spent_minutes'];
@@ -119,7 +103,6 @@ class Form extends Component
                 'assigned_to' => $data['assigned_to'] ?: null,
                 'priority' => $data['priority'],
                 'status' => $data['status'],
-                'is_customer_visible' => $data['is_customer_visible'],
                 'due_at' => $data['due_at'] ?: null,
                 'estimated_minutes' => $data['estimated_minutes'],
                 'spent_minutes' => $data['spent_minutes'],
@@ -143,7 +126,6 @@ class Form extends Component
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'priority' => ['required', Rule::enum(TaskPriority::class)],
             'status' => ['required', Rule::enum(TaskStatus::class)],
-            'is_customer_visible' => ['boolean'],
             'due_at' => ['nullable', 'date'],
             'estimated_minutes' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'spent_minutes' => ['nullable', 'integer', 'min:0', 'max:1000000'],
@@ -154,8 +136,6 @@ class Form extends Component
 
     private function assertProjectAllowed(int $projectId, array $scope): void
     {
-        abort_if($scope['customer_id'], 403);
-
         if ($scope['manage_all']) {
             return;
         }
@@ -173,7 +153,7 @@ class Form extends Component
         }
 
         $user = User::query()->findOrFail($userId);
-        abort_if(! $user->is_active || $user->person?->type !== PersonType::Employee, 422);
+        abort_if(! $user->is_active, 422);
     }
 
     public function render()
