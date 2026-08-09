@@ -43,11 +43,11 @@
                 @error('attachments.*')<p class="text-xs font-medium text-red-600">{{ $message }}</p>@enderror
 
                 <x-ui.form-actions>
-                    <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save,attachments">
+                    <x-ui.button type="submit" icon="fa-plus" wire:loading.attr="disabled" wire:target="save,attachments">
                         <span wire:loading.remove wire:target="save">{{ __('app.create') }}</span>
                         <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
                     </x-ui.button>
-                    <x-ui.button variant="secondary" :href="route('tickets.index')" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
+                    <x-ui.button variant="secondary" :href="route('tickets.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
                 </x-ui.form-actions>
             </div>
         </x-ui.card>
