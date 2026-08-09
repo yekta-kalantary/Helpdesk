@@ -6,7 +6,7 @@
     <x-ui.page-header :title="__('identity::messages.users')">
         <x-slot:actions>
             @can('users.create')
-                <x-ui.button :href="route('users.create')" wire:navigate>{{ __('identity::messages.new_user') }}</x-ui.button>
+                <x-ui.button :href="route('users.create')" icon="fa-user-plus" wire:navigate>{{ __('identity::messages.new_user') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
@@ -15,7 +15,7 @@
         <div class="min-w-0 flex-1">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('identity::messages.search_users')" />
         </div>
-        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q">{{ __('app.loading') }}</span>
+        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q"><i class="fa-light fa-spinner-third fa-spin ml-1" aria-hidden="true"></i>{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
     <x-ui.table wire:loading.class="opacity-60" wire:target="q">
@@ -46,7 +46,7 @@
                     <td>
                         <div class="flex flex-wrap gap-2">
                             @can('users.update')
-                                <x-ui.button size="sm" variant="secondary" :href="route('users.edit', $user['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" :href="route('users.edit', $user['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
                             @endcan
                         </div>
                     </td>
