@@ -3,6 +3,7 @@
     'variant' => 'primary',
     'type' => 'button',
     'size' => 'md',
+    'icon' => null,
 ])
 
 @php
@@ -19,11 +20,23 @@
         default => 'min-h-9 px-4 py-2 text-sm',
     };
 
+    $iconClasses = match ($size) {
+        'sm' => 'text-xs',
+        'lg' => 'text-base',
+        default => 'text-sm',
+    };
+
     $classes = "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 {$variantClasses} {$sizeClasses}";
 @endphp
 
 @if($href)
-    <a href="{{ $href }}" {{ $attributes->class([$classes]) }}>{{ $slot }}</a>
+    <a href="{{ $href }}" {{ $attributes->class([$classes]) }}>
+        @if($icon)<i class="fa-light {{ $icon }} fa-fw {{ $iconClasses }}" aria-hidden="true"></i>@endif
+        {{ $slot }}
+    </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class([$classes]) }}>{{ $slot }}</button>
+    <button type="{{ $type }}" {{ $attributes->class([$classes]) }}>
+        @if($icon)<i class="fa-light {{ $icon }} fa-fw {{ $iconClasses }}" aria-hidden="true"></i>@endif
+        {{ $slot }}
+    </button>
 @endif
