@@ -6,7 +6,7 @@
     <x-ui.page-header :title="__('identity::notifications.title')">
         <x-slot:actions>
             @if(auth()->user()->unreadNotifications()->exists())
-                <x-ui.button variant="secondary" wire:click="markAllRead" wire:loading.attr="disabled" wire:target="markAllRead">
+                <x-ui.button variant="secondary" icon="fa-check-double" wire:click="markAllRead" wire:loading.attr="disabled" wire:target="markAllRead">
                     <span wire:loading.remove wire:target="markAllRead">{{ __('identity::notifications.mark_all_read') }}</span>
                     <span wire:loading wire:target="markAllRead">{{ __('app.loading') }}</span>
                 </x-ui.button>
@@ -23,9 +23,15 @@
                     <div class="min-w-0">
                         <div class="mb-2 flex flex-wrap items-center gap-2">
                             <x-ui.badge :tone="$notification->read_at ? 'neutral' : 'info'">{{ $notification->read_at ? __('identity::notifications.read') : __('identity::notifications.unread') }}</x-ui.badge>
-                            <span class="text-xs text-slate-500" dir="ltr">{{ $notification->created_at?->format('Y-m-d H:i') }}</span>
+                            <span class="inline-flex items-center gap-1.5 text-xs text-slate-500" dir="ltr">
+                                <i class="fa-light fa-clock" aria-hidden="true"></i>
+                                {{ $notification->created_at?->format('Y-m-d H:i') }}
+                            </span>
                         </div>
-                        <div class="font-semibold text-slate-900">{{ $messageKey ? __($messageKey) : __('identity::notifications.title') }}</div>
+                        <div class="flex items-center gap-2 font-semibold text-slate-900">
+                            <i class="fa-light fa-bell text-slate-400" aria-hidden="true"></i>
+                            <span>{{ $messageKey ? __($messageKey) : __('identity::notifications.title') }}</span>
+                        </div>
                         @if(isset($notification->data['task_title']))
                             <div class="mt-1 text-sm text-slate-500">{{ $notification->data['task_title'] }}</div>
                         @endif
@@ -34,7 +40,7 @@
                         @endif
                     </div>
 
-                    <x-ui.button wire:click="open('{{ $notification->id }}')" wire:loading.attr="disabled" wire:target="open('{{ $notification->id }}')">{{ __('identity::notifications.open') }}</x-ui.button>
+                    <x-ui.button icon="fa-eye" wire:click="open('{{ $notification->id }}')" wire:loading.attr="disabled" wire:target="open('{{ $notification->id }}')">{{ __('identity::notifications.open') }}</x-ui.button>
                 </div>
             </x-ui.card>
         @empty
