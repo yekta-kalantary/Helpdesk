@@ -2,7 +2,7 @@
     <x-ui.page-header :title="__('tasks::messages.tasks')">
         <x-slot:actions>
             @can('tasks.create')
-                <x-ui.button :href="route('tasks.create', ['project' => $projectId])" wire:navigate>{{ __('tasks::messages.new_task') }}</x-ui.button>
+                <x-ui.button :href="route('tasks.create', ['project' => $projectId])" icon="fa-plus" wire:navigate>{{ __('tasks::messages.new_task') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
@@ -11,7 +11,7 @@
         <div class="min-w-0 flex-1">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('tasks::messages.search_placeholder')" />
         </div>
-        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q">{{ __('app.loading') }}</span>
+        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q"><i class="fa-light fa-spinner-third fa-spin ml-1" aria-hidden="true"></i>{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
     @php($grouped = collect($tasks)->groupBy('status'))
@@ -29,14 +29,20 @@
                         <a href="{{ route('tasks.show', $task['id']) }}" wire:navigate class="group block" wire:key="task-{{ $task['id'] }}">
                             <x-ui.card class="transition group-hover:-translate-y-0.5 group-hover:border-slate-300 group-hover:shadow-md">
                                 <div class="font-bold text-slate-950">{{ $task['title'] }}</div>
-                                <div class="mt-2 text-xs font-medium text-slate-500">{{ $task['project_title'] }}</div>
+                                <div class="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                                    <i class="fa-light fa-diagram-project" aria-hidden="true"></i>
+                                    <span>{{ $task['project_title'] }}</span>
+                                </div>
                                 <div class="mt-3 flex flex-wrap gap-1.5">
                                     <x-ui.badge>{{ __('tasks::messages.priority.'.$task['priority']) }}</x-ui.badge>
                                     <x-ui.badge>{{ $task['assignee_name'] ?: __('tasks::messages.unassigned') }}</x-ui.badge>
                                 </div>
 
                                 @if($task['due_at'])
-                                    <div class="mt-3 text-xs text-slate-500" dir="ltr">{{ \Illuminate\Support\Carbon::parse($task['due_at'])->format('Y-m-d H:i') }}</div>
+                                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500" dir="ltr">
+                                        <i class="fa-light fa-calendar-clock" aria-hidden="true"></i>
+                                        <span>{{ \Illuminate\Support\Carbon::parse($task['due_at'])->format('Y-m-d H:i') }}</span>
+                                    </div>
                                 @endif
                             </x-ui.card>
                         </a>
