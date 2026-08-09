@@ -67,20 +67,22 @@ it('renders a distinct disabled state for shared form fields', function (): void
         ->toContain('bg-slate-100');
 });
 
-it('renders searchable selects as one combobox with integrated live search', function (): void {
+it('renders searchable selects with live server search and server selection', function (): void {
     $html = Blade::render(
-        '<x-ui.searchable-select name="customer_id" label="Customer" :options="$options" :value="2" wire:model.number="customer_id" search-model="customerSearch" search-value="Needle" />',
+        '<x-ui.searchable-select name="customer_id" label="Customer" :options="$options" :value="2" search-model="customerSearch" select-action="selectCustomer" />',
         ['options' => [
-            ['id' => 1, 'name' => 'First Customer'],
-            ['id' => 2, 'name' => 'Selected Customer'],
+            ['id' => 1, 'name' => 'First Customer', 'email' => 'first@example.test', 'mobile' => '09120000001'],
+            ['id' => 2, 'name' => 'Selected Customer', 'email' => 'selected@example.test', 'mobile' => '09120000002'],
         ]],
     );
 
     expect($html)
         ->toContain('role="combobox"')
         ->toContain('role="listbox"')
-        ->toContain('wire:model.number="customer_id"')
-        ->toContain('wire:model.live.debounce.300ms="customerSearch"')
+        ->toContain('wire:model.live.debounce.200ms="customerSearch"')
+        ->toContain('wire:click="selectCustomer(2)"')
         ->toContain('data-searchable-option')
-        ->toContain('Selected Customer');
+        ->toContain('Selected Customer')
+        ->toContain('selected@example.test')
+        ->toContain('09120000002');
 });
