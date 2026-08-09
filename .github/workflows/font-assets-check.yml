@@ -26,15 +26,19 @@ jobs:
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          import { readdir, readFile } from 'node:fs/promises';
+          import { readFile } from 'node:fs/promises';
           import { resolve } from 'node:path';
 
           const dir = 'resources/fonts/fontawesome/fa-light-300.woff2.base64';
-          const parts = (await readdir(dir)).filter((name) => /^part-.*\.txt$/.test(name)).sort();
 
-          for (const name of parts) {
+          for (const name of ['part-002.txt', 'part-003.txt', 'part-010.txt']) {
               const content = (await readFile(resolve(dir, name), 'utf8')).replace(/\s+/g, '');
-              console.log(`${name}|${content.length}|${content.slice(0, 64)}|${content.slice(-64)}`);
+              console.log(`BEGIN|${name}|${content.length}`);
+              for (let offset = 0; offset < content.length; offset += 4096) {
+                  console.log(`SAMPLE|${name}|${offset}|${content.slice(offset, offset + 64)}`);
+              }
+              const tailOffset = Math.max(0, content.length - 64);
+              console.log(`TAIL|${name}|${tailOffset}|${content.slice(tailOffset)}`);
           }
           NODE
 
