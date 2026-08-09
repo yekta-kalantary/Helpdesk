@@ -33,7 +33,6 @@
                     <x-ui.input name="spent_minutes" :label="__('tasks::messages.spent_minutes')" type="number" min="0" :value="$spent_minutes" wire:model.number="spent_minutes" />
                 </div>
 
-                <x-ui.checkbox name="is_customer_visible" :label="__('tasks::messages.customer_visible')" model="is_customer_visible" />
                 <x-ui.textarea name="description" :label="__('app.description')" :value="$description" wire:model="description" />
                 <x-ui.input name="attachments" :label="__('tasks::messages.add_attachments')" type="file" wire:model="attachments" multiple />
                 @error('attachments.*')<p class="text-xs font-medium text-red-600">{{ $message }}</p>@enderror
