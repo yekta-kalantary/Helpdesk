@@ -17,7 +17,10 @@
                     <div class="grid gap-4 md:grid-cols-2">
                         @foreach(collect($permissionCatalog)->groupBy('module') as $module => $modulePermissions)
                             <section class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                <h2 class="mb-3 font-bold text-slate-900">{{ __('identity::messages.permission_modules.'.$module) }}</h2>
+                                <h2 class="mb-3 flex items-center gap-2 font-bold text-slate-900">
+                                    <i class="fa-light fa-shield-check text-slate-400" aria-hidden="true"></i>
+                                    <span>{{ __('identity::messages.permission_modules.'.$module) }}</span>
+                                </h2>
                                 <div class="space-y-2">
                                     @foreach($modulePermissions as $permission)
                                         <x-ui.checkbox name="permissions[]" :label="$permission['name']" :value="$permission['name']" model="permissions" dir="ltr" />
@@ -30,11 +33,11 @@
                 </div>
 
                 <x-ui.form-actions>
-                    <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save">
+                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">
                         <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
                         <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
                     </x-ui.button>
-                    <x-ui.button variant="secondary" :href="route('roles.index')" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
+                    <x-ui.button variant="secondary" :href="route('roles.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
                 </x-ui.form-actions>
             </div>
         </x-ui.card>
