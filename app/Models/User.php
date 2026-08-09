@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['contact_id', 'password', 'is_active'])]
@@ -17,7 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, HasRoles;
 
     public function contact(): BelongsTo
     {
