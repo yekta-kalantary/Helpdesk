@@ -6,10 +6,10 @@
     <x-ui.page-header :title="$task['title']" :subtitle="$task['project_title'].' · '.$task['customer_name']">
         <x-slot:actions>
             @can('tasks.update')
-                <x-ui.button variant="secondary" :href="route('tasks.edit', $task['id'])" wire:navigate>{{ __('app.edit') }}</x-ui.button>
+                <x-ui.button variant="secondary" :href="route('tasks.edit', $task['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
             @endcan
             @can('tasks.delete')
-                <x-ui.button variant="danger" wire:click="deleteTask" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteTask">{{ __('app.delete') }}</x-ui.button>
+                <x-ui.button variant="danger" icon="fa-trash" wire:click="deleteTask" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteTask">{{ __('app.delete') }}</x-ui.button>
             @endcan
         </x-slot:actions>
     </x-ui.page-header>
@@ -33,13 +33,16 @@
                     @forelse($task['attachments'] as $attachment)
                         <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 p-3" wire:key="task-attachment-{{ $attachment['id'] }}">
                             <div>
-                                <div class="text-sm font-semibold text-slate-800">{{ $attachment['name'] }}</div>
+                                <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                    <i class="fa-light fa-paperclip text-slate-400" aria-hidden="true"></i>
+                                    <span>{{ $attachment['name'] }}</span>
+                                </div>
                                 <div class="mt-1 text-xs text-slate-500">{{ number_format($attachment['size'] / 1024, 1) }} KB</div>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.attachments.download', [$task['id'], $attachment['id']])">{{ __('tasks::messages.download') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" icon="fa-download" :href="route('tasks.attachments.download', [$task['id'], $attachment['id']])">{{ __('tasks::messages.download') }}</x-ui.button>
                                 @can('tasks.update')
-                                    <x-ui.button size="sm" variant="danger" wire:click="deleteAttachment({{ $attachment['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteAttachment({{ $attachment['id'] }})">{{ __('app.delete') }}</x-ui.button>
+                                    <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="deleteAttachment({{ $attachment['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="deleteAttachment({{ $attachment['id'] }})">{{ __('app.delete') }}</x-ui.button>
                                 @endcan
                             </div>
                         </div>
@@ -54,7 +57,7 @@
                     @can('tasks.comment')
                         <form class="mb-5 space-y-3" wire:submit="addComment">
                             <x-ui.textarea name="commentBody" :value="$commentBody" wire:model="commentBody" :placeholder="__('tasks::messages.comment_placeholder')" required />
-                            <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="addComment">
+                            <x-ui.button type="submit" icon="fa-comment-plus" wire:loading.attr="disabled" wire:target="addComment">
                                 <span wire:loading.remove wire:target="addComment">{{ __('tasks::messages.new_comment') }}</span>
                                 <span wire:loading wire:target="addComment">{{ __('app.loading') }}</span>
                             </x-ui.button>
@@ -85,7 +88,7 @@
                                     <option value="{{ $statusItem->value }}">{{ __('tasks::messages.status.'.$statusItem->value) }}</option>
                                 @endforeach
                             </x-ui.select>
-                            <x-ui.button class="w-full" type="submit" wire:loading.attr="disabled" wire:target="updateStatus">
+                            <x-ui.button class="w-full" type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="updateStatus">
                                 <span wire:loading.remove wire:target="updateStatus">{{ __('app.save') }}</span>
                                 <span wire:loading wire:target="updateStatus">{{ __('app.loading') }}</span>
                             </x-ui.button>
