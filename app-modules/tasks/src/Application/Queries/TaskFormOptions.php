@@ -2,7 +2,6 @@
 
 namespace Modules\Tasks\Application\Queries;
 
-use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -21,13 +20,11 @@ class TaskFormOptions
 
         $members = User::query()
             ->select('users.*')
-            ->join('people', 'people.id', '=', 'users.person_id')
-            ->with('person')
+            ->join('contacts', 'contacts.id', '=', 'users.contact_id')
+            ->with('contact')
             ->where('users.is_active', true)
-            ->where('people.type', PersonType::Employee->value)
-            ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
-            ->orderBy('people.first_name')
-            ->orderBy('people.last_name')
+            ->orderBy('contacts.first_name')
+            ->orderBy('contacts.last_name')
             ->get()
             ->map(fn (User $member) => ['id' => $member->id, 'name' => $member->full_name])
             ->all();
