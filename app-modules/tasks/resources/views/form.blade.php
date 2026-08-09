@@ -39,15 +39,18 @@
                 @error('attachments.*')<p class="text-xs font-medium text-red-600">{{ $message }}</p>@enderror
 
                 @if($attachments)
-                    <div class="text-xs text-slate-500">{{ count($attachments) }} {{ __('tasks::messages.attachments') }}</div>
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500">
+                        <i class="fa-light fa-paperclip" aria-hidden="true"></i>
+                        <span>{{ count($attachments) }} {{ __('tasks::messages.attachments') }}</span>
+                    </div>
                 @endif
 
                 <x-ui.form-actions>
-                    <x-ui.button type="submit" wire:loading.attr="disabled" wire:target="save,attachments">
+                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save,attachments">
                         <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
                         <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
                     </x-ui.button>
-                    <x-ui.button variant="secondary" :href="route('tasks.index')" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
+                    <x-ui.button variant="secondary" :href="route('tasks.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
                 </x-ui.form-actions>
             </div>
         </x-ui.card>
