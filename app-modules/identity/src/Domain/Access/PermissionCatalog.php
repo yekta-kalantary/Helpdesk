@@ -8,10 +8,10 @@ final class PermissionCatalog
     public static function groups(): array
     {
         return [
-            'customers' => [
-                'customers.view',
-                'customers.create',
-                'customers.update',
+            'contacts' => [
+                'contacts.view',
+                'contacts.create',
+                'contacts.update',
             ],
             'projects' => [
                 'projects.view',
@@ -27,14 +27,6 @@ final class PermissionCatalog
                 'tasks.comment',
                 'tasks.manage_all',
             ],
-            'tickets' => [
-                'tickets.view',
-                'tickets.create',
-                'tickets.reply',
-                'tickets.manage',
-                'tickets.delete',
-                'tickets.manage_all',
-            ],
             'identity' => [
                 'users.view',
                 'users.create',
@@ -43,13 +35,6 @@ final class PermissionCatalog
                 'roles.create',
                 'roles.update',
                 'roles.delete',
-                'notifications.view',
-            ],
-            'reports' => [
-                'reports.view',
-            ],
-            'settings' => [
-                'settings.manage',
             ],
         ];
     }
