@@ -137,8 +137,9 @@ return [
     | Redis Databases
     |--------------------------------------------------------------------------
     |
-    | Redis is an open source, fast, and advanced key-value store that may
-    | be used for caching and other data operations.
+    | Redis is an open source, fast, and advanced key-value store that also
+    | provides a richer body of commands than a typical key-value store such
+    | as Memcached. You may define your connection settings here.
     |
     */
 
