@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -45,8 +45,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: agent/contact-core-cleanup
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -63,21 +61,8 @@ jobs:
           cache: npm
           package-manager-cache: false
 
-      - name: Refresh PHP dependencies
-        env:
-          COMPOSER_MINIMAL_CHANGES: '1'
-        run: composer update --no-interaction --prefer-dist --no-progress --minimal-changes
-
-      - name: Commit refreshed Composer lock
-        if: github.actor != 'github-actions[bot]'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add composer.lock
-          if ! git diff --cached --quiet; then
-            git commit -m "Refresh Composer lock"
-            git push origin HEAD:agent/contact-core-cleanup
-          fi
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Validate Composer
         run: composer validate --no-check-publish
