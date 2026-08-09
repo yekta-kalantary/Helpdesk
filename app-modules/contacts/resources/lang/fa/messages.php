@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'contacts' => 'مخاطبین',
+    'new_contact' => 'مخاطب جدید',
+    'edit_contact' => 'ویرایش مخاطب',
+    'general_info' => 'اطلاعات عمومی',
+    'contact_info' => 'اطلاعات تماس',
+    'account_settings' => 'تنظیمات حساب',
+    'gender' => 'جنسیت',
+    'gender_unspecified' => 'مشخص نشده',
+    'gender_male' => 'مرد',
+    'gender_female' => 'زن',
+    'gender_other' => 'سایر',
+    'province' => 'استان',
+    'city' => 'شهر',
+    'address' => 'آدرس',
+    'postal_code' => 'کد پستی',
+    'location' => 'موقعیت',
+    'account' => 'حساب کاربری',
+    'login_enabled' => 'دسترسی ورود فعال باشد',
+    'role' => 'نقش',
+    'select_role' => 'انتخاب نقش',
+    'password' => 'رمز عبور',
+    'password_confirmation' => 'تکرار رمز عبور',
+    'password_hint' => 'برای حفظ رمز عبور فعلی، این فیلد را خالی بگذارید.',
+    'search_placeholder' => 'جستجو با نام، نام خانوادگی، ایمیل یا موبایل',
+];
