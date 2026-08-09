@@ -62,7 +62,7 @@ class Form extends Component
         $this->projectId = $project;
         $this->category = $item['category'];
         $this->customer_id = $item['customer_id'] ? (int) $item['customer_id'] : null;
-        $this->customerSearch = '';
+        $this->customerSearch = (string) ($item['customer_name'] ?? '');
         $this->title = $item['title'];
         $this->type = $item['type'];
         $this->status = $item['status'];
@@ -78,6 +78,32 @@ class Form extends Component
             $this->customer_id = null;
             $this->customerSearch = '';
         }
+    }
+
+    public function updatedCustomerSearch(): void
+    {
+        if ($this->customer_id === null) {
+            return;
+        }
+
+        $this->customer_id = null;
+        $this->resetValidation('customer_id');
+    }
+
+    public function selectCustomer(int $customerId): void
+    {
+        $customer = $this->options->findCustomer($customerId);
+
+        if (! $customer) {
+            $this->customer_id = null;
+            $this->addError('customer_id', __('validation.exists', ['attribute' => __('projects::messages.customer')]));
+
+            return;
+        }
+
+        $this->customer_id = $customer['id'];
+        $this->customerSearch = $customer['name'];
+        $this->resetValidation('customer_id');
     }
 
     public function save()
@@ -138,7 +164,7 @@ class Form extends Component
     public function render()
     {
         return view('projects::form', [
-            'options' => $this->options->get(trim($this->customerSearch) ?: null, $this->customer_id),
+            'options' => $this->options->get(trim($this->customerSearch) ?: null),
             'categories' => ProjectCategory::cases(),
             'statuses' => ProjectStatus::cases(),
             'types' => ProjectType::cases(),
