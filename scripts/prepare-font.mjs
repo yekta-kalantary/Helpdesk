@@ -1,36 +1,156 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const sourceDir = resolve(root, 'resources/fonts/IRANYekanXVF.woff2.base64');
-const target = resolve(root, 'public/fonts/IRANYekanXVF.woff2');
-const obsoleteViteTarget = resolve(root, 'resources/fonts/IRANYekanXVF.woff2');
-const expectedSha256 = '3a3a62a935a549584d610e38b4b27ea30053c6fe137ca0186687dec038cfcf88';
-const expectedSize = 95404;
+const resources = resolve(root, 'resources');
 
-const parts = (await readdir(sourceDir))
+const iranYekanSourceDir = resolve(root, 'resources/fonts/IRANYekanXVF.woff2.base64');
+const iranYekanTarget = resolve(root, 'public/fonts/IRANYekanXVF.woff2');
+const obsoleteViteTarget = resolve(root, 'resources/fonts/IRANYekanXVF.woff2');
+const iranYekanExpectedSha256 = '3a3a62a935a549584d610e38b4b27ea30053c6fe137ca0186687dec038cfcf88';
+const iranYekanExpectedSize = 95404;
+
+const iranYekanParts = (await readdir(iranYekanSourceDir))
     .filter((file) => file.endsWith('.txt'))
     .sort();
 
-if (parts.length === 0) {
+if (iranYekanParts.length === 0) {
     throw new Error('IRANYekan font source parts are missing.');
 }
 
-const base64 = (await Promise.all(
-    parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')),
+const iranYekanBase64 = (await Promise.all(
+    iranYekanParts.map((file) => readFile(resolve(iranYekanSourceDir, file), 'utf8')),
 )).join('').replace(/\s+/g, '');
 
-const font = Buffer.from(base64, 'base64');
-const sha256 = createHash('sha256').update(font).digest('hex');
+const iranYekanFont = Buffer.from(iranYekanBase64, 'base64');
+const iranYekanSha256 = createHash('sha256').update(iranYekanFont).digest('hex');
 
-if (font.length !== expectedSize || sha256 !== expectedSha256) {
-    throw new Error(`IRANYekan font integrity check failed: size=${font.length}, sha256=${sha256}`);
+if (iranYekanFont.length !== iranYekanExpectedSize || iranYekanSha256 !== iranYekanExpectedSha256) {
+    throw new Error(`IRANYekan font integrity check failed: size=${iranYekanFont.length}, sha256=${iranYekanSha256}`);
 }
 
-await mkdir(dirname(target), { recursive: true });
-await writeFile(target, font);
+await mkdir(dirname(iranYekanTarget), { recursive: true });
+await writeFile(iranYekanTarget, iranYekanFont);
 await rm(obsoleteViteTarget, { force: true });
 
-console.log(`IRANYekan font prepared: ${font.length} bytes (${sha256})`);
+console.log(`IRANYekan font prepared: ${iranYekanFont.length} bytes (${iranYekanSha256})`);
+
+async function findEntryByName(directory, targetName, expectedType) {
+    const entries = await readdir(directory, { withFileTypes: true });
+
+    for (const entry of entries) {
+        const path = resolve(directory, entry.name);
+
+        if (entry.name === targetName && ((expectedType === 'file' && entry.isFile()) || (expectedType === 'directory' && entry.isDirectory()))) {
+            return path;
+        }
+    }
+
+    for (const entry of entries) {
+        if (!entry.isDirectory()) {
+            continue;
+        }
+
+        const found = await findEntryByName(resolve(directory, entry.name), targetName, expectedType);
+
+        if (found) {
+            return found;
+        }
+    }
+
+    return null;
+}
+
+function assertWoff2(font, filename) {
+    if (font.length < 12 || font.subarray(0, 4).toString('ascii') !== 'wOF2') {
+        throw new Error(`${filename} is not a valid WOFF2 file.`);
+    }
+
+    const declaredLength = font.readUInt32BE(8);
+
+    if (declaredLength !== font.length) {
+        throw new Error(`${filename} integrity check failed: declared=${declaredLength}, actual=${font.length}`);
+    }
+}
+
+const fontAwesomeRoot = resolve(root, 'public/fontawesome');
+const fontAwesomeCssTarget = resolve(fontAwesomeRoot, 'css');
+const fontAwesomeWebfontsTarget = resolve(fontAwesomeRoot, 'webfonts');
+
+await rm(fontAwesomeRoot, { recursive: true, force: true });
+await mkdir(fontAwesomeCssTarget, { recursive: true });
+await mkdir(fontAwesomeWebfontsTarget, { recursive: true });
+
+for (const filename of ['brands.css', 'light.css']) {
+    const source = await findEntryByName(resources, filename, 'file');
+
+    if (!source) {
+        throw new Error(`Font Awesome source stylesheet is missing: ${filename}`);
+    }
+
+    const css = await readFile(source, 'utf8');
+
+    if (!css.includes('Font Awesome Pro 7.3.1')) {
+        throw new Error(`Unexpected Font Awesome stylesheet source: ${source}`);
+    }
+
+    await copyFile(source, resolve(fontAwesomeCssTarget, filename));
+}
+
+for (const filename of ['fa-brands-400.woff2', 'fa-light-300.woff2']) {
+    const sourceDir = await findEntryByName(resources, `${filename}.base64`, 'directory');
+
+    if (!sourceDir) {
+        throw new Error(`Font Awesome source parts are missing: ${filename}`);
+    }
+
+    const parts = (await readdir(sourceDir))
+        .filter((file) => file.endsWith('.txt'))
+        .sort();
+
+    if (parts.length === 0) {
+        throw new Error(`Font Awesome source parts are empty: ${filename}`);
+    }
+
+    const base64 = (await Promise.all(
+        parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')),
+    )).join('').replace(/\s+/g, '');
+
+    const font = Buffer.from(base64, 'base64');
+    assertWoff2(font, filename);
+
+    const sha256 = createHash('sha256').update(font).digest('hex');
+    await writeFile(resolve(fontAwesomeWebfontsTarget, filename), font);
+
+    console.log(`Font Awesome prepared: ${filename} (${font.length} bytes, ${sha256})`);
+}
+
+const fontAwesomeCoreCss = `/* Minimal Font Awesome core required by the bundled style files. */
+.fa,
+.fal,
+.fab,
+.fa-light,
+.fa-brands {
+    display: var(--fa-display, inline-block);
+    font-family: var(--fa-family);
+    font-style: normal;
+    font-variant: normal;
+    font-weight: var(--fa-style);
+    line-height: 1;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.fa::before,
+.fal::before,
+.fab::before,
+.fa-light::before,
+.fa-brands::before {
+    content: var(--fa-content, var(--fa));
+}
+`;
+
+await writeFile(resolve(fontAwesomeCssTarget, 'fontawesome.css'), fontAwesomeCoreCss);
