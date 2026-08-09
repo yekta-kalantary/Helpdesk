@@ -2,9 +2,6 @@
 
 namespace Modules\Projects\Presentation\Livewire;
 
-use App\Enums\PersonType;
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Modules\Projects\Domain\Contracts\ProjectRepository;
@@ -30,14 +27,8 @@ class Index extends Component
 
     public function render()
     {
-        /** @var User $user */
-        $user = auth()->user();
-        $customerId = $user->person?->type === PersonType::Customer
-            ? DB::table('customers')->where('person_id', $user->person_id)->whereNull('deleted_at')->value('id')
-            : null;
-
         return view('projects::index', [
-            'projects' => $this->projects->search(trim($this->q) ?: null, $customerId ? (int) $customerId : null),
+            'projects' => $this->projects->search(trim($this->q) ?: null),
         ])->title(__('projects::messages.projects'));
     }
 }
