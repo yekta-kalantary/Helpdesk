@@ -63,21 +63,45 @@ async function findEntryByName(directory, targetName, expectedType) {
     return null;
 }
 
-function assertWoff2(font, filename) {
+function normalizeWoff2(font, filename, expectedSize, expectedSha256) {
     if (font.length < 12 || font.subarray(0, 4).toString('ascii') !== 'wOF2') {
         throw new Error(`${filename} is not a valid WOFF2 file.`);
     }
 
     const declaredLength = font.readUInt32BE(8);
 
-    if (declaredLength !== font.length) {
+    if (declaredLength > font.length) {
         throw new Error(`${filename} integrity check failed: declared=${declaredLength}, actual=${font.length}`);
     }
+
+    // Some historical source chunks contain trailing duplicated bytes after the
+    // complete WOFF2 payload. The WOFF2 header is authoritative for file length;
+    // trim only that trailing data, then verify against the known original hash.
+    const normalized = declaredLength === font.length
+        ? font
+        : font.subarray(0, declaredLength);
+    const sha256 = createHash('sha256').update(normalized).digest('hex');
+
+    if (normalized.length !== expectedSize || sha256 !== expectedSha256) {
+        throw new Error(`${filename} integrity check failed: size=${normalized.length}, sha256=${sha256}`);
+    }
+
+    return { font: normalized, sha256 };
 }
 
 const fontAwesomeRoot = resolve(root, 'public/fontawesome');
 const fontAwesomeCssTarget = resolve(fontAwesomeRoot, 'css');
 const fontAwesomeWebfontsTarget = resolve(fontAwesomeRoot, 'webfonts');
+const fontAwesomeFonts = {
+    'fa-brands-400.woff2': {
+        size: 115380,
+        sha256: '57f8508ef396d096c48c6ad56257e0fcc510a5560bb220c13339be93543ff868',
+    },
+    'fa-light-300.woff2': {
+        size: 380172,
+        sha256: '4bf8e8608d8ddb833c06b636235b13f3d6926de361fbf590f369405fb06c4707',
+    },
+};
 
 await rm(fontAwesomeRoot, { recursive: true, force: true });
 await mkdir(fontAwesomeCssTarget, { recursive: true });
@@ -99,7 +123,7 @@ for (const filename of ['brands.css', 'light.css']) {
     await copyFile(source, resolve(fontAwesomeCssTarget, filename));
 }
 
-for (const filename of ['fa-brands-400.woff2', 'fa-light-300.woff2']) {
+for (const [filename, expected] of Object.entries(fontAwesomeFonts)) {
     const sourceDir = await findEntryByName(resources, `${filename}.base64`, 'directory');
 
     if (!sourceDir) {
@@ -118,10 +142,9 @@ for (const filename of ['fa-brands-400.woff2', 'fa-light-300.woff2']) {
         parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')),
     )).join('').replace(/\s+/g, '');
 
-    const font = Buffer.from(base64, 'base64');
-    assertWoff2(font, filename);
+    const decoded = Buffer.from(base64, 'base64');
+    const { font, sha256 } = normalizeWoff2(decoded, filename, expected.size, expected.sha256);
 
-    const sha256 = createHash('sha256').update(font).digest('hex');
     await writeFile(resolve(fontAwesomeWebfontsTarget, filename), font);
 
     console.log(`Font Awesome prepared: ${filename} (${font.length} bytes, ${sha256})`);
