@@ -19,9 +19,8 @@
                             :label="__('projects::messages.customer')"
                             :options="$options['customers']"
                             :value="$customer_id"
-                            wire:model.number="customer_id"
                             search-model="customerSearch"
-                            :search-value="$customerSearch"
+                            select-action="selectCustomer"
                             :search-placeholder="__('projects::messages.customer_search_placeholder')"
                             required
                         />
