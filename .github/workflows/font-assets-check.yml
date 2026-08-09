@@ -22,5 +22,21 @@ jobs:
         with:
           node-version: 22
 
+      - name: Inspect Light source chunks
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { readdir, readFile } from 'node:fs/promises';
+          import { resolve } from 'node:path';
+
+          const dir = 'resources/fonts/fontawesome/fa-light-300.woff2.base64';
+          const parts = (await readdir(dir)).filter((name) => /^part-.*\.txt$/.test(name)).sort();
+
+          for (const name of parts) {
+              const content = (await readFile(resolve(dir, name), 'utf8')).replace(/\s+/g, '');
+              console.log(`${name}|${content.length}|${content.slice(0, 64)}|${content.slice(-64)}`);
+          }
+          NODE
+
       - name: Rebuild and validate font assets
         run: npm run prepare-font
