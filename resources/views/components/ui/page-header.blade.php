@@ -3,15 +3,17 @@
     'subtitle' => null,
 ])
 
-<header {{ $attributes->class(['mb-6 flex flex-wrap items-start justify-between gap-4']) }}>
+<header {{ $attributes->class(['mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-start sm:justify-between']) }}>
     <div class="min-w-0">
-        <h1 class="text-2xl font-black tracking-tight text-slate-950">{{ $title }}</h1>
+        <h1 class="break-words text-xl font-black tracking-tight text-slate-950 sm:text-2xl">{{ $title }}</h1>
         @if($subtitle)
-            <p class="mt-1 max-w-3xl text-sm leading-6 text-slate-500">{{ $subtitle }}</p>
+            <p class="mt-1 max-w-3xl break-words text-sm leading-6 text-slate-500">{{ $subtitle }}</p>
         @endif
     </div>
 
     @isset($actions)
-        <div class="flex flex-wrap items-center gap-2">{{ $actions }}</div>
+        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center [&>a]:w-full [&>button]:w-full [&>form]:w-full sm:[&>a]:w-auto sm:[&>button]:w-auto sm:[&>form]:w-auto [&>form>button]:w-full">
+            {{ $actions }}
+        </div>
     @endisset
 </header>
