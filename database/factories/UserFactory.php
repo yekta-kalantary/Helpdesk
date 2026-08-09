@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Person;
+use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +20,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'person_id' => Person::factory(),
+            'contact_id' => Contact::factory(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'is_active' => true,
