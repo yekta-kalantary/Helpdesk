@@ -88,7 +88,9 @@ it('does not expose internal projects to customer portal users', function (): vo
         ->assertDontSee('Hidden Internal Project');
 });
 
-it('searches customers without loading the full customer list', function (): void {
+it('searches customers directly by name email and mobile without loading the full list', function (): void {
+    $needleCustomerId = null;
+
     foreach (range(1, 30) as $index) {
         $personId = DB::table('people')->insertGetId([
             'type' => PersonType::Customer->value,
@@ -100,17 +102,62 @@ it('searches customers without loading the full customer list', function (): voi
             'updated_at' => now(),
         ]);
 
-        DB::table('customers')->insert([
+        $customerId = DB::table('customers')->insertGetId([
             'person_id' => $personId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        if ($index === 30) {
+            $needleCustomerId = $customerId;
+        }
     }
 
-    $options = app(ProjectFormOptions::class)->get('Needle');
+    $options = app(ProjectFormOptions::class);
 
-    expect($options['customers'])->toHaveCount(1)
-        ->and($options['customers'][0]['name'])->toBe('Searchable Needle Customer');
+    foreach ([
+        'Needle',
+        'Searchable Needle',
+        'search-customer-30@example.test',
+        '09000000030',
+        '۰۹۰۰۰۰۰۰۰۳۰',
+    ] as $search) {
+        $customers = $options->get($search)['customers'];
 
-    expect(app(ProjectFormOptions::class)->get()['customers'])->toHaveCount(25);
+        expect($customers)->toHaveCount(1)
+            ->and($customers[0]['id'])->toBe($needleCustomerId)
+            ->and($customers[0]['name'])->toBe('Searchable Needle Customer');
+    }
+
+    expect($options->get()['customers'])->toHaveCount(25);
+});
+
+it('updates searchable customer results while typing and selects the customer server side', function (): void {
+    $admin = User::query()->role('admin')->firstOrFail();
+    $personId = DB::table('people')->insertGetId([
+        'type' => PersonType::Customer->value,
+        'first_name' => 'Live',
+        'last_name' => 'Search Customer',
+        'email' => 'live-search@example.test',
+        'mobile' => '09121234567',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    $customerId = DB::table('customers')->insertGetId([
+        'person_id' => $personId,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test('projects::form')
+        ->set('customerSearch', 'live-search@example.test')
+        ->assertSee('Live Search Customer')
+        ->assertSee('live-search@example.test')
+        ->assertSee('09121234567')
+        ->call('selectCustomer', $customerId)
+        ->assertSet('customer_id', $customerId)
+        ->assertSet('customerSearch', 'Live Search Customer')
+        ->set('customerSearch', '0912')
+        ->assertSet('customer_id', null);
 });
