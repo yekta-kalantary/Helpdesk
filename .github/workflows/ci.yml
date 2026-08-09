@@ -95,12 +95,21 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Verify IRANYekan font asset
+      - name: Verify Vite font assets
         run: |
-          test -f public/fonts/IRANYekanXVF.woff2
-          test "$(wc -c < public/fonts/IRANYekanXVF.woff2 | tr -d ' ')" = "95404"
-          echo "3a3a62a935a549584d610e38b4b27ea30053c6fe137ca0186687dec038cfcf88  public/fonts/IRANYekanXVF.woff2" | sha256sum -c -
-          ! grep -R "Instrument Sans\|fonts.bunny.net\|/build/fonts/IRANYekanXVF" public/build resources/css vite.config.js
+          IRANYEKAN_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'IRANYekanXVF-*.woff2' -print -quit)"
+          FA_BRANDS_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'fa-brands-400-*.woff2' -print -quit)"
+          FA_LIGHT_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'fa-light-300-*.woff2' -print -quit)"
+
+          test -n "$IRANYEKAN_ASSET"
+          test -n "$FA_BRANDS_ASSET"
+          test -n "$FA_LIGHT_ASSET"
+
+          cmp resources/fonts/IRANYekanXVF/IRANYekanXVF.woff2 "$IRANYEKAN_ASSET"
+          cmp resources/fonts/fontawesome/webfonts/fa-brands-400.woff2 "$FA_BRANDS_ASSET"
+          cmp resources/fonts/fontawesome/webfonts/fa-light-300.woff2 "$FA_LIGHT_ASSET"
+
+          ! grep -R "data:font/woff2;base64\|fonts.bunny.net\|/fonts/IRANYekanXVF.woff2\|/fontawesome/" public/build resources/css resources/views/layouts/app.blade.php vite.config.js
 
       - name: Build deployable source archive
         run: |
