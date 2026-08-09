@@ -190,7 +190,8 @@ for (const [filename, expected] of Object.entries(fontAwesomeFonts)) {
     const base64 = mergeBase64Parts(contents, filename);
 
     if (base64.length !== expected.base64Length) {
-        throw new Error(`${filename} Base64 reconstruction failed: expected=${expected.base64Length}, actual=${base64.length}`);
+        const base64Sha256 = createHash('sha256').update(base64).digest('hex');
+        throw new Error(`${filename} Base64 reconstruction failed: expected=${expected.base64Length}, actual=${base64.length}, sha256=${base64Sha256}`);
     }
 
     const decoded = Buffer.from(base64, 'base64');
