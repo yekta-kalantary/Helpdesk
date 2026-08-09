@@ -1,24 +1,28 @@
-name: Font Assets Check
+name: Font Assets Build Check
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'scripts/prepare-font.mjs'
       - 'resources/fonts/**'
-      - 'resources/css/fontawesome/**'
+      - 'resources/css/app.css'
+      - 'resources/views/layouts/app.blade.php'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/font-assets-check.yml'
   pull_request:
     paths:
-      - 'scripts/prepare-font.mjs'
       - 'resources/fonts/**'
-      - 'resources/css/fontawesome/**'
+      - 'resources/css/app.css'
+      - 'resources/views/layouts/app.blade.php'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/font-assets-check.yml'
   workflow_dispatch:
 
 jobs:
-  font-assets:
+  frontend-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +33,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Rebuild and validate font assets
-        run: npm run prepare-font
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
