@@ -43,7 +43,7 @@ class EloquentContactRepository implements ContactRepository
         return DB::transaction(function () use ($id, $contactAttributes, $account): int {
             $contact = $id
                 ? Contact::query()->with('user.roles:id,name')->findOrFail($id)
-                : new Contact();
+                : new Contact;
 
             $contact->fill($contactAttributes);
             $contact->save();

@@ -17,15 +17,23 @@ class Form extends Component
     public ?int $contactId = null;
 
     public string $name = '';
+
     public string $last_name = '';
+
     public string $email = '';
+
     public string $mobile = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
+
     public bool $is_active = true;
+
     public string $role = '';
 
     protected UserRepository $users;
+
     protected AccessControl $access;
 
     public function boot(UserRepository $users, AccessControl $access): void

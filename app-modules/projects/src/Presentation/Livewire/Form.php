@@ -19,18 +19,29 @@ class Form extends Component
     public ?int $projectId = null;
 
     public string $category = 'contact';
+
     public ?int $contact_id = null;
+
     public string $contactSearch = '';
+
     public string $title = '';
+
     public string $type = 'website_design';
+
     public string $status = 'planning';
+
     public ?string $description = null;
+
     public ?string $starts_at = null;
+
     public ?string $ends_at = null;
+
     public array $member_ids = [];
 
     protected ProjectRepository $projects;
+
     protected SaveProject $saveProject;
+
     protected ProjectFormOptions $options;
 
     public function boot(ProjectRepository $projects, SaveProject $saveProject, ProjectFormOptions $options): void

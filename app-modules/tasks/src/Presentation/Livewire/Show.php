@@ -17,10 +17,13 @@ class Show extends Component
     public int $taskId;
 
     public string $commentBody = '';
+
     public string $status = 'todo';
 
     protected TaskRepository $tasks;
+
     protected TaskAccessScope $scopeBuilder;
+
     protected TaskAttachmentStore $attachments;
 
     public function boot(

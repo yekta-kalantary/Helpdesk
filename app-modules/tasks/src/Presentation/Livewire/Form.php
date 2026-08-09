@@ -23,19 +23,31 @@ class Form extends Component
     public ?int $taskId = null;
 
     public ?int $project_id = null;
+
     public string $title = '';
+
     public ?string $description = null;
+
     public ?int $assigned_to = null;
+
     public string $priority = 'medium';
+
     public string $status = 'todo';
+
     public ?string $due_at = null;
+
     public ?int $estimated_minutes = null;
+
     public ?int $spent_minutes = null;
+
     public array $attachments = [];
 
     protected TaskRepository $tasks;
+
     protected SaveTask $saveTask;
+
     protected TaskAccessScope $scopeBuilder;
+
     protected TaskFormOptions $formOptions;
 
     public function boot(

@@ -21,18 +21,29 @@ class Form extends Component
     public string $tab = 'general';
 
     public string $first_name = '';
+
     public string $last_name = '';
+
     public ?string $gender = null;
+
     public string $email = '';
+
     public string $mobile = '';
+
     public ?string $province = null;
+
     public ?string $city = null;
+
     public ?string $address = null;
+
     public ?string $postal_code = null;
 
     public bool $account_enabled = false;
+
     public ?string $role = null;
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     protected ContactRepository $contacts;
