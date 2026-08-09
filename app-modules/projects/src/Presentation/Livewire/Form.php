@@ -2,7 +2,6 @@
 
 namespace Modules\Projects\Presentation\Livewire;
 
-use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
@@ -19,30 +18,19 @@ class Form extends Component
     #[Locked]
     public ?int $projectId = null;
 
-    public string $category = 'customer';
-
-    public ?int $customer_id = null;
-
-    public string $customerSearch = '';
-
+    public string $category = 'contact';
+    public ?int $contact_id = null;
+    public string $contactSearch = '';
     public string $title = '';
-
     public string $type = 'website_design';
-
     public string $status = 'planning';
-
     public ?string $description = null;
-
     public ?string $starts_at = null;
-
     public ?string $ends_at = null;
-
     public array $member_ids = [];
 
     protected ProjectRepository $projects;
-
     protected SaveProject $saveProject;
-
     protected ProjectFormOptions $options;
 
     public function boot(ProjectRepository $projects, SaveProject $saveProject, ProjectFormOptions $options): void
@@ -61,8 +49,8 @@ class Form extends Component
         $item = $this->projects->find($project);
         $this->projectId = $project;
         $this->category = $item['category'];
-        $this->customer_id = $item['customer_id'] ? (int) $item['customer_id'] : null;
-        $this->customerSearch = (string) ($item['customer_name'] ?? '');
+        $this->contact_id = $item['contact_id'] ? (int) $item['contact_id'] : null;
+        $this->contactSearch = (string) ($item['contact_name'] ?? '');
         $this->title = $item['title'];
         $this->type = $item['type'];
         $this->status = $item['status'];
@@ -75,35 +63,35 @@ class Form extends Component
     public function updatedCategory(string $category): void
     {
         if ($category === ProjectCategory::Internal->value) {
-            $this->customer_id = null;
-            $this->customerSearch = '';
+            $this->contact_id = null;
+            $this->contactSearch = '';
         }
     }
 
-    public function updatedCustomerSearch(): void
+    public function updatedContactSearch(): void
     {
-        if ($this->customer_id === null) {
+        if ($this->contact_id === null) {
             return;
         }
 
-        $this->customer_id = null;
-        $this->resetValidation('customer_id');
+        $this->contact_id = null;
+        $this->resetValidation('contact_id');
     }
 
-    public function selectCustomer(int $customerId): void
+    public function selectContact(int $contactId): void
     {
-        $customer = $this->options->findCustomer($customerId);
+        $contact = $this->options->findContact($contactId);
 
-        if (! $customer) {
-            $this->customer_id = null;
-            $this->addError('customer_id', __('validation.exists', ['attribute' => __('projects::messages.customer')]));
+        if (! $contact) {
+            $this->contact_id = null;
+            $this->addError('contact_id', __('validation.exists', ['attribute' => __('projects::messages.contact')]));
 
             return;
         }
 
-        $this->customer_id = $customer['id'];
-        $this->customerSearch = $customer['name'];
-        $this->resetValidation('customer_id');
+        $this->contact_id = $contact['id'];
+        $this->contactSearch = $contact['name'];
+        $this->resetValidation('contact_id');
     }
 
     public function save()
@@ -113,7 +101,7 @@ class Form extends Component
         $data = $this->validate();
         $members = User::query()
             ->whereIn('id', $data['member_ids'] ?? [])
-            ->whereHas('person', fn ($query) => $query->where('type', PersonType::Employee->value))
+            ->where('is_active', true)
             ->pluck('id')
             ->all();
 
@@ -121,8 +109,8 @@ class Form extends Component
             $this->projectId,
             [
                 'category' => $data['category'],
-                'customer_id' => $data['category'] === ProjectCategory::Customer->value
-                    ? (int) $data['customer_id']
+                'contact_id' => $data['category'] === ProjectCategory::Contact->value
+                    ? (int) $data['contact_id']
                     : null,
                 'title' => $data['title'],
                 'type' => $data['type'],
@@ -143,12 +131,12 @@ class Form extends Component
     {
         return [
             'category' => ['required', Rule::enum(ProjectCategory::class)],
-            'customer_id' => [
-                Rule::requiredIf($this->category === ProjectCategory::Customer->value),
+            'contact_id' => [
+                Rule::requiredIf($this->category === ProjectCategory::Contact->value),
                 Rule::prohibitedIf($this->category === ProjectCategory::Internal->value),
                 'nullable',
                 'integer',
-                Rule::exists('customers', 'id')->whereNull('deleted_at'),
+                Rule::exists('contacts', 'id'),
             ],
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(ProjectType::class)],
@@ -164,7 +152,7 @@ class Form extends Component
     public function render()
     {
         return view('projects::form', [
-            'options' => $this->options->get(trim($this->customerSearch) ?: null),
+            'options' => $this->options->get(trim($this->contactSearch) ?: null),
             'categories' => ProjectCategory::cases(),
             'statuses' => ProjectStatus::cases(),
             'types' => ProjectType::cases(),
