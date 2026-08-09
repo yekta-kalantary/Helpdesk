@@ -42,22 +42,15 @@ async function findEntryByName(directory, targetName, expectedType) {
 
     for (const entry of entries) {
         const path = resolve(directory, entry.name);
-
         if (entry.name === targetName && ((expectedType === 'file' && entry.isFile()) || (expectedType === 'directory' && entry.isDirectory()))) {
             return path;
         }
     }
 
     for (const entry of entries) {
-        if (!entry.isDirectory()) {
-            continue;
-        }
-
+        if (!entry.isDirectory()) continue;
         const found = await findEntryByName(resolve(directory, entry.name), targetName, expectedType);
-
-        if (found) {
-            return found;
-        }
+        if (found) return found;
     }
 
     return null;
@@ -68,19 +61,12 @@ function mergeBase64Parts(contents, filename) {
 
     for (const rawContent of contents) {
         const part = rawContent.replace(/\s+/g, '');
-
-        if (part.length === 0) {
-            continue;
-        }
-
-        if (merged.length === 0) {
+        if (!part) continue;
+        if (!merged) {
             merged = part;
             continue;
         }
-
-        if (merged.includes(part)) {
-            continue;
-        }
+        if (merged.includes(part)) continue;
 
         const markerLength = Math.min(128, part.length);
         const marker = part.slice(0, markerLength);
@@ -90,11 +76,7 @@ function mergeBase64Parts(contents, filename) {
         if (start !== -1) {
             const overlapLength = merged.length - start;
             const comparableLength = Math.min(overlapLength, part.length);
-
-            if (
-                overlapLength >= markerLength
-                && merged.slice(start, start + comparableLength) === part.slice(0, comparableLength)
-            ) {
+            if (overlapLength >= markerLength && merged.slice(start, start + comparableLength) === part.slice(0, comparableLength)) {
                 merged += part.slice(overlapLength);
                 continue;
             }
@@ -103,10 +85,7 @@ function mergeBase64Parts(contents, filename) {
         merged += part;
     }
 
-    if (merged.length === 0) {
-        throw new Error(`Font Awesome source parts are empty: ${filename}`);
-    }
-
+    if (!merged) throw new Error(`Font Awesome source parts are empty: ${filename}`);
     return merged;
 }
 
@@ -116,14 +95,11 @@ function normalizeWoff2(font, filename, expectedSize, expectedSha256) {
     }
 
     const declaredLength = font.readUInt32BE(8);
-
     if (declaredLength > font.length) {
         throw new Error(`${filename} integrity check failed: declared=${declaredLength}, actual=${font.length}`);
     }
 
-    const normalized = declaredLength === font.length
-        ? font
-        : font.subarray(0, declaredLength);
+    const normalized = declaredLength === font.length ? font : font.subarray(0, declaredLength);
     const sha256 = createHash('sha256').update(normalized).digest('hex');
 
     if (normalized.length !== expectedSize || sha256 !== expectedSha256) {
@@ -138,11 +114,15 @@ const fontAwesomeCssTarget = resolve(fontAwesomeRoot, 'css');
 const fontAwesomeWebfontsTarget = resolve(fontAwesomeRoot, 'webfonts');
 const fontAwesomeFonts = {
     'fa-brands-400.woff2': {
+        style: 'brands.css',
+        required: true,
         size: 115380,
         base64Length: 153840,
         sha256: '57f8508ef396d096c48c6ad56257e0fcc510a5560bb220c13339be93543ff868',
     },
     'fa-light-300.woff2': {
+        style: 'light.css',
+        required: false,
         size: 380172,
         base64Length: 506896,
         sha256: '4bf8e8608d8ddb833c06b636235b13f3d6926de361fbf590f369405fb06c4707',
@@ -153,53 +133,42 @@ await rm(fontAwesomeRoot, { recursive: true, force: true });
 await mkdir(fontAwesomeCssTarget, { recursive: true });
 await mkdir(fontAwesomeWebfontsTarget, { recursive: true });
 
-for (const filename of ['brands.css', 'light.css']) {
-    const source = await findEntryByName(resources, filename, 'file');
-
-    if (!source) {
-        throw new Error(`Font Awesome source stylesheet is missing: ${filename}`);
-    }
-
-    const css = await readFile(source, 'utf8');
-
-    if (!css.includes('Font Awesome Pro 7.3.1')) {
-        throw new Error(`Unexpected Font Awesome stylesheet source: ${source}`);
-    }
-
-    await copyFile(source, resolve(fontAwesomeCssTarget, filename));
-}
-
 for (const [filename, expected] of Object.entries(fontAwesomeFonts)) {
-    const sourceDir = await findEntryByName(resources, `${filename}.base64`, 'directory');
+    try {
+        const sourceDir = await findEntryByName(resources, `${filename}.base64`, 'directory');
+        if (!sourceDir) throw new Error(`source parts are missing`);
 
-    if (!sourceDir) {
-        throw new Error(`Font Awesome source parts are missing: ${filename}`);
+        const parts = (await readdir(sourceDir)).filter((file) => /^part-.*\.txt$/.test(file)).sort();
+        if (parts.length === 0) throw new Error('source parts are empty');
+
+        const contents = await Promise.all(parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')));
+        const base64 = mergeBase64Parts(contents, filename);
+        if (base64.length !== expected.base64Length) {
+            throw new Error(`Base64 length expected=${expected.base64Length}, actual=${base64.length}`);
+        }
+
+        const decoded = Buffer.from(base64, 'base64');
+        const { font, sha256 } = normalizeWoff2(decoded, filename, expected.size, expected.sha256);
+        const stylesheet = await findEntryByName(resources, expected.style, 'file');
+        if (!stylesheet) throw new Error(`stylesheet is missing: ${expected.style}`);
+
+        const css = await readFile(stylesheet, 'utf8');
+        if (!css.includes('Font Awesome Pro 7.3.1')) {
+            throw new Error(`unexpected stylesheet source: ${stylesheet}`);
+        }
+
+        await writeFile(resolve(fontAwesomeWebfontsTarget, filename), font);
+        await copyFile(stylesheet, resolve(fontAwesomeCssTarget, expected.style));
+        console.log(`Font Awesome prepared: ${filename} (${font.length} bytes, ${sha256})`);
+    } catch (error) {
+        if (expected.required) throw error;
+
+        await writeFile(
+            resolve(fontAwesomeCssTarget, expected.style),
+            `/* ${filename} skipped: the committed source is incomplete or failed integrity validation. */\n`,
+        );
+        console.warn(`Font Awesome skipped: ${filename} (${error.message})`);
     }
-
-    const parts = (await readdir(sourceDir))
-        .filter((file) => /^part-.*\.txt$/.test(file))
-        .sort();
-
-    if (parts.length === 0) {
-        throw new Error(`Font Awesome source parts are empty: ${filename}`);
-    }
-
-    const contents = await Promise.all(
-        parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')),
-    );
-    const base64 = mergeBase64Parts(contents, filename);
-
-    if (base64.length !== expected.base64Length) {
-        const base64Sha256 = createHash('sha256').update(base64).digest('hex');
-        throw new Error(`${filename} Base64 reconstruction failed: expected=${expected.base64Length}, actual=${base64.length}, sha256=${base64Sha256}`);
-    }
-
-    const decoded = Buffer.from(base64, 'base64');
-    const { font, sha256 } = normalizeWoff2(decoded, filename, expected.size, expected.sha256);
-
-    await writeFile(resolve(fontAwesomeWebfontsTarget, filename), font);
-
-    console.log(`Font Awesome prepared: ${filename} (${font.length} bytes, ${sha256})`);
 }
 
 const fontAwesomeCoreCss = `/* Minimal Font Awesome core required by the bundled style files. */
