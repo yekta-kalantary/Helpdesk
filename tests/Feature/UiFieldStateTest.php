@@ -66,3 +66,21 @@ it('renders a distinct disabled state for shared form fields', function (): void
         ->toContain('cursor-not-allowed')
         ->toContain('bg-slate-100');
 });
+
+it('renders searchable selects as one combobox with integrated live search', function (): void {
+    $html = Blade::render(
+        '<x-ui.searchable-select name="customer_id" label="Customer" :options="$options" :value="2" wire:model.number="customer_id" search-model="customerSearch" search-value="Needle" />',
+        ['options' => [
+            ['id' => 1, 'name' => 'First Customer'],
+            ['id' => 2, 'name' => 'Selected Customer'],
+        ]],
+    );
+
+    expect($html)
+        ->toContain('role="combobox"')
+        ->toContain('role="listbox"')
+        ->toContain('wire:model.number="customer_id"')
+        ->toContain('wire:model.live.debounce.300ms="customerSearch"')
+        ->toContain('data-searchable-option')
+        ->toContain('Selected Customer');
+});
