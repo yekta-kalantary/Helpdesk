@@ -8,14 +8,16 @@
 
 - PHP 8.4+
 - Composer 2
-- SQLite و extensionهای `pdo_sqlite` / `sqlite3`
+- MariaDB 11.x و extension `pdo_mysql`
 - extensionهای استاندارد Laravel شامل `mbstring`, `openssl`, `ctype`, `json`, `fileinfo`
 - `exif` و `fileinfo` برای Media Library
 - Node.js فقط برای build کردن assetها در محیط توسعه/CI؛ runtime وب به Node نیاز ندارد.
 
-هیچ Redis، Docker، Elasticsearch، queue worker یا سرویس خارجی اجباری نیست. Livewire در همان Laravel web runtime اجرا می‌شود.
+هیچ Redis، Docker، Elasticsearch یا queue worker اجباری نیست. Livewire در همان Laravel web runtime اجرا می‌شود.
 
 ## نصب محلی
+
+ابتدا دیتابیس و کاربر MariaDB را ایجاد کنید. تنظیمات پیش‌فرض توسعه در `.env.example` برای دیتابیس `helpdesk` و کاربر `helpdesk` است؛ جزئیات کامل در `docs/installation.md` آمده است.
 
 ```bash
 cp .env.example .env
@@ -23,7 +25,7 @@ composer run setup
 php artisan serve
 ```
 
-اسکریپت `setup` dependencyها، SQLite، APP_KEY، migration/seed و frontend build را آماده می‌کند.
+اسکریپت `setup` dependencyها، APP_KEY، migration/seed و frontend build را آماده می‌کند. خود MariaDB و دیتابیس باید قبل از اجرای آن در دسترس باشند.
 
 ## معماری UI
 
@@ -98,6 +100,8 @@ SMTP از صفحه Livewire تنظیمات مدیریت می‌شود. رمز SM
 
 ## تست و کیفیت
 
+برای اجرای تست‌ها، دیتابیس MariaDB با نام `helpdesk_testing` باید در دسترس باشد.
+
 ```bash
 php artisan view:cache
 php artisan test
@@ -105,4 +109,4 @@ php artisan test
 npm run build
 ```
 
-CI روی PHP 8.4 و SQLite، routeها، تمام Blade viewها، Livewire actionهای امنیتی، frontend build و deployable ZIP را اعتبارسنجی می‌کند.
+CI روی PHP 8.4 و MariaDB، routeها، تمام Blade viewها، Livewire actionهای امنیتی، frontend build و deployable ZIP را اعتبارسنجی می‌کند.

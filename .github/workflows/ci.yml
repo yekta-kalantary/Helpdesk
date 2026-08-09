@@ -18,6 +18,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: helpdesk_testing
+          MARIADB_USER: helpdesk
+          MARIADB_PASSWORD: helpdesk
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h localhost -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      DB_CONNECTION: mariadb
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: helpdesk_testing
+      DB_USERNAME: helpdesk
+      DB_PASSWORD: helpdesk
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -26,7 +50,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite, sqlite3, exif, fileinfo
+          extensions: mbstring, pdo_mysql, exif, fileinfo
           coverage: none
           tools: composer:v2
 
@@ -46,7 +70,6 @@ jobs:
       - name: Prepare environment
         run: |
           cp .env.example .env
-          touch database/database.sqlite
           php artisan key:generate
 
       - name: Run database migrations
@@ -81,7 +104,6 @@ jobs:
 
       - name: Build deployable source archive
         run: |
-          rm -f database/database.sqlite
           zip -qr helpdesk.zip . \
             -x '.git/*' \
             -x 'node_modules/*' \

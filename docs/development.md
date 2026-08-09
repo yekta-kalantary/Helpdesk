@@ -76,6 +76,8 @@ Modelهای Eloquent implementation detail لایه Infrastructure هستند. �
 5. حذف ستون یا جدول داده‌دار بدون مقصد archive/backfill مجاز نیست. ابتدا application باید خواندن/نوشتن آن را متوقف کند و cleanup در deployment جداگانه انجام شود.
 6. migration داده‌ای مخرب باید forward-only و با توضیح صریح باشد؛ rollback نباید source of truth قبلی و جدید را همزمان برگرداند.
 
+Migrationها باید با MariaDB سازگار باشند و از SQL یا behavior اختصاصی SQLite استفاده نکنند. CI تمام migration/seed/testها را روی MariaDB اجرا می‌کند.
+
 ## ترجمه
 
 تمام stringهای UI باید با translation key فراخوانی شوند:
@@ -120,7 +122,7 @@ Taskهای داخلی default هستند. فقط Task با `is_customer_visible=
 - validation مهم
 - regression برای bug امنیتی
 
-تست‌ها با SQLite memory اجرا می‌شوند.
+تست‌ها با دیتابیس MariaDB مجزای `helpdesk_testing` اجرا می‌شوند. این دیتابیس باید قبل از اجرای test suite وجود داشته باشد و فقط برای تست استفاده شود.
 
 ## Style
 
