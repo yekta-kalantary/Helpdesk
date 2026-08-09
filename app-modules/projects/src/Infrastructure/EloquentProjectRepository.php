@@ -9,31 +9,28 @@ use Modules\Projects\Infrastructure\Models\Project;
 
 class EloquentProjectRepository implements ProjectRepository
 {
-    public function search(?string $term = null, ?int $customerId = null): array
+    public function search(?string $term = null, ?int $contactId = null): array
     {
         $query = DB::table('projects')
-            ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
-            ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
+            ->leftJoin('contacts', 'contacts.id', '=', 'projects.contact_id')
             ->whereNull('projects.deleted_at')
             ->select([
-                'projects.id', 'projects.customer_id', 'projects.category', 'projects.title', 'projects.type', 'projects.status',
+                'projects.id', 'projects.contact_id', 'projects.category', 'projects.title', 'projects.type', 'projects.status',
                 'projects.starts_at', 'projects.ends_at', 'projects.created_at',
-                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
+                'contacts.first_name as contact_first_name', 'contacts.last_name as contact_last_name',
             ]);
 
         if (Schema::hasTable('tasks')) {
             $tasksCount = DB::table('tasks')
                 ->selectRaw('count(*)')
                 ->whereColumn('tasks.project_id', 'projects.id')
-                ->whereNull('tasks.deleted_at')
-                ->when($customerId, fn ($builder) => $builder->where('tasks.is_customer_visible', true));
+                ->whereNull('tasks.deleted_at');
 
             $tasksDone = DB::table('tasks')
                 ->selectRaw('count(*)')
                 ->whereColumn('tasks.project_id', 'projects.id')
                 ->whereNull('tasks.deleted_at')
-                ->where('tasks.status', 'done')
-                ->when($customerId, fn ($builder) => $builder->where('tasks.is_customer_visible', true));
+                ->where('tasks.status', 'done');
 
             $query->addSelect([
                 'tasks_count' => $tasksCount,
@@ -42,23 +39,23 @@ class EloquentProjectRepository implements ProjectRepository
         }
 
         $rows = $query
-            ->when($customerId, fn ($builder) => $builder->where('projects.customer_id', $customerId))
+            ->when($contactId, fn ($builder) => $builder->where('projects.contact_id', $contactId))
             ->when($term, fn ($builder) => $builder->where(fn ($nested) => $nested
                 ->where('projects.title', 'like', "%{$term}%")
-                ->orWhere('customer_people.first_name', 'like', "%{$term}%")
-                ->orWhere('customer_people.last_name', 'like', "%{$term}%")))
+                ->orWhere('contacts.first_name', 'like', "%{$term}%")
+                ->orWhere('contacts.last_name', 'like', "%{$term}%")))
             ->orderByDesc('projects.id')
             ->get();
 
         return $rows->map(function (object $row): array {
             $count = (int) ($row->tasks_count ?? 0);
             $done = (int) ($row->tasks_done ?? 0);
-            $customerName = trim(($row->customer_first_name ?? '').' '.($row->customer_last_name ?? ''));
+            $contactName = trim(($row->contact_first_name ?? '').' '.($row->contact_last_name ?? ''));
 
             return [
                 'id' => $row->id,
-                'customer_id' => $row->customer_id,
-                'customer_name' => $customerName !== '' ? $customerName : null,
+                'contact_id' => $row->contact_id,
+                'contact_name' => $contactName !== '' ? $contactName : null,
                 'category' => $row->category,
                 'title' => $row->title,
                 'type' => $row->type,
@@ -72,18 +69,12 @@ class EloquentProjectRepository implements ProjectRepository
 
     public function find(int $id): array
     {
-        $project = Project::query()->findOrFail($id);
-        $customer = $project->customer_id
-            ? DB::table('customers')
-                ->join('people', 'people.id', '=', 'customers.person_id')
-                ->where('customers.id', $project->customer_id)
-                ->first(['people.first_name', 'people.last_name'])
-            : null;
+        $project = Project::query()->with('contact')->findOrFail($id);
 
         return [
             'id' => $project->id,
-            'customer_id' => $project->customer_id,
-            'customer_name' => $customer ? trim($customer->first_name.' '.$customer->last_name) : null,
+            'contact_id' => $project->contact_id,
+            'contact_name' => $project->contact?->full_name,
             'category' => $project->category->value,
             'title' => $project->title,
             'type' => $project->type->value,
