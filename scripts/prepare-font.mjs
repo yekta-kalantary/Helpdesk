@@ -4,7 +4,6 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const resources = resolve(root, 'resources');
 
 const iranYekanSourceDir = resolve(root, 'resources/fonts/IRANYekanXVF.woff2.base64');
 const iranYekanTarget = resolve(root, 'public/fonts/IRANYekanXVF.woff2');
@@ -37,58 +36,8 @@ await rm(obsoleteViteTarget, { force: true });
 
 console.log(`IRANYekan font prepared: ${iranYekanFont.length} bytes (${iranYekanSha256})`);
 
-async function findEntryByName(directory, targetName, expectedType) {
-    const entries = await readdir(directory, { withFileTypes: true });
-
-    for (const entry of entries) {
-        const path = resolve(directory, entry.name);
-
-        if (entry.name === targetName && ((expectedType === 'file' && entry.isFile()) || (expectedType === 'directory' && entry.isDirectory()))) {
-            return path;
-        }
-    }
-
-    for (const entry of entries) {
-        if (!entry.isDirectory()) {
-            continue;
-        }
-
-        const found = await findEntryByName(resolve(directory, entry.name), targetName, expectedType);
-
-        if (found) {
-            return found;
-        }
-    }
-
-    return null;
-}
-
-function normalizeWoff2(font, filename, expectedSize, expectedSha256) {
-    if (font.length < 12 || font.subarray(0, 4).toString('ascii') !== 'wOF2') {
-        throw new Error(`${filename} is not a valid WOFF2 file.`);
-    }
-
-    const declaredLength = font.readUInt32BE(8);
-
-    if (declaredLength > font.length) {
-        throw new Error(`${filename} integrity check failed: declared=${declaredLength}, actual=${font.length}`);
-    }
-
-    // Some historical source chunks contain trailing duplicated bytes after the
-    // complete WOFF2 payload. The WOFF2 header is authoritative for file length;
-    // trim only that trailing data, then verify against the known original hash.
-    const normalized = declaredLength === font.length
-        ? font
-        : font.subarray(0, declaredLength);
-    const sha256 = createHash('sha256').update(normalized).digest('hex');
-
-    if (normalized.length !== expectedSize || sha256 !== expectedSha256) {
-        throw new Error(`${filename} integrity check failed: size=${normalized.length}, sha256=${sha256}`);
-    }
-
-    return { font: normalized, sha256 };
-}
-
+const fontAwesomeSourceRoot = resolve(root, 'resources/fonts/fontawesome');
+const fontAwesomeCssSource = resolve(root, 'resources/css/fontawesome/css');
 const fontAwesomeRoot = resolve(root, 'public/fontawesome');
 const fontAwesomeCssTarget = resolve(fontAwesomeRoot, 'css');
 const fontAwesomeWebfontsTarget = resolve(fontAwesomeRoot, 'webfonts');
@@ -108,12 +57,7 @@ await mkdir(fontAwesomeCssTarget, { recursive: true });
 await mkdir(fontAwesomeWebfontsTarget, { recursive: true });
 
 for (const filename of ['brands.css', 'light.css']) {
-    const source = await findEntryByName(resources, filename, 'file');
-
-    if (!source) {
-        throw new Error(`Font Awesome source stylesheet is missing: ${filename}`);
-    }
-
+    const source = resolve(fontAwesomeCssSource, filename);
     const css = await readFile(source, 'utf8');
 
     if (!css.includes('Font Awesome Pro 7.3.1')) {
@@ -124,29 +68,21 @@ for (const filename of ['brands.css', 'light.css']) {
 }
 
 for (const [filename, expected] of Object.entries(fontAwesomeFonts)) {
-    const sourceDir = await findEntryByName(resources, `${filename}.base64`, 'directory');
+    const source = resolve(fontAwesomeSourceRoot, filename);
+    const font = await readFile(source);
 
-    if (!sourceDir) {
-        throw new Error(`Font Awesome source parts are missing: ${filename}`);
+    if (font.length < 12 || font.subarray(0, 4).toString('ascii') !== 'wOF2') {
+        throw new Error(`${filename} is not a valid WOFF2 file.`);
     }
 
-    const parts = (await readdir(sourceDir))
-        .filter((file) => file.endsWith('.txt'))
-        .sort();
+    const declaredLength = font.readUInt32BE(8);
+    const sha256 = createHash('sha256').update(font).digest('hex');
 
-    if (parts.length === 0) {
-        throw new Error(`Font Awesome source parts are empty: ${filename}`);
+    if (declaredLength !== font.length || font.length !== expected.size || sha256 !== expected.sha256) {
+        throw new Error(`${filename} integrity check failed: declared=${declaredLength}, size=${font.length}, sha256=${sha256}`);
     }
 
-    const base64 = (await Promise.all(
-        parts.map((file) => readFile(resolve(sourceDir, file), 'utf8')),
-    )).join('').replace(/\s+/g, '');
-
-    const decoded = Buffer.from(base64, 'base64');
-    const { font, sha256 } = normalizeWoff2(decoded, filename, expected.size, expected.sha256);
-
-    await writeFile(resolve(fontAwesomeWebfontsTarget, filename), font);
-
+    await copyFile(source, resolve(fontAwesomeWebfontsTarget, filename));
     console.log(`Font Awesome prepared: ${filename} (${font.length} bytes, ${sha256})`);
 }
 
