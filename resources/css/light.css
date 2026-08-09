@@ -15,7 +15,7 @@
   font-style: normal;
   font-weight: 300;
   font-display: block;
-  src: url("../webfonts/fa-light-300.woff2");
+  src: url("../fonts/fontawesome/fa-light-300.woff2") format("woff2");
 }
 .fal {
   --fa-family: var(--fa-family-classic);

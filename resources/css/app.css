@@ -1,7 +1,6 @@
 @import 'tailwindcss';
-@import '../fonts/fontawesome/css/base.css';
-@import '../fonts/fontawesome/css/light.css';
-@import '../fonts/fontawesome/css/brands.css';
+@import './fontawesome.css';
+@import './light.css';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
@@ -33,7 +32,11 @@
         font-family: 'IRANYekanXVF';
     }
 
-    *, *::before, *::after {
+    body,
+    button,
+    input,
+    select,
+    textarea {
         font-family: 'IRANYekanXVF';
     }
 
