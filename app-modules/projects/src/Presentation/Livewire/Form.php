@@ -62,7 +62,7 @@ class Form extends Component
         $this->projectId = $project;
         $this->category = $item['category'];
         $this->customer_id = $item['customer_id'] ? (int) $item['customer_id'] : null;
-        $this->customerSearch = (string) ($item['customer_name'] ?? '');
+        $this->customerSearch = '';
         $this->title = $item['title'];
         $this->type = $item['type'];
         $this->status = $item['status'];
