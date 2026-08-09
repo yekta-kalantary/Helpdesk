@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php($resolvedTitle = $title ?? trim($__env->yieldContent('title')) ?: __('app.name'))
     <title>{{ $resolvedTitle }} - {{ __('app.name') }}</title>
+    <link rel="stylesheet" href="{{ asset('fontawesome/css/fontawesome.css') }}">
+    <link rel="stylesheet" href="{{ asset('fontawesome/css/light.css') }}">
+    <link rel="stylesheet" href="{{ asset('fontawesome/css/brands.css') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
