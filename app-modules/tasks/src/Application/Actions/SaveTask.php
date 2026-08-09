@@ -12,7 +12,7 @@ class SaveTask
         private readonly TaskAttachmentStore $attachments,
     ) {}
 
-    public function execute(?int $id, array $attributes, array $files = [], ?int $previousAssignee = null): int
+    public function execute(?int $id, array $attributes, array $files = []): int
     {
         if ($id) {
             $this->tasks->update($id, $attributes);
