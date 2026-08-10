@@ -11,7 +11,7 @@ class TaskAccessScope
     {
         return [
             'actor_id' => $user->id,
-            'manage_all' => $user->hasRole('admin') || $user->can('tasks.manage_all'),
+            'manage_all' => (bool) $user->is_admin,
         ];
     }
 }
