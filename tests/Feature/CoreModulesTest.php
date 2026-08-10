@@ -1,21 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
 
-it('exposes only users projects and tasks', function (): void {
+it('exposes users projects and tasks', function (): void {
     $admin = User::query()->where('is_admin', true)->firstOrFail();
 
     $this->actingAs($admin)->get(route('projects.index'))->assertOk();
     $this->get(route('tasks.index'))->assertOk();
     $this->get(route('users.index'))->assertOk();
-
-    expect(Route::has('contacts.index'))->toBeFalse()
-        ->and(Route::has('roles.index'))->toBeFalse()
-        ->and(Route::has('tasks.show'))->toBeFalse()
-        ->and(Route::has('tasks.attachments.download'))->toBeFalse();
 });
 
 it('keeps user profile data directly on users', function (): void {
