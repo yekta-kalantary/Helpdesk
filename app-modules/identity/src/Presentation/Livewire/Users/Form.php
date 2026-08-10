@@ -12,6 +12,8 @@ class Form extends Component
     #[Locked]
     public ?int $userId = null;
 
+    public string $activeTab = 'general';
+
     public string $name = '';
 
     public string $last_name = '';
@@ -24,7 +26,7 @@ class Form extends Component
 
     public string $password_confirmation = '';
 
-    public bool $is_active = true;
+    public bool $is_active = false;
 
     public function mount(?int $user = null): void
     {
@@ -41,56 +43,105 @@ class Form extends Component
         $this->userId = $item->id;
         $this->name = $item->name;
         $this->last_name = $item->last_name;
-        $this->email = $item->email;
+        $this->email = $item->email ?? '';
         $this->mobile = $item->mobile;
         $this->is_active = $item->is_active;
     }
 
-    public function save()
+    public function saveGeneral(): void
     {
         abort_unless(auth()->user()?->is_admin, 403);
 
-        $data = $this->validate();
-        $attributes = [
-            'name' => $data['name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
+        $data = $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+        ]);
+
+        if ($this->userId) {
+            $this->user()->update($data);
+            session()->flash('success', __('identity::messages.general_saved'));
+
+            return;
+        }
+
+        $user = User::query()->create([
+            ...$data,
+            'email' => null,
+            'mobile' => null,
+            'password' => null,
+            'is_active' => false,
+            'is_admin' => false,
+        ]);
+
+        $this->userId = $user->id;
+        $this->activeTab = 'contact';
+
+        session()->flash('success', __('identity::messages.general_saved'));
+    }
+
+    public function saveContact(): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+
+        $data = $this->validate([
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
+            'mobile' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        $this->user()->update([
+            'email' => $data['email'] ?: null,
             'mobile' => $data['mobile'] ?: null,
+        ]);
+
+        session()->flash('success', __('identity::messages.contact_saved'));
+    }
+
+    public function saveAccount(): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+
+        $data = $this->validate([
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'is_active' => ['boolean'],
+        ]);
+
+        $user = $this->user();
+
+        if ($data['is_active'] && blank($user->email)) {
+            $this->addError('is_active', __('identity::messages.email_required_to_activate'));
+
+            return;
+        }
+
+        if ($data['is_active'] && blank($user->getRawOriginal('password')) && $data['password'] === '') {
+            $this->addError('password', __('identity::messages.password_required_to_activate'));
+
+            return;
+        }
+
+        $attributes = [
             'is_active' => $data['is_active'],
         ];
 
-        if ($this->userId) {
-            $user = User::query()
-                ->where('is_admin', false)
-                ->findOrFail($this->userId);
-
-            if ($data['password'] !== '') {
-                $attributes['password'] = $data['password'];
-            }
-
-            $user->update($attributes);
-        } else {
-            User::query()->create($attributes + [
-                'password' => $data['password'],
-                'is_admin' => false,
-            ]);
+        if ($data['password'] !== '') {
+            $attributes['password'] = $data['password'];
         }
 
-        session()->flash('success', $this->userId ? __('app.updated_successfully') : __('app.created_successfully'));
+        $user->update($attributes);
 
-        return $this->redirectRoute('users.index', navigate: true);
+        $this->password = '';
+        $this->password_confirmation = '';
+
+        session()->flash('success', __('identity::messages.account_saved'));
     }
 
-    protected function rules(): array
+    private function user(): User
     {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
-            'mobile' => ['nullable', 'string', 'max:32'],
-            'password' => [$this->userId ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
-            'is_active' => ['boolean'],
-        ];
+        abort_unless($this->userId, 404);
+
+        return User::query()
+            ->where('is_admin', false)
+            ->findOrFail($this->userId);
     }
 
     public function render()
