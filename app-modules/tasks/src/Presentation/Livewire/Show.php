@@ -2,10 +2,10 @@
 
 namespace Modules\Tasks\Presentation\Livewire;
 
-use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Application\Queries\TaskAccessScope;
 use Modules\Tasks\Domain\Contracts\TaskAttachmentStore;
 use Modules\Tasks\Domain\Contracts\TaskRepository;
