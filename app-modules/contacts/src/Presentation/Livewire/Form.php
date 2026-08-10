@@ -104,6 +104,16 @@ class Form extends Component
     {
         abort_unless(auth()->user()?->can($this->contactId ? 'contacts.update' : 'contacts.create'), 403);
 
+        if ($this->tab === 'account-settings') {
+            abort_unless(auth()->user()?->can('users.view'), 403);
+
+            if ($this->userId) {
+                abort_unless(auth()->user()?->can('users.update'), 403);
+            } elseif ($this->account_enabled) {
+                abort_unless(auth()->user()?->can('users.create'), 403);
+            }
+        }
+
         $data = $this->validate();
         $contactId = $this->contacts->save(
             $this->contactId,
@@ -120,31 +130,23 @@ class Form extends Component
             ],
         );
 
-        if ($this->tab === 'account-settings') {
-            if ($this->userId) {
-                abort_unless(auth()->user()?->can('users.update'), 403);
-            } elseif ($data['account_enabled']) {
-                abort_unless(auth()->user()?->can('users.create'), 403);
+        if ($this->tab === 'account-settings' && ($this->userId || $data['account_enabled'])) {
+            try {
+                $this->accounts->save($contactId, [
+                    'enabled' => $data['account_enabled'],
+                    'role' => $data['role'] ?? null,
+                    'password' => $data['password'] ?? null,
+                ]);
+            } catch (DomainException $exception) {
+                $this->addError('role', __('contacts::messages.'.$exception->getMessage()));
+
+                return null;
             }
 
-            if ($this->userId || $data['account_enabled']) {
-                try {
-                    $this->accounts->save($contactId, [
-                        'enabled' => $data['account_enabled'],
-                        'role' => $data['role'] ?? null,
-                        'password' => $data['password'] ?? null,
-                    ]);
-                } catch (DomainException $exception) {
-                    $this->addError('role', __('contacts::messages.'.$exception->getMessage()));
-
-                    return null;
-                }
-
-                $account = $this->accounts->get($contactId);
-                $this->userId = $account['user_id'] ? (int) $account['user_id'] : null;
-                $this->account_enabled = $account['account_enabled'];
-                $this->role = $account['role'];
-            }
+            $account = $this->accounts->get($contactId);
+            $this->userId = $account['user_id'] ? (int) $account['user_id'] : null;
+            $this->account_enabled = $account['account_enabled'];
+            $this->role = $account['role'];
         }
 
         session()->flash('success', $this->contactId ? __('app.updated_successfully') : __('app.created_successfully'));
