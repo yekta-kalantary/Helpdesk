@@ -2,8 +2,7 @@
 
 namespace Modules\Identity\Infrastructure;
 
-use App\Enums\PersonType;
-use App\Models\Person;
+use App\Models\Contact;
 use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -11,23 +10,22 @@ use Modules\Identity\Domain\Contracts\UserRepository;
 
 class EloquentUserRepository implements UserRepository
 {
-    private const SYSTEM_ROLES = ['admin', 'customer'];
+    private const SYSTEM_ROLES = ['admin'];
 
     public function search(?string $term = null): array
     {
         return User::query()
             ->select('users.*')
-            ->join('people', 'people.id', '=', 'users.person_id')
-            ->with(['person', 'roles:id,name'])
-            ->where('people.type', PersonType::Employee->value)
+            ->join('contacts', 'contacts.id', '=', 'users.contact_id')
+            ->with(['contact', 'roles:id,name'])
             ->when($term, fn ($query) => $query->where(fn ($nested) => $nested
-                ->where('people.first_name', 'like', "%{$term}%")
-                ->orWhere('people.last_name', 'like', "%{$term}%")
-                ->orWhere('people.email', 'like', "%{$term}%")
-                ->orWhere('people.mobile', 'like', "%{$term}%")))
+                ->where('contacts.first_name', 'like', "%{$term}%")
+                ->orWhere('contacts.last_name', 'like', "%{$term}%")
+                ->orWhere('contacts.email', 'like', "%{$term}%")
+                ->orWhere('contacts.mobile', 'like', "%{$term}%")))
             ->whereDoesntHave('roles', fn ($query) => $query->whereIn('name', self::SYSTEM_ROLES))
-            ->orderBy('people.first_name')
-            ->orderBy('people.last_name')
+            ->orderBy('contacts.first_name')
+            ->orderBy('contacts.last_name')
             ->get()
             ->map(fn (User $user) => $this->map($user))
             ->all();
@@ -35,7 +33,7 @@ class EloquentUserRepository implements UserRepository
 
     public function find(int $id): array
     {
-        $user = User::query()->with(['person', 'roles:id,name'])->findOrFail($id);
+        $user = User::query()->with(['contact', 'roles:id,name'])->findOrFail($id);
         $this->assertTeamUser($user);
 
         return $this->map($user);
@@ -53,8 +51,7 @@ class EloquentUserRepository implements UserRepository
         return DB::transaction(function () use ($name, $lastName, $email, $mobile, $password, $isActive, $role): int {
             $this->assertTeamRole($role);
 
-            $person = Person::create([
-                'type' => PersonType::Employee,
+            $contact = Contact::create([
                 'first_name' => $name,
                 'last_name' => $lastName,
                 'email' => $email,
@@ -62,7 +59,7 @@ class EloquentUserRepository implements UserRepository
             ]);
 
             $user = User::create([
-                'person_id' => $person->id,
+                'contact_id' => $contact->id,
                 'password' => $password,
                 'is_active' => $isActive,
             ]);
@@ -84,11 +81,11 @@ class EloquentUserRepository implements UserRepository
         string $role,
     ): void {
         DB::transaction(function () use ($id, $name, $lastName, $email, $mobile, $password, $isActive, $role): void {
-            $user = User::query()->with('person')->findOrFail($id);
+            $user = User::query()->with('contact')->findOrFail($id);
             $this->assertTeamUser($user);
             $this->assertTeamRole($role);
 
-            $user->person->update([
+            $user->contact->update([
                 'first_name' => $name,
                 'last_name' => $lastName,
                 'email' => $email,
@@ -96,7 +93,6 @@ class EloquentUserRepository implements UserRepository
             ]);
 
             $attributes = ['is_active' => $isActive];
-
             if ($password !== null && $password !== '') {
                 $attributes['password'] = $password;
             }
@@ -115,23 +111,20 @@ class EloquentUserRepository implements UserRepository
 
     private function assertTeamUser(User $user): void
     {
-        abort_if(
-            $user->person?->type !== PersonType::Employee || $user->hasAnyRole(self::SYSTEM_ROLES),
-            404,
-        );
+        abort_if($user->hasAnyRole(self::SYSTEM_ROLES), 404);
     }
 
-    /** @return array{id:int,person_id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
+    /** @return array{id:int,contact_id:int,name:string,last_name:string,full_name:string,email:string,mobile:string,is_active:bool,role:?string} */
     private function map(User $user): array
     {
         return [
             'id' => $user->id,
-            'person_id' => $user->person_id,
-            'name' => $user->person->first_name,
-            'last_name' => $user->person->last_name,
-            'full_name' => $user->person->full_name,
-            'email' => $user->person->email,
-            'mobile' => $user->person->mobile,
+            'contact_id' => $user->contact_id,
+            'name' => $user->contact->first_name,
+            'last_name' => $user->contact->last_name,
+            'full_name' => $user->contact->full_name,
+            'email' => $user->contact->email,
+            'mobile' => $user->contact->mobile,
             'is_active' => (bool) $user->is_active,
             'role' => $user->roles->first()?->name,
         ];

@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'contacts' => 'Contacts',
+    'new_contact' => 'New contact',
+    'edit_contact' => 'Edit contact',
+    'general_info' => 'General Info',
+    'contact_info' => 'Contact Info',
+    'account_settings' => 'Account Settings',
+    'gender' => 'Gender',
+    'gender_unspecified' => 'Unspecified',
+    'gender_male' => 'Male',
+    'gender_female' => 'Female',
+    'gender_other' => 'Other',
+    'province' => 'Province',
+    'city' => 'City',
+    'address' => 'Address',
+    'postal_code' => 'Postal code',
+    'location' => 'Location',
+    'account' => 'Account',
+    'login_enabled' => 'Login access enabled',
+    'role' => 'Role',
+    'select_role' => 'Select a role',
+    'password' => 'Password',
+    'password_confirmation' => 'Password confirmation',
+    'password_hint' => 'Leave blank to keep the current password.',
+    'search_placeholder' => 'Search name, last name, email or mobile',
+];

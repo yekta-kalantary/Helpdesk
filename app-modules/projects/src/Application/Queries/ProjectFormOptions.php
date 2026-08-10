@@ -2,26 +2,23 @@
 
 namespace Modules\Projects\Application\Queries;
 
-use App\Enums\PersonType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class ProjectFormOptions
 {
-    /** @return array{customers:array<int,array{id:int,name:string,email:string,mobile:string}>,members:array<int,array{id:int,name:string}>} */
-    public function get(?string $customerSearch = null): array
+    /** @return array{contacts:array<int,array{id:int,name:string,email:string,mobile:string}>,members:array<int,array{id:int,name:string}>} */
+    public function get(?string $contactSearch = null): array
     {
         return [
-            'customers' => $this->customers($customerSearch),
+            'contacts' => $this->contacts($contactSearch),
             'members' => User::query()
                 ->select('users.*')
-                ->join('people', 'people.id', '=', 'users.person_id')
-                ->with('person')
+                ->join('contacts', 'contacts.id', '=', 'users.contact_id')
+                ->with('contact')
                 ->where('users.is_active', true)
-                ->where('people.type', PersonType::Employee->value)
-                ->whereDoesntHave('roles', fn ($query) => $query->where('name', 'customer'))
-                ->orderBy('people.first_name')
-                ->orderBy('people.last_name')
+                ->orderBy('contacts.first_name')
+                ->orderBy('contacts.last_name')
                 ->get()
                 ->map(fn (User $user) => ['id' => $user->id, 'name' => $user->full_name])
                 ->all(),
@@ -29,67 +26,50 @@ class ProjectFormOptions
     }
 
     /** @return array{id:int,name:string,email:string,mobile:string}|null */
-    public function findCustomer(int $customerId): ?array
+    public function findContact(int $contactId): ?array
     {
-        $customer = DB::table('customers')
-            ->join('people', 'people.id', '=', 'customers.person_id')
-            ->whereNull('customers.deleted_at')
-            ->where('customers.id', $customerId)
-            ->first([
-                'customers.id',
-                'people.first_name',
-                'people.last_name',
-                'people.email',
-                'people.mobile',
-            ]);
+        $contact = DB::table('contacts')
+            ->where('id', $contactId)
+            ->first(['id', 'first_name', 'last_name', 'email', 'mobile']);
 
-        return $customer ? $this->mapCustomer($customer) : null;
+        return $contact ? $this->mapContact($contact) : null;
     }
 
     /** @return array<int,array{id:int,name:string,email:string,mobile:string}> */
-    private function customers(?string $search): array
+    private function contacts(?string $search): array
     {
-        $query = DB::table('customers')
-            ->join('people', 'people.id', '=', 'customers.person_id')
-            ->whereNull('customers.deleted_at');
-
+        $query = DB::table('contacts');
         $search = $this->normalizeSearch((string) $search);
 
         if ($search !== '') {
             foreach (preg_split('/\s+/u', $search) ?: [] as $term) {
                 $like = '%'.addcslashes($term, '\\%_').'%';
 
-                $query->where(fn ($customerQuery) => $customerQuery
-                    ->where('people.first_name', 'like', $like)
-                    ->orWhere('people.last_name', 'like', $like)
-                    ->orWhere('people.email', 'like', $like)
-                    ->orWhere('people.mobile', 'like', $like));
+                $query->where(fn ($contactQuery) => $contactQuery
+                    ->where('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)
+                    ->orWhere('email', 'like', $like)
+                    ->orWhere('mobile', 'like', $like));
             }
         }
 
         return $query
-            ->orderBy('people.first_name')
-            ->orderBy('people.last_name')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
             ->limit(25)
-            ->get([
-                'customers.id',
-                'people.first_name',
-                'people.last_name',
-                'people.email',
-                'people.mobile',
-            ])
-            ->map(fn (object $customer) => $this->mapCustomer($customer))
+            ->get(['id', 'first_name', 'last_name', 'email', 'mobile'])
+            ->map(fn (object $contact) => $this->mapContact($contact))
             ->all();
     }
 
     /** @return array{id:int,name:string,email:string,mobile:string} */
-    private function mapCustomer(object $customer): array
+    private function mapContact(object $contact): array
     {
         return [
-            'id' => (int) $customer->id,
-            'name' => trim($customer->first_name.' '.$customer->last_name),
-            'email' => (string) $customer->email,
-            'mobile' => (string) $customer->mobile,
+            'id' => (int) $contact->id,
+            'name' => trim($contact->first_name.' '.$contact->last_name),
+            'email' => (string) $contact->email,
+            'mobile' => (string) $contact->mobile,
         ];
     }
 

@@ -25,8 +25,8 @@ class Login extends Component
         ]);
 
         $user = User::query()
-            ->with('person')
-            ->whereHas('person', fn ($query) => $query->where('email', $credentials['email']))
+            ->with('contact')
+            ->whereHas('contact', fn ($query) => $query->where('email', $credentials['email']))
             ->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
@@ -46,7 +46,7 @@ class Login extends Component
         Auth::login($user, $this->remember);
         session()->regenerate();
 
-        return redirect()->intended(route('dashboard'));
+        return redirect()->intended(route('contacts.index'));
     }
 
     public function render()

@@ -3,7 +3,10 @@
         <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
     @endif
 
-    <x-ui.page-header :title="$task['title']" :subtitle="$task['project_title'].' · '.$task['customer_name']">
+    <x-ui.page-header
+        :title="$task['title']"
+        :subtitle="collect([$task['project_title'], $task['contact_name']])->filter()->implode(' · ')"
+    >
         <x-slot:actions>
             @can('tasks.update')
                 <x-ui.button variant="secondary" :href="route('tasks.edit', $task['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
@@ -17,9 +20,6 @@
     <div class="mb-5 flex flex-wrap gap-2">
         <x-ui.badge>{{ __('tasks::messages.status.'.$task['status']) }}</x-ui.badge>
         <x-ui.badge>{{ __('tasks::messages.priority.'.$task['priority']) }}</x-ui.badge>
-        @if(! $customerView && $task['is_customer_visible'])
-            <x-ui.badge tone="info">{{ __('tasks::messages.customer_visible') }}</x-ui.badge>
-        @endif
     </div>
 
     <div class="grid gap-6 xl:grid-cols-3">
@@ -52,30 +52,28 @@
                 </div>
             </x-ui.card>
 
-            @if(! $customerView)
-                <x-ui.card :title="__('tasks::messages.comments')">
-                    @can('tasks.comment')
-                        <form class="mb-5 space-y-3" wire:submit="addComment">
-                            <x-ui.textarea name="commentBody" :value="$commentBody" wire:model="commentBody" :placeholder="__('tasks::messages.comment_placeholder')" required />
-                            <x-ui.button type="submit" icon="fa-comment-plus" wire:loading.attr="disabled" wire:target="addComment">
-                                <span wire:loading.remove wire:target="addComment">{{ __('tasks::messages.new_comment') }}</span>
-                                <span wire:loading wire:target="addComment">{{ __('app.loading') }}</span>
-                            </x-ui.button>
-                        </form>
-                    @endcan
+            <x-ui.card :title="__('tasks::messages.comments')">
+                @can('tasks.comment')
+                    <form class="mb-5 space-y-3" wire:submit="addComment">
+                        <x-ui.textarea name="commentBody" :value="$commentBody" wire:model="commentBody" :placeholder="__('tasks::messages.comment_placeholder')" required />
+                        <x-ui.button type="submit" icon="fa-comment-plus" wire:loading.attr="disabled" wire:target="addComment">
+                            <span wire:loading.remove wire:target="addComment">{{ __('tasks::messages.new_comment') }}</span>
+                            <span wire:loading wire:target="addComment">{{ __('app.loading') }}</span>
+                        </x-ui.button>
+                    </form>
+                @endcan
 
-                    <div class="space-y-3">
-                        @forelse($task['comments'] as $comment)
-                            <article class="rounded-xl border border-slate-200 p-4" wire:key="task-comment-{{ $comment['id'] }}">
-                                <div class="flex justify-between gap-3 text-xs text-slate-500"><span class="font-semibold text-slate-700">{{ $comment['user_name'] }}</span><span dir="ltr">{{ $comment['created_at']?->format('Y-m-d H:i') }}</span></div>
-                                <div class="mt-3 whitespace-pre-line text-sm leading-7">{{ $comment['body'] }}</div>
-                            </article>
-                        @empty
-                            <x-ui.empty-state :description="__('app.no_records')" />
-                        @endforelse
-                    </div>
-                </x-ui.card>
-            @endif
+                <div class="space-y-3">
+                    @forelse($task['comments'] as $comment)
+                        <article class="rounded-xl border border-slate-200 p-4" wire:key="task-comment-{{ $comment['id'] }}">
+                            <div class="flex justify-between gap-3 text-xs text-slate-500"><span class="font-semibold text-slate-700">{{ $comment['user_name'] }}</span><span dir="ltr">{{ $comment['created_at']?->format('Y-m-d H:i') }}</span></div>
+                            <div class="mt-3 whitespace-pre-line text-sm leading-7">{{ $comment['body'] }}</div>
+                        </article>
+                    @empty
+                        <x-ui.empty-state :description="__('app.no_records')" />
+                    @endforelse
+                </div>
+            </x-ui.card>
         </div>
 
         <aside class="space-y-4">
@@ -101,11 +99,9 @@
                 <div class="space-y-4">
                     <x-ui.meta-item :label="__('tasks::messages.assignee')">{{ $task['assignee_name'] ?: __('tasks::messages.unassigned') }}</x-ui.meta-item>
                     <x-ui.meta-item :label="__('tasks::messages.due_at')"><span dir="ltr">{{ $task['due_at'] ? str_replace('T', ' ', $task['due_at']) : '—' }}</span></x-ui.meta-item>
-                    @if(! $customerView)
-                        <x-ui.meta-item :label="__('tasks::messages.creator')">{{ $task['creator_name'] }}</x-ui.meta-item>
-                        <x-ui.meta-item :label="__('tasks::messages.estimated_minutes')">{{ $task['estimated_minutes'] ?? '—' }}</x-ui.meta-item>
-                        <x-ui.meta-item :label="__('tasks::messages.spent_minutes')">{{ $task['spent_minutes'] ?? '—' }}</x-ui.meta-item>
-                    @endif
+                    <x-ui.meta-item :label="__('tasks::messages.creator')">{{ $task['creator_name'] }}</x-ui.meta-item>
+                    <x-ui.meta-item :label="__('tasks::messages.estimated_minutes')">{{ $task['estimated_minutes'] ?? '—' }}</x-ui.meta-item>
+                    <x-ui.meta-item :label="__('tasks::messages.spent_minutes')">{{ $task['spent_minutes'] ?? '—' }}</x-ui.meta-item>
                 </div>
             </x-ui.card>
         </aside>

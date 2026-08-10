@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
             $table->string('priority', 20)->default('medium')->index();
             $table->string('status', 20)->default('todo')->index();
-            $table->boolean('is_customer_visible')->default(false)->index();
             $table->timestamp('due_at')->nullable()->index();
             $table->unsignedInteger('estimated_minutes')->nullable();
             $table->unsignedInteger('spent_minutes')->nullable();

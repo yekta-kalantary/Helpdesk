@@ -13,15 +13,15 @@
                         @endforeach
                     </x-ui.select>
 
-                    @if($category === 'customer')
+                    @if($category === 'contact')
                         <x-ui.searchable-select
-                            name="customer_id"
-                            :label="__('projects::messages.customer')"
-                            :options="$options['customers']"
-                            :value="$customer_id"
-                            search-model="customerSearch"
-                            select-action="selectCustomer"
-                            :search-placeholder="__('projects::messages.customer_search_placeholder')"
+                            name="contact_id"
+                            :label="__('projects::messages.contact')"
+                            :options="$options['contacts']"
+                            :value="$contact_id"
+                            search-model="contactSearch"
+                            select-action="selectContact"
+                            :search-placeholder="__('projects::messages.contact_search_placeholder')"
                             required
                         />
                     @else

@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 class SpatieAccessControl implements AccessControl
 {
-    private const SYSTEM_ROLES = ['admin', 'customer'];
+    private const SYSTEM_ROLES = ['admin'];
 
     public function roles(): array
     {

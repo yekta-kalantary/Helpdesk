@@ -1,15 +1,11 @@
 <?php
 
 return [
-    'name' => 'Project & Ticket Helpdesk',
-    'dashboard' => 'Dashboard',
-    'customers' => 'Customers',
+    'name' => 'Contact & Project Manager',
     'projects' => 'Projects',
     'tasks' => 'Tasks',
-    'tickets' => 'Tickets',
     'users' => 'Users',
     'roles_permissions' => 'Roles & Permissions',
-    'settings' => 'Settings',
     'logout' => 'Logout',
     'login' => 'Login',
     'email' => 'Email',

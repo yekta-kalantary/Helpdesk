@@ -2,8 +2,10 @@
 
 namespace Modules\Projects\Infrastructure\Models;
 
+use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Projects\Domain\Enums\ProjectCategory;
@@ -15,7 +17,7 @@ class Project extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'customer_id',
+        'contact_id',
         'category',
         'title',
         'type',
@@ -34,6 +36,11 @@ class Project extends Model
             'starts_at' => 'date',
             'ends_at' => 'date',
         ];
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
     }
 
     public function members(): BelongsToMany

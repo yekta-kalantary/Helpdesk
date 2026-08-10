@@ -1,23 +1,46 @@
 # Helpdesk
 
-سامانه فارسی مدیریت مشتری، پروژه، تسک و تیکت برای تیم‌های طراحی سایت، سئو و دیجیتال مارکتینگ.
+سامانه فارسی مدیریت مخاطب، پروژه و تسک با معماری **Modular Monolith** مبتنی بر Laravel 13 و Livewire 4.
 
-این پروژه یک **Modular Monolith** مبتنی بر Laravel 13 است. API عمومی ندارد و رابط کاربری آن با **Livewire 4 + Blade + Tailwind CSS** پیاده‌سازی شده است.
+## ماژول‌ها
 
-## نیازمندی‌های اجرا
+فقط چهار ماژول در هسته سیستم وجود دارد:
 
-- PHP 8.4+
-- Composer 2
-- MariaDB 11.x و extension `pdo_mysql`
-- extensionهای استاندارد Laravel شامل `mbstring`, `openssl`, `ctype`, `json`, `fileinfo`
-- `exif` و `fileinfo` برای Media Library
-- Node.js فقط برای build کردن assetها در محیط توسعه/CI؛ runtime وب به Node نیاز ندارد.
+| Module | مسئولیت |
+| --- | --- |
+| `Identity` | Login/Logout، حساب‌های کاربری، Role و Permission |
+| `Contacts` | اطلاعات عمومی، اطلاعات تماس و Account Settings مخاطبین |
+| `Projects` | پروژه‌های مخاطب یا داخلی، اعضای تیم، وضعیت و پیشرفت |
+| `Tasks` | Kanban، Assignment، Deadline، Time tracking، Comment و Attachment |
 
-هیچ Redis، Docker، Elasticsearch یا queue worker اجباری نیست. Livewire در همان Laravel web runtime اجرا می‌شود.
+ماژول‌های `Customers`، `Tickets`، `Reports`، `Settings`، Notification Center و Client Portal در این نسخه وجود ندارند.
+
+## مدل هویتی
+
+`contacts` تنها منبع اطلاعات شخصی است:
+
+- `first_name`
+- `last_name`
+- `gender`
+- `email`
+- `mobile`
+- `province`
+- `city`
+- `address`
+- `postal_code`
+
+`users` فقط حساب ورود و دسترسی است و با `contact_id` به Contact متصل می‌شود. هر Contact می‌تواند بدون User وجود داشته باشد.
+
+Project می‌تواند از نوع `contact` یا `internal` باشد. Project نوع `contact` با `projects.contact_id` مستقیماً به Contact متصل است. Task همیشه متعلق به Project است.
 
 ## نصب محلی
 
-ابتدا دیتابیس و کاربر MariaDB را ایجاد کنید. تنظیمات پیش‌فرض توسعه در `.env.example` برای دیتابیس `helpdesk` و کاربر `helpdesk` است؛ جزئیات کامل در `docs/installation.md` آمده است.
+نیازمندی‌های اصلی:
+
+- PHP 8.4+
+- Composer 2
+- MariaDB 11.x
+- Node.js 22 برای build frontend
 
 ```bash
 cp .env.example .env
@@ -25,88 +48,56 @@ composer run setup
 php artisan serve
 ```
 
-اسکریپت `setup` dependencyها، APP_KEY، migration/seed و frontend build را آماده می‌کند. خود MariaDB و دیتابیس باید قبل از اجرای آن در دسترس باشند.
+## UI
 
-## معماری UI
-
-هر bounded context، class-based Livewire componentهای خودش را در مسیر زیر نگهداری می‌کند:
+رابط کاربری با Livewire 4 + Blade + Tailwind CSS پیاده‌سازی شده است. صفحات اصلی:
 
 ```text
-app-modules/<module>/src/Presentation/Livewire
+/contacts
+/projects
+/tasks
+/users
+/roles
 ```
 
-namespaceهای UI ماژولی هستند؛ برای مثال:
+Contact detail سه بخش دارد:
 
 ```text
-identity::users.index
-customers::form
-projects::index
-tasks::show
-tickets::create
-settings::smtp
-reports::index
+General Info
+Contact Info
+Account Settings
 ```
 
-صفحات، فرم‌ها، فیلترها و write actionهای UI با Livewire انجام می‌شوند. URL و route nameهای اصلی حفظ شده‌اند و navigation داخلی از `wire:navigate` استفاده می‌کند.
+جستجوی Contact و انتخاب Contact در Project مستقیماً روی دیتابیس و بر اساس نام، نام خانوادگی، ایمیل و موبایل انجام می‌شود.
 
-Shared Design System در `resources/views/components/ui` قرار دارد و Domain/Application هیچ وابستگی‌ای به Livewire یا Blade ندارند.
+## Role و Permission
 
-تنها exception عمدی، **دانلود attachment** است که برای streaming مستقیم فایل از HTTP GET احراز هویت‌شده استفاده می‌کند. Upload، delete، reply، comment، status و سایر interactionها Livewire هستند.
+فقط `admin` یک Role سیستمی و immutable است. سایر Roleها قابل مدیریت‌اند. Permissionها در کد و در `PermissionCatalog` تعریف می‌شوند و متعلق به یکی از گروه‌های زیر هستند:
 
-## نقش‌ها
+```text
+contacts
+projects
+tasks
+identity
+```
 
-دو Role سیستمی وجود دارد:
+## فایل‌های Task
 
-- `admin`: غیرقابل ایجاد، تغییر یا حذف از پنل و دارای دسترسی کامل.
-- `customer`: غیرقابل ایجاد، تغییر یا حذف از پنل و مخصوص Client Portal.
+Attachmentهای Task با `spatie/laravel-medialibrary` روی disk محلی ذخیره می‌شوند و download از route احراز هویت‌شده انجام می‌شود.
 
-تمام Roleهای دیگر و Permissionهای سفارشی از پنل قابل مدیریت هستند.
+## کیفیت
 
-## ماژول‌ها
-
-| Module | مسئولیت |
-| --- | --- |
-| `Identity` | Livewire login/logout، کاربران تیم، Role/Permission، Dashboard، Notifications |
-| `Customers` | مشتری و حساب Client Portal |
-| `Projects` | پروژه، نوع/وضعیت، اعضای تیم و پیشرفت |
-| `Tasks` | Livewire Kanban، Assignment، Deadline، زمان، upload، فایل و کامنت داخلی |
-| `Tickets` | Livewire تیکت، گفتگو، upload، Assignment و وضعیت پشتیبانی |
-| `Reports` | گزارش read-only مشتری، پروژه و تیم |
-| `Settings` | تنظیمات SMTP |
-
-ماژول‌های مالی، Website و Subscription عمداً در این نسخه وجود ندارند.
-
-## Client Portal
-
-مشتری پس از فعال شدن Portal می‌تواند پروژه‌های خودش، Taskهای `is_customer_visible`، تیکت‌ها و اعلان‌های خودش را مشاهده کند و روی تیکت‌های خودش پاسخ بدهد. کامنت داخلی Task، زمان تخمینی/مصرف‌شده و Taskهای داخلی برای مشتری نمایش داده نمی‌شوند.
-
-## فایل‌ها
-
-فایل‌های Task و Ticket با `spatie/laravel-medialibrary` روی disk محلی ذخیره می‌شوند. فایل‌ها URL عمومی ندارند. Uploadها از `Livewire\WithFileUploads` و validation server-side عبور می‌کنند و download از route scopeشده stream می‌شود.
-
-## SMTP
-
-SMTP از صفحه Livewire تنظیمات مدیریت می‌شود. رمز SMTP با encrypted settings پکیج `spatie/laravel-settings` نگهداری می‌شود. اگر SMTP غیرفعال باشد، Laravel از mailer محلی `log` استفاده می‌کند.
-
-## مستندات
-
-- `docs/architecture.md`
-- `docs/database.md`
-- `docs/permissions.md`
-- `docs/development.md`
-- `docs/installation.md`
-- `docs/ui.md`
-- `docs/roadmap.md`
-
-## تست و کیفیت
-
-برای اجرای تست‌ها، دیتابیس MariaDB با نام `helpdesk_testing` باید در دسترس باشد.
+CI روی PHP 8.4 و MariaDB موارد زیر را بررسی می‌کند:
 
 ```bash
+composer validate --no-check-publish
+php artisan migrate:fresh --force
+php artisan db:seed --force
+php artisan route:list
 php artisan view:cache
 php artisan test
 ./vendor/bin/pint --test
 npm run build
 ```
 
-CI روی PHP 8.4 و MariaDB، routeها، تمام Blade viewها، Livewire actionهای امنیتی، frontend build و deployable ZIP را اعتبارسنجی می‌کند.
+مستندات تکمیلی در `docs/` قرار دارند.

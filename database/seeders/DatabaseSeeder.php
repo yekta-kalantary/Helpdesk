@@ -2,8 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Enums\PersonType;
-use App\Models\Person;
+use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Modules\Identity\Domain\Access\PermissionCatalog;
@@ -18,7 +17,6 @@ class DatabaseSeeder extends Seeder
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         $permissions = PermissionCatalog::all();
-
         foreach ($permissions as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -28,23 +26,14 @@ class DatabaseSeeder extends Seeder
             ->whereNotIn('name', $permissions)
             ->delete();
 
+        Role::query()->where('name', 'customer')->where('guard_name', 'web')->delete();
+
         $adminRole = Role::findOrCreate('admin', 'web');
-        $customerRole = Role::findOrCreate('customer', 'web');
-
         $adminRole->syncPermissions($permissions);
-        $customerRole->syncPermissions([
-            'projects.view',
-            'tasks.view',
-            'tickets.view',
-            'tickets.create',
-            'tickets.reply',
-            'notifications.view',
-        ]);
 
-        $person = Person::query()->updateOrCreate(
+        $contact = Contact::query()->updateOrCreate(
             ['email' => config('helpdesk.admin.email')],
             [
-                'type' => PersonType::Employee,
                 'first_name' => config('helpdesk.admin.first_name'),
                 'last_name' => config('helpdesk.admin.last_name'),
                 'mobile' => config('helpdesk.admin.mobile'),
@@ -52,7 +41,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $admin = User::query()->updateOrCreate(
-            ['person_id' => $person->id],
+            ['contact_id' => $contact->id],
             [
                 'password' => config('helpdesk.admin.password'),
                 'is_active' => true,

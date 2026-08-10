@@ -14,17 +14,16 @@ class EloquentTaskRepository implements TaskRepository
     {
         $query = DB::table('tasks')
             ->join('projects', 'projects.id', '=', 'tasks.project_id')
-            ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
-            ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
+            ->leftJoin('contacts as project_contacts', 'project_contacts.id', '=', 'projects.contact_id')
             ->leftJoin('users as assignees', 'assignees.id', '=', 'tasks.assigned_to')
-            ->leftJoin('people as assignee_people', 'assignee_people.id', '=', 'assignees.person_id')
+            ->leftJoin('contacts as assignee_contacts', 'assignee_contacts.id', '=', 'assignees.contact_id')
             ->whereNull('tasks.deleted_at')
             ->whereNull('projects.deleted_at')
             ->select([
                 'tasks.id', 'tasks.project_id', 'tasks.title', 'tasks.priority', 'tasks.status', 'tasks.due_at',
-                'tasks.is_customer_visible', 'tasks.assigned_to', 'projects.title as project_title',
-                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
-                'assignee_people.first_name as assignee_first_name', 'assignee_people.last_name as assignee_last_name',
+                'tasks.assigned_to', 'projects.title as project_title',
+                'project_contacts.first_name as contact_first_name', 'project_contacts.last_name as contact_last_name',
+                'assignee_contacts.first_name as assignee_first_name', 'assignee_contacts.last_name as assignee_last_name',
             ]);
 
         $this->applyDbScope($query, $scope);
@@ -42,10 +41,9 @@ class EloquentTaskRepository implements TaskRepository
                 'priority' => $row->priority,
                 'status' => $row->status,
                 'due_at' => $row->due_at,
-                'is_customer_visible' => (bool) $row->is_customer_visible,
                 'assigned_to' => $row->assigned_to,
                 'project_title' => $row->project_title,
-                'customer_name' => trim(($row->customer_first_name ?? '').' '.($row->customer_last_name ?? '')),
+                'contact_name' => trim(($row->contact_first_name ?? '').' '.($row->contact_last_name ?? '')) ?: null,
                 'assignee_name' => $row->assigned_to ? trim(($row->assignee_first_name ?? '').' '.($row->assignee_last_name ?? '')) : null,
             ])
             ->all();
@@ -54,7 +52,7 @@ class EloquentTaskRepository implements TaskRepository
     public function findAccessible(int $id, array $scope): array
     {
         $query = Task::query()
-            ->with(['assignee.person', 'creator.person', 'comments.user.person'])
+            ->with(['assignee.contact', 'creator.contact', 'comments.user.contact'])
             ->whereKey($id)
             ->whereIn('project_id', DB::table('projects')->whereNull('deleted_at')->select('id'));
 
@@ -62,20 +60,19 @@ class EloquentTaskRepository implements TaskRepository
 
         $task = $query->firstOrFail();
         $project = DB::table('projects')
-            ->leftJoin('customers', 'customers.id', '=', 'projects.customer_id')
-            ->leftJoin('people as customer_people', 'customer_people.id', '=', 'customers.person_id')
+            ->leftJoin('contacts', 'contacts.id', '=', 'projects.contact_id')
             ->where('projects.id', $task->project_id)
             ->first([
-                'projects.title as project_title', 'projects.customer_id',
-                'customer_people.first_name as customer_first_name', 'customer_people.last_name as customer_last_name',
+                'projects.title as project_title', 'projects.contact_id',
+                'contacts.first_name as contact_first_name', 'contacts.last_name as contact_last_name',
             ]);
 
         return [
             'id' => $task->id,
             'project_id' => $task->project_id,
             'project_title' => $project?->project_title,
-            'customer_id' => $project?->customer_id,
-            'customer_name' => $project ? trim(($project->customer_first_name ?? '').' '.($project->customer_last_name ?? '')) : null,
+            'contact_id' => $project?->contact_id,
+            'contact_name' => $project ? (trim(($project->contact_first_name ?? '').' '.($project->contact_last_name ?? '')) ?: null) : null,
             'title' => $task->title,
             'description' => $task->description,
             'assigned_to' => $task->assigned_to,
@@ -83,7 +80,6 @@ class EloquentTaskRepository implements TaskRepository
             'creator_name' => $task->creator?->full_name,
             'priority' => $task->priority->value,
             'status' => $task->status->value,
-            'is_customer_visible' => (bool) $task->is_customer_visible,
             'due_at' => $task->due_at?->format('Y-m-d\TH:i'),
             'estimated_minutes' => $task->estimated_minutes,
             'spent_minutes' => $task->spent_minutes,
@@ -124,13 +120,6 @@ class EloquentTaskRepository implements TaskRepository
 
     private function applyDbScope($query, array $scope): void
     {
-        if ($scope['customer_id']) {
-            $query->where('projects.customer_id', $scope['customer_id'])
-                ->where('tasks.is_customer_visible', true);
-
-            return;
-        }
-
         if (! $scope['manage_all']) {
             $query->where(function ($nested) use ($scope): void {
                 $nested->where('tasks.assigned_to', $scope['actor_id'])
@@ -143,13 +132,6 @@ class EloquentTaskRepository implements TaskRepository
 
     private function applyEloquentScope(EloquentBuilder $query, array $scope): void
     {
-        if ($scope['customer_id']) {
-            $query->where('is_customer_visible', true)
-                ->whereIn('project_id', DB::table('projects')->where('customer_id', $scope['customer_id'])->whereNull('deleted_at')->select('id'));
-
-            return;
-        }
-
         if (! $scope['manage_all']) {
             $query->where(function (EloquentBuilder $nested) use ($scope): void {
                 $nested->where('assigned_to', $scope['actor_id'])

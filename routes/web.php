@@ -4,6 +4,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', static function () {
     return auth()->check()
-        ? redirect()->route('dashboard')
+        ? redirect()->route('contacts.index')
         : redirect()->route('login');
 })->name('home');

@@ -9,53 +9,52 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['person_id', 'password', 'is_active'])]
+#[Fillable(['contact_id', 'password', 'is_active'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, HasRoles;
 
-    public function person(): BelongsTo
+    public function contact(): BelongsTo
     {
-        return $this->belongsTo(Person::class);
+        return $this->belongsTo(Contact::class);
     }
 
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => $this->person?->first_name ?? '',
+            get: fn (): string => $this->contact?->first_name ?? '',
         );
     }
 
     protected function lastName(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => $this->person?->last_name ?? '',
+            get: fn (): string => $this->contact?->last_name ?? '',
         );
     }
 
     protected function email(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => $this->person?->email ?? '',
+            get: fn (): string => $this->contact?->email ?? '',
         );
     }
 
     protected function mobile(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => $this->person?->mobile ?? '',
+            get: fn (): string => $this->contact?->mobile ?? '',
         );
     }
 
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => $this->person?->full_name ?? '',
+            get: fn (): string => $this->contact?->full_name ?? '',
         );
     }
 

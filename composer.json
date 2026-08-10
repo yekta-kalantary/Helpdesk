@@ -2,8 +2,8 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "yekta-kalantary/helpdesk",
     "type": "project",
-    "description": "Persian modular monolith helpdesk for customer, project, task and ticket management.",
-    "keywords": ["laravel", "helpdesk", "ticketing", "project-management"],
+    "description": "Persian modular monolith for contact, project and task management.",
+    "keywords": ["laravel", "contacts", "project-management", "task-management"],
     "license": "MIT",
     "repositories": [
         {
@@ -12,13 +12,10 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "modules/customers": "1.0.0",
+                    "modules/contacts": "1.0.0",
                     "modules/identity": "1.0.0",
                     "modules/projects": "1.0.0",
-                    "modules/reports": "1.0.0",
-                    "modules/settings": "1.0.0",
-                    "modules/tasks": "1.0.0",
-                    "modules/tickets": "1.0.0"
+                    "modules/tasks": "1.0.0"
                 }
             }
         }
@@ -29,16 +26,12 @@
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.3",
-        "modules/customers": "*",
+        "modules/contacts": "*",
         "modules/identity": "*",
         "modules/projects": "*",
-        "modules/reports": "*",
-        "modules/settings": "*",
         "modules/tasks": "*",
-        "modules/tickets": "*",
         "spatie/laravel-medialibrary": "^11.23",
-        "spatie/laravel-permission": "^8.3",
-        "spatie/laravel-settings": "^3.9"
+        "spatie/laravel-permission": "^8.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
