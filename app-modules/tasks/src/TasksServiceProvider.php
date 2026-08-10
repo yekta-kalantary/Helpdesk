@@ -4,16 +4,9 @@ namespace Modules\Tasks;
 
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
-use Modules\Tasks\Domain\Contracts\TaskRepository;
-use Modules\Tasks\Infrastructure\EloquentTaskRepository;
 
 class TasksServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        $this->app->bind(TaskRepository::class, EloquentTaskRepository::class);
-    }
-
     public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
