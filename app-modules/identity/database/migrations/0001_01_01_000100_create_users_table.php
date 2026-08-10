@@ -11,10 +11,14 @@ return new class extends Migration
         if (! Schema::hasTable('users')) {
             Schema::create('users', function (Blueprint $table): void {
                 $table->id();
-                $table->foreignId('contact_id')->unique()->constrained('contacts')->restrictOnDelete();
+                $table->string('name');
+                $table->string('last_name');
+                $table->string('email')->unique();
+                $table->string('mobile', 32)->nullable();
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->boolean('is_active')->default(true)->index();
+                $table->boolean('is_admin')->default(false)->index();
                 $table->rememberToken();
                 $table->timestamps();
             });
