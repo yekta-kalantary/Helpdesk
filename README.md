@@ -1,6 +1,6 @@
 # Helpdesk
 
-یک سامانه ساده مدیریت پروژه و تسک با Laravel 13 و Livewire 4.
+یک سامانه ساده مدیریت پروژه و تسک با Laravel و Livewire.
 
 ## ساختار سیستم
 
@@ -14,23 +14,23 @@ Tasks
 
 ### Users
 
-ادمین می‌تواند کاربر بسازد و ویرایش کند. اطلاعات کاربر مستقیماً روی جدول `users` نگهداری می‌شود و Role/Permission و Contact جداگانه وجود ندارد.
-
-فیلدهای اصلی:
+ادمین می‌تواند کاربر بسازد و ویرایش کند.
 
 ```text
-name
-last_name
-email
-mobile
-password
-is_active
-is_admin
+users
+  id
+  name
+  last_name
+  email
+  mobile
+  password
+  is_active
+  is_admin
 ```
 
 ### Projects
 
-هر پروژه فقط عنوان، توضیح و اعضا دارد. ارتباط کاربر و پروژه در جدول `project_user` نگهداری می‌شود.
+هر پروژه فقط عنوان، توضیح و اعضا دارد.
 
 ```text
 projects
@@ -47,7 +47,7 @@ project_user
 
 ### Tasks
 
-هر Task فقط متعلق به یک Project است:
+هر Task فقط متعلق به یک Project است.
 
 ```text
 tasks
@@ -58,7 +58,7 @@ tasks
   is_done
 ```
 
-کاربر عادی فقط Taskهای پروژه‌هایی را می‌بیند که در آن‌ها عضو است. ادمین همه Taskها را می‌بیند و مدیریت می‌کند.
+کاربر عادی فقط Taskهای پروژه‌هایی را می‌بیند که عضو آن‌هاست. ادمین همه Taskها را می‌بیند و مدیریت می‌کند.
 
 ## مسیرها
 
@@ -67,8 +67,6 @@ tasks
 /tasks
 /users   # فقط ادمین
 ```
-
-بخش‌های Contact، Customer، Role/Permission، Ticket، Report، Setting، Media، Attachment و ساختارهای CRM در UI و جریان اصلی سیستم وجود ندارند.
 
 ## نصب
 
@@ -85,16 +83,11 @@ composer run setup
 php artisan serve
 ```
 
-برای دیتابیس موجود:
+این نسخه schema قبلی پروژه را پشتیبانی نمی‌کند. هنگام مهاجرت از نسخه قبلی، دیتابیس توسعه را یک‌بار از نو بسازید:
 
 ```bash
-composer install
-php artisan optimize:clear
-php artisan migrate --force
-php artisan db:seed --force
+php artisan migrate:fresh --seed
 ```
-
-Migration نهایی داده‌های User و Task موجود را به ساختار ساده جدید منتقل می‌کند و جدول‌ها و ستون‌های legacy را حذف می‌کند.
 
 ## بررسی کیفیت
 
@@ -106,5 +99,6 @@ php artisan route:list
 php artisan view:cache
 php artisan test
 ./vendor/bin/pint --test
+npm ci
 npm run build
 ```
