@@ -2,13 +2,12 @@
 
 namespace Modules\Identity\Presentation\Livewire\Users;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Infrastructure\Models\Task;
 
 class Show extends Component
 {
@@ -148,18 +147,22 @@ class Show extends Component
     {
         $user = $this->user();
 
-        $projects = Project::query()
-            ->whereHas('members', fn ($members) => $members->whereKey($this->userId))
-            ->orderBy('title')
+        $projects = DB::table('projects')
+            ->join('project_user', 'projects.id', '=', 'project_user.project_id')
+            ->where('project_user.user_id', $this->userId)
+            ->select('projects.id', 'projects.title', 'projects.description')
+            ->orderBy('projects.title')
             ->get();
 
         $projectIds = $projects->pluck('id');
-        $tasks = Task::query()->whereIn('project_id', $projectIds);
-        $taskCount = (clone $tasks)->count();
-        $openTaskCount = (clone $tasks)->where('is_done', false)->count();
+        $taskCount = DB::table('tasks')->whereIn('project_id', $projectIds)->count();
+        $openTaskCount = DB::table('tasks')
+            ->whereIn('project_id', $projectIds)
+            ->where('is_done', false)
+            ->count();
         $doneTaskCount = $taskCount - $openTaskCount;
 
-        $projectTaskCounts = Task::query()
+        $projectTaskCounts = DB::table('tasks')
             ->whereIn('project_id', $projectIds)
             ->selectRaw('project_id, count(*) as total')
             ->groupBy('project_id')
