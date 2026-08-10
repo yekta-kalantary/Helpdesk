@@ -7,7 +7,6 @@ use Livewire\Component;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Application\Queries\TaskAccessScope;
 use Modules\Tasks\Domain\Contracts\TaskRepository;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 class Index extends Component
 {
@@ -27,6 +26,13 @@ class Index extends Component
         $this->scopeBuilder = $scopeBuilder;
     }
 
+    public function delete(int $task): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+        $this->tasks->delete($task);
+        session()->flash('success', __('app.deleted_successfully'));
+    }
+
     public function render()
     {
         /** @var User $user */
@@ -35,7 +41,7 @@ class Index extends Component
 
         return view('tasks::index', [
             'tasks' => $this->tasks->search($scope, $this->projectId, trim($this->q) ?: null),
-            'statuses' => TaskStatus::cases(),
+            'isAdmin' => $user->is_admin,
         ])->title(__('tasks::messages.tasks'));
     }
 }
