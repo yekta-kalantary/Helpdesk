@@ -1,59 +1,44 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Contacts\Infrastructure\Models\Contact;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
 
-it('exposes only retained business routes', function (): void {
-    $admin = User::query()->with('contact')->firstOrFail();
+it('exposes only users projects and tasks', function (): void {
+    $admin = User::query()->where('is_admin', true)->firstOrFail();
 
-    $this->actingAs($admin)
-        ->get(route('contacts.index'))
-        ->assertOk();
-
-    $this->get(route('projects.index'))->assertOk();
+    $this->actingAs($admin)->get(route('projects.index'))->assertOk();
     $this->get(route('tasks.index'))->assertOk();
     $this->get(route('users.index'))->assertOk();
-    $this->get(route('roles.index'))->assertOk();
 
-    expect(Route::has('customers.index'))->toBeFalse()
-        ->and(Route::has('tickets.index'))->toBeFalse()
-        ->and(Route::has('reports.index'))->toBeFalse()
-        ->and(Route::has('settings.smtp.edit'))->toBeFalse()
-        ->and(Route::has('notifications.index'))->toBeFalse()
-        ->and(Route::has('dashboard'))->toBeFalse();
+    expect(Route::has('contacts.index'))->toBeFalse()
+        ->and(Route::has('roles.index'))->toBeFalse()
+        ->and(Route::has('tasks.show'))->toBeFalse()
+        ->and(Route::has('tasks.attachments.download'))->toBeFalse();
 });
 
-it('uses contacts as the identity source', function (): void {
-    $contact = Contact::factory()->create([
-        'first_name' => 'Yekta',
+it('keeps user profile data directly on users', function (): void {
+    $user = User::factory()->create([
+        'name' => 'Yekta',
         'last_name' => 'Kalantary',
         'email' => 'yekta@example.test',
         'mobile' => '09120000000',
-        'province' => 'Tehran',
-        'city' => 'Tehran',
-        'postal_code' => '1234567890',
     ]);
 
-    $user = User::factory()->create(['contact_id' => $contact->id]);
-
-    expect($user->contact_id)->toBe($contact->id)
-        ->and($user->full_name)->toBe('Yekta Kalantary')
-        ->and($user->email)->toBe('yekta@example.test');
+    expect($user->full_name)->toBe('Yekta Kalantary')
+        ->and($user->email)->toBe('yekta@example.test')
+        ->and($user->mobile)->toBe('09120000000');
 });
 
-it('links contact projects directly to contacts', function (): void {
-    $contact = Contact::factory()->create();
-
+it('links users to projects through project membership', function (): void {
+    $user = User::factory()->create();
     $project = Project::query()->create([
-        'contact_id' => $contact->id,
-        'category' => 'contact',
         'title' => 'Example project',
-        'type' => 'other',
-        'status' => 'planning',
+        'description' => 'Simple project',
     ]);
 
-    expect($project->contact_id)->toBe($contact->id)
-        ->and($project->contact()->is($contact))->toBeTrue();
+    $project->members()->attach($user->id);
+
+    expect($project->members()->whereKey($user->id)->exists())->toBeTrue()
+        ->and($user->projects()->whereKey($project->id)->exists())->toBeTrue();
 });
