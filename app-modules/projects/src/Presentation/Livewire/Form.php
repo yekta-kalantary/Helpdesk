@@ -2,10 +2,10 @@
 
 namespace Modules\Projects\Presentation\Livewire;
 
-use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\Actions\SaveProject;
 use Modules\Projects\Application\Queries\ProjectFormOptions;
 use Modules\Projects\Domain\Contracts\ProjectRepository;
