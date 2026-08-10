@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "df1ece7a3afa44a2f9243bce3c834cfe",
+    "content-hash": "12e6f5628a86238046e1d148c1fd8382",
     "packages": [
         {
             "name": "brick/math",
@@ -3074,12 +3074,11 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/contacts",
-                "reference": "f4f3a6fa8424069a38b3ea58f490912aeb48bc8f"
+                "reference": "594fa4b2f2738ad3a4cce72d52ef9507bc03bb82"
             },
             "require": {
                 "laravel/framework": "^13.8",
-                "php": "^8.4",
-                "spatie/laravel-permission": "^8.3"
+                "php": "^8.4"
             },
             "type": "library",
             "extra": {
@@ -3109,10 +3108,11 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/identity",
-                "reference": "524d1b0f459e9c48dde2ce3ebca0d9113271ce2d"
+                "reference": "5ac66da43d8c2f94b317a840971d30ea4effdd86"
             },
             "require": {
                 "laravel/framework": "^13.8",
+                "modules/contacts": "*",
                 "php": "^8.4",
                 "spatie/laravel-permission": "^8.3"
             },
@@ -3139,15 +3139,52 @@
             }
         },
         {
+            "name": "modules/media",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "./app-modules/media",
+                "reference": "6055424913303983346368c22ba9751092737164"
+            },
+            "require": {
+                "laravel/framework": "^13.8",
+                "php": "^8.4",
+                "spatie/laravel-medialibrary": "^11.23"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Media\\MediaServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Media\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Shared media storage capability for the Helpdesk modular monolith.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "modules/projects",
             "version": "1.0.0",
             "dist": {
                 "type": "path",
                 "url": "./app-modules/projects",
-                "reference": "c8adc27d6da9bff37a5c6ae7691db1fb58955ca3"
+                "reference": "47e83b201cd4827dabaff47159727f7359227302"
             },
             "require": {
                 "laravel/framework": "^13.8",
+                "modules/contacts": "*",
+                "modules/identity": "*",
                 "php": "^8.4"
             },
             "type": "library",
@@ -3178,12 +3215,14 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/tasks",
-                "reference": "2ed09377e44bac3cc31a7539888f02cdb7f2857b"
+                "reference": "8110a2b587b5066dc4ded5a53f8382ac7b9f30b7"
             },
             "require": {
                 "laravel/framework": "^13.8",
-                "php": "^8.4",
-                "spatie/laravel-medialibrary": "^11.23"
+                "modules/identity": "*",
+                "modules/media": "*",
+                "modules/projects": "*",
+                "php": "^8.4"
             },
             "type": "library",
             "extra": {
