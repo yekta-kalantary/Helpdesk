@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use Modules\Identity\Infrastructure\Models\User;
 
 return [
 
@@ -87,8 +87,8 @@ return [
     | they have less time to be guessed. You may change this as needed.
     |
     | The throttle setting is the number of seconds a user must wait before
-    | generating more password reset tokens. This prevents the user from
-    | quickly generating a very large amount of password reset tokens.
+    | generating more than one password reset token. This prevents the user
+    | from quickly generating a very large amount of password reset tokens.
     |
     */
 
