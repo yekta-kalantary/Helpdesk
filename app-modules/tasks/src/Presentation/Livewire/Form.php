@@ -94,7 +94,7 @@ class Form extends Component
             return;
         }
 
-        if (! DB::table('project_user')->where('project_id', $this->project_id)->where('user_id', $this->assigned_to)->exists()) {
+        if (! $this->formOptions->isAssignableToProject($this->project_id, $this->assigned_to)) {
             $this->assigned_to = null;
         }
     }
@@ -168,12 +168,7 @@ class Form extends Component
             return;
         }
 
-        $user = User::query()->findOrFail($userId);
-        abort_if(! $user->is_active, 422);
-        abort_unless(
-            DB::table('project_user')->where('project_id', $projectId)->where('user_id', $userId)->exists(),
-            422,
-        );
+        abort_unless($this->formOptions->isAssignableToProject($projectId, $userId), 422);
     }
 
     public function render()
