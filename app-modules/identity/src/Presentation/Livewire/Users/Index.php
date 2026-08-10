@@ -2,6 +2,7 @@
 
 namespace Modules\Identity\Presentation\Livewire\Users;
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Modules\Identity\Infrastructure\Models\User;
@@ -31,7 +32,13 @@ class Index extends Component
             ->orderBy('last_name')
             ->get();
 
-        return view('identity::users.index', compact('users'))
+        $projectCounts = DB::table('project_user')
+            ->whereIn('user_id', $users->pluck('id'))
+            ->selectRaw('user_id, count(*) as total')
+            ->groupBy('user_id')
+            ->pluck('total', 'user_id');
+
+        return view('identity::users.index', compact('users', 'projectCounts'))
             ->title(__('identity::messages.users'));
     }
 }

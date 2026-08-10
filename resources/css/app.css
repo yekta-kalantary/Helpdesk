@@ -57,6 +57,11 @@
     canvas {
         max-width: 100%;
     }
+
+    table th,
+    table td {
+        vertical-align: baseline;
+    }
 }
 
 @layer components {
@@ -80,11 +85,13 @@
 
     .ui-table th {
         @apply px-4 py-3 text-right font-semibold text-slate-600;
+        vertical-align: baseline;
         white-space: nowrap;
     }
 
     .ui-table td {
-        @apply px-4 py-3 align-top text-slate-700;
+        @apply px-4 py-3 text-slate-700;
+        vertical-align: baseline;
         overflow-wrap: anywhere;
     }
 
