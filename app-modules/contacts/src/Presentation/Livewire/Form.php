@@ -2,12 +2,13 @@
 
 namespace Modules\Contacts\Presentation\Livewire;
 
+use DomainException;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Modules\Contacts\Domain\Contracts\ContactAccountGateway;
 use Modules\Contacts\Domain\Contracts\ContactRepository;
-use Spatie\Permission\Models\Role;
 
 class Form extends Component
 {
@@ -48,14 +49,21 @@ class Form extends Component
 
     protected ContactRepository $contacts;
 
-    public function boot(ContactRepository $contacts): void
+    protected ContactAccountGateway $accounts;
+
+    public function boot(ContactRepository $contacts, ContactAccountGateway $accounts): void
     {
         $this->contacts = $contacts;
+        $this->accounts = $accounts;
     }
 
     public function mount(?int $contact = null): void
     {
         abort_unless(in_array($this->tab, ['general', 'contact-info', 'account-settings'], true), 404);
+
+        if ($this->tab === 'account-settings') {
+            abort_unless(auth()->user()?->can('users.view'), 403);
+        }
 
         if (! $contact) {
             return;
@@ -63,7 +71,6 @@ class Form extends Component
 
         $item = $this->contacts->find($contact);
         $this->contactId = $contact;
-        $this->userId = $item['user_id'] ? (int) $item['user_id'] : null;
         $this->first_name = $item['first_name'];
         $this->last_name = $item['last_name'];
         $this->gender = $item['gender'];
@@ -73,13 +80,23 @@ class Form extends Component
         $this->city = $item['city'];
         $this->address = $item['address'];
         $this->postal_code = $item['postal_code'];
-        $this->account_enabled = (bool) $item['account_enabled'];
-        $this->role = $item['role'];
+
+        if (auth()->user()?->can('users.view')) {
+            $account = $this->accounts->get($contact);
+            $this->userId = $account['user_id'] ? (int) $account['user_id'] : null;
+            $this->account_enabled = $account['account_enabled'];
+            $this->role = $account['role'];
+        }
     }
 
     public function setTab(string $tab): void
     {
         abort_unless(in_array($tab, ['general', 'contact-info', 'account-settings'], true), 404);
+
+        if ($tab === 'account-settings') {
+            abort_unless(auth()->user()?->can('users.view'), 403);
+        }
+
         $this->tab = $tab;
     }
 
@@ -101,12 +118,34 @@ class Form extends Component
                 'address' => $data['address'] ?: null,
                 'postal_code' => $data['postal_code'] ?: null,
             ],
-            [
-                'enabled' => $data['account_enabled'],
-                'role' => $data['role'] ?? null,
-                'password' => $data['password'] ?? null,
-            ],
         );
+
+        if ($this->tab === 'account-settings') {
+            if ($this->userId) {
+                abort_unless(auth()->user()?->can('users.update'), 403);
+            } elseif ($data['account_enabled']) {
+                abort_unless(auth()->user()?->can('users.create'), 403);
+            }
+
+            if ($this->userId || $data['account_enabled']) {
+                try {
+                    $this->accounts->save($contactId, [
+                        'enabled' => $data['account_enabled'],
+                        'role' => $data['role'] ?? null,
+                        'password' => $data['password'] ?? null,
+                    ]);
+                } catch (DomainException $exception) {
+                    $this->addError('role', __('contacts::messages.'.$exception->getMessage()));
+
+                    return null;
+                }
+
+                $account = $this->accounts->get($contactId);
+                $this->userId = $account['user_id'] ? (int) $account['user_id'] : null;
+                $this->account_enabled = $account['account_enabled'];
+                $this->role = $account['role'];
+            }
+        }
 
         session()->flash('success', $this->contactId ? __('app.updated_successfully') : __('app.created_successfully'));
 
@@ -140,14 +179,14 @@ class Form extends Component
 
     public function render()
     {
-        $roles = Role::query()
-            ->where('guard_name', 'web')
-            ->when($this->role !== 'admin', fn ($query) => $query->where('name', '!=', 'admin'))
-            ->orderBy('name')
-            ->pluck('name')
-            ->all();
+        $canViewAccounts = (bool) auth()->user()?->can('users.view');
+        $roles = $this->tab === 'account-settings' && $canViewAccounts
+            ? $this->accounts->assignableRoles($this->contactId)
+            : [];
 
-        return view('contacts::form', ['roles' => $roles])
-            ->title($this->contactId ? __('contacts::messages.edit_contact') : __('contacts::messages.new_contact'));
+        return view('contacts::form', [
+            'roles' => $roles,
+            'canViewAccounts' => $canViewAccounts,
+        ])->title($this->contactId ? __('contacts::messages.edit_contact') : __('contacts::messages.new_contact'));
     }
 }
