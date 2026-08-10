@@ -36,4 +36,13 @@ class TaskFormOptions
 
         return compact('projects', 'members');
     }
+
+    public function isAssignableToProject(int $projectId, int $userId): bool
+    {
+        return User::query()
+            ->whereKey($userId)
+            ->where('is_active', true)
+            ->whereIn('id', DB::table('project_user')->where('project_id', $projectId)->select('user_id'))
+            ->exists();
+    }
 }
