@@ -6,8 +6,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Application\Queries\TaskAccessScope;
-use Modules\Tasks\Domain\Contracts\TaskRepository;
+use Modules\Tasks\Infrastructure\Models\Task;
 
 class Form extends Component
 {
@@ -22,16 +21,6 @@ class Form extends Component
 
     public bool $is_done = false;
 
-    protected TaskRepository $tasks;
-
-    protected TaskAccessScope $scopeBuilder;
-
-    public function boot(TaskRepository $tasks, TaskAccessScope $scopeBuilder): void
-    {
-        $this->tasks = $tasks;
-        $this->scopeBuilder = $scopeBuilder;
-    }
-
     public function mount(?int $task = null): void
     {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -43,12 +32,13 @@ class Form extends Component
             return;
         }
 
-        $item = $this->tasks->findAccessible($task, $this->scopeBuilder->for(auth()->user()));
-        $this->taskId = $task;
-        $this->project_id = (int) $item['project_id'];
-        $this->title = $item['title'];
-        $this->description = $item['description'];
-        $this->is_done = $item['is_done'];
+        $item = Task::query()->findOrFail($task);
+
+        $this->taskId = $item->id;
+        $this->project_id = $item->project_id;
+        $this->title = $item->title;
+        $this->description = $item->description;
+        $this->is_done = $item->is_done;
     }
 
     public function save()
@@ -64,9 +54,9 @@ class Form extends Component
         ];
 
         if ($this->taskId) {
-            $this->tasks->update($this->taskId, $attributes);
+            Task::query()->findOrFail($this->taskId)->update($attributes);
         } else {
-            $this->tasks->create($attributes);
+            Task::query()->create($attributes);
         }
 
         session()->flash('success', $this->taskId ? __('app.updated_successfully') : __('app.created_successfully'));
