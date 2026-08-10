@@ -2,7 +2,7 @@
 
 namespace Modules\Tasks\Application\Queries;
 
-use App\Models\User;
+use Modules\Identity\Infrastructure\Models\User;
 
 class TaskAccessScope
 {
