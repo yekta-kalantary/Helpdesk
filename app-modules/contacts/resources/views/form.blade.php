@@ -1,12 +1,21 @@
 <div>
     <x-ui.page-header :title="$contactId ? trim($first_name.' '.$last_name) : __('contacts::messages.new_contact')" />
 
-    <div class="mb-5 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
-        @foreach([
+    @php
+        $tabs = [
             'general' => __('contacts::messages.general_info'),
             'contact-info' => __('contacts::messages.contact_info'),
-            'account-settings' => __('contacts::messages.account_settings'),
-        ] as $tabKey => $tabLabel)
+        ];
+        if ($canViewAccounts) {
+            $tabs['account-settings'] = __('contacts::messages.account_settings');
+        }
+        $canManageAccount = $userId
+            ? auth()->user()?->can('users.update')
+            : auth()->user()?->can('users.create');
+    @endphp
+
+    <div class="mb-5 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+        @foreach($tabs as $tabKey => $tabLabel)
             <button
                 type="button"
                 wire:click="setTab('{{ $tabKey }}')"
@@ -47,10 +56,14 @@
                 </div>
             @else
                 <div class="space-y-5">
-                    <x-ui.checkbox name="account_enabled" :label="__('contacts::messages.login_enabled')" model="account_enabled" />
+                    @unless($canManageAccount)
+                        <x-ui.alert tone="warning">{{ __('contacts::messages.account_read_only') }}</x-ui.alert>
+                    @endunless
+
+                    <x-ui.checkbox name="account_enabled" :label="__('contacts::messages.login_enabled')" model="account_enabled" :disabled="! $canManageAccount" />
 
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <x-ui.select name="role" :label="__('contacts::messages.role')" wire:model="role" :disabled="! $account_enabled" :required="$account_enabled">
+                        <x-ui.select name="role" :label="__('contacts::messages.role')" wire:model="role" :disabled="! $account_enabled || ! $canManageAccount" :required="$account_enabled">
                             <option value="">{{ __('contacts::messages.select_role') }}</option>
                             @foreach($roles as $roleItem)
                                 <option value="{{ $roleItem }}">{{ $roleItem }}</option>
@@ -64,7 +77,7 @@
                             :label="__('contacts::messages.password')"
                             type="password"
                             wire:model="password"
-                            :disabled="! $account_enabled"
+                            :disabled="! $account_enabled || ! $canManageAccount"
                             :required="$account_enabled && ! $userId"
                             :hint="$userId ? __('contacts::messages.password_hint') : null"
                         />
@@ -73,7 +86,7 @@
                             :label="__('contacts::messages.password_confirmation')"
                             type="password"
                             wire:model="password_confirmation"
-                            :disabled="! $account_enabled"
+                            :disabled="! $account_enabled || ! $canManageAccount"
                             :required="$account_enabled && ! $userId"
                         />
                     </div>
@@ -81,10 +94,12 @@
             @endif
 
             <x-ui.form-actions class="mt-6">
-                <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">
-                    <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
-                    <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
-                </x-ui.button>
+                @if($tab !== 'account-settings' || $canManageAccount)
+                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">
+                        <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
+                        <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
+                    </x-ui.button>
+                @endif
                 <x-ui.button variant="secondary" :href="route('contacts.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
             </x-ui.form-actions>
         </x-ui.card>
