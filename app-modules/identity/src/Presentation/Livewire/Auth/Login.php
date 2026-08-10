@@ -26,7 +26,7 @@ class Login extends Component
 
         $user = User::query()->where('email', $credentials['email'])->first();
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        if (! $user || blank($user->password) || ! Hash::check($credentials['password'], $user->password)) {
             $this->addError('email', __('identity::messages.invalid_credentials'));
             $this->reset('password');
 
