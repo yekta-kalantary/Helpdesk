@@ -1,70 +1,26 @@
 <?php
 
-use Modules\Media\Domain\Contracts\MediaManager;
-use Modules\Media\Infrastructure\SpatieMediaManager;
+use Illuminate\Support\Facades\Schema;
 
-function phpFilesIn(string $path): array
-{
-    if (! is_dir($path)) {
-        return [];
-    }
-
-    $files = [];
-    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
-
-    foreach ($iterator as $file) {
-        if ($file->isFile() && $file->getExtension() === 'php') {
-            $files[] = $file->getPathname();
-        }
-    }
-
-    return $files;
-}
-
-it('keeps contact and user models inside their owning modules', function (): void {
-    expect(file_exists(app_path('Models/Contact.php')))->toBeFalse()
-        ->and(file_exists(app_path('Models/User.php')))->toBeFalse()
-        ->and(file_exists(base_path('app-modules/contacts/src/Infrastructure/Models/Contact.php')))->toBeTrue()
-        ->and(file_exists(base_path('app-modules/identity/src/Infrastructure/Models/User.php')))->toBeTrue();
-
-    $forbidden = [
-        'App'.'\\Models\\Contact',
-        'App'.'\\Models\\User',
-    ];
-
-    $paths = [
-        app_path(),
-        config_path(),
-        database_path('factories'),
-        database_path('seeders'),
-        ...glob(base_path('app-modules/*/src')),
-    ];
-
-    foreach ($paths as $path) {
-        foreach (phpFilesIn($path) as $file) {
-            $contents = file_get_contents($file);
-
-            foreach ($forbidden as $class) {
-                expect($contents, $file)->not->toContain($class);
-            }
-        }
-    }
+it('keeps only the simple core tables', function (): void {
+    expect(Schema::hasTable('users'))->toBeTrue()
+        ->and(Schema::hasTable('projects'))->toBeTrue()
+        ->and(Schema::hasTable('project_user'))->toBeTrue()
+        ->and(Schema::hasTable('tasks'))->toBeTrue()
+        ->and(Schema::hasTable('contacts'))->toBeFalse()
+        ->and(Schema::hasTable('roles'))->toBeFalse()
+        ->and(Schema::hasTable('permissions'))->toBeFalse()
+        ->and(Schema::hasTable('media'))->toBeFalse()
+        ->and(Schema::hasTable('task_comments'))->toBeFalse();
 });
 
-it('keeps Spatie media implementation inside the Media module', function (): void {
-    foreach (phpFilesIn(base_path('app-modules/tasks/src')) as $file) {
-        expect(file_get_contents($file), $file)->not->toContain('Spatie'.'\\MediaLibrary');
-    }
-
-    expect(file_get_contents(base_path('app-modules/tasks/composer.json')))->not->toContain('spatie/laravel-medialibrary')
-        ->and(file_get_contents(base_path('app-modules/media/composer.json')))->toContain('spatie/laravel-medialibrary')
-        ->and(app(MediaManager::class))->toBeInstanceOf(SpatieMediaManager::class);
-});
-
-it('assigns schema creation to owning modules', function (): void {
-    expect(file_exists(database_path('migrations/0001_01_01_000000_create_users_table.php')))->toBeFalse()
-        ->and(file_exists(base_path('app-modules/contacts/database/migrations/0001_01_01_000000_create_contacts_table.php')))->toBeTrue()
-        ->and(file_exists(base_path('app-modules/identity/database/migrations/0001_01_01_000100_create_users_table.php')))->toBeTrue()
-        ->and(file_exists(base_path('app-modules/tasks/database/migrations/2026_08_07_003010_create_media_table.php')))->toBeFalse()
-        ->and(file_exists(base_path('app-modules/media/database/migrations/2026_08_07_003010_create_media_table.php')))->toBeTrue();
+it('keeps user project and task schemas minimal', function (): void {
+    expect(Schema::hasColumns('users', ['name', 'last_name', 'email', 'mobile', 'password', 'is_active', 'is_admin']))->toBeTrue()
+        ->and(Schema::hasColumn('users', 'contact_id'))->toBeFalse()
+        ->and(Schema::hasColumns('projects', ['title', 'description']))->toBeTrue()
+        ->and(Schema::hasColumn('projects', 'contact_id'))->toBeFalse()
+        ->and(Schema::hasColumn('projects', 'category'))->toBeFalse()
+        ->and(Schema::hasColumns('tasks', ['project_id', 'title', 'description', 'is_done']))->toBeTrue()
+        ->and(Schema::hasColumn('tasks', 'assigned_to'))->toBeFalse()
+        ->and(Schema::hasColumn('tasks', 'priority'))->toBeFalse();
 });
