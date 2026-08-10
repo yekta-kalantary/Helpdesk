@@ -15,6 +15,4 @@ interface TaskRepository
     public function update(int $id, array $attributes): void;
 
     public function delete(int $id): void;
-
-    public function addComment(int $taskId, int $userId, string $body): void;
 }
