@@ -2,18 +2,17 @@
 
 namespace Modules\Tasks\Infrastructure\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Identity\Infrastructure\Models\User;
+use Modules\Media\Infrastructure\Concerns\InteractsWithMedia;
+use Modules\Media\Infrastructure\Contracts\MediaOwner;
 use Modules\Tasks\Domain\Enums\TaskPriority;
 use Modules\Tasks\Domain\Enums\TaskStatus;
-use Spatie\MediaLibrary\HasMedia;
-use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Task extends Model implements HasMedia
+class Task extends Model implements MediaOwner
 {
     use InteractsWithMedia, SoftDeletes;
 
@@ -51,10 +50,5 @@ class Task extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('attachments')->useDisk('local');
-    }
-
-    public function registerMediaConversions(?Media $media = null): void
-    {
-        // Originals only: no image processing dependency is required at runtime.
     }
 }
