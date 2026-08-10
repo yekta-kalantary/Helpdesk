@@ -24,10 +24,7 @@ class Login extends Component
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::query()
-            ->with('contact')
-            ->whereHas('contact', fn ($query) => $query->where('email', $credentials['email']))
-            ->first();
+        $user = User::query()->where('email', $credentials['email'])->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             $this->addError('email', __('identity::messages.invalid_credentials'));
@@ -46,7 +43,7 @@ class Login extends Component
         Auth::login($user, $this->remember);
         session()->regenerate();
 
-        return redirect()->intended(route('contacts.index'));
+        return redirect()->intended(route('projects.index'));
     }
 
     public function render()
