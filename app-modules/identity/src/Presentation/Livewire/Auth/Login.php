@@ -43,7 +43,7 @@ class Login extends Component
         Auth::login($user, $this->remember);
         session()->regenerate();
 
-        return redirect()->intended(route('projects.index'));
+        return redirect()->intended(route('dashboard'));
     }
 
     public function render()
