@@ -14,6 +14,7 @@
                 "versions": {
                     "modules/contacts": "1.0.0",
                     "modules/identity": "1.0.0",
+                    "modules/media": "1.0.0",
                     "modules/projects": "1.0.0",
                     "modules/tasks": "1.0.0"
                 }
@@ -28,9 +29,9 @@
         "livewire/livewire": "^4.3",
         "modules/contacts": "*",
         "modules/identity": "*",
+        "modules/media": "*",
         "modules/projects": "*",
         "modules/tasks": "*",
-        "spatie/laravel-medialibrary": "^11.23",
         "spatie/laravel-permission": "^8.3"
     },
     "require-dev": {

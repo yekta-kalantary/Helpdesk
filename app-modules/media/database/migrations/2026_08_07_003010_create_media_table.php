@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('media')) {
+            return;
+        }
+
         Schema::create('media', function (Blueprint $table): void {
             $table->id();
             $table->morphs('model');

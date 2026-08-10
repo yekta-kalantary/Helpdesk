@@ -23,7 +23,9 @@
                 <th>{{ __('app.email') }}</th>
                 <th>{{ __('app.mobile') }}</th>
                 <th>{{ __('contacts::messages.location') }}</th>
-                <th>{{ __('contacts::messages.account') }}</th>
+                @if($canViewAccounts)
+                    <th>{{ __('contacts::messages.account') }}</th>
+                @endif
                 <th>{{ __('app.actions') }}</th>
             </tr>
         </thead>
@@ -34,11 +36,13 @@
                     <td dir="ltr" class="text-right">{{ $contact['email'] }}</td>
                     <td dir="ltr" class="text-right">{{ $contact['mobile'] }}</td>
                     <td>{{ collect([$contact['province'], $contact['city']])->filter()->implode('، ') ?: '—' }}</td>
-                    <td>
-                        <x-ui.badge :tone="$contact['account_enabled'] ? 'success' : 'neutral'">
-                            {{ $contact['account_enabled'] ? __('app.active') : __('app.inactive') }}
-                        </x-ui.badge>
-                    </td>
+                    @if($canViewAccounts)
+                        <td>
+                            <x-ui.badge :tone="$contact['account_enabled'] ? 'success' : 'neutral'">
+                                {{ $contact['account_enabled'] ? __('app.active') : __('app.inactive') }}
+                            </x-ui.badge>
+                        </td>
+                    @endif
                     <td>
                         @can('contacts.update')
                             <x-ui.button size="sm" variant="secondary" :href="route('contacts.edit', $contact['id'])" icon="fa-pen" wire:navigate>
@@ -48,7 +52,7 @@
                     </td>
                 </tr>
             @empty
-                <x-ui.empty-row colspan="6" />
+                <x-ui.empty-row :colspan="$canViewAccounts ? 6 : 5" />
             @endforelse
         </tbody>
     </x-ui.table>

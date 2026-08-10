@@ -4,12 +4,15 @@ namespace Modules\Tasks\Infrastructure;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Facades\DB;
+use Modules\Media\Domain\Contracts\MediaManager;
 use Modules\Tasks\Domain\Contracts\TaskRepository;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Infrastructure\Models\TaskComment;
 
 class EloquentTaskRepository implements TaskRepository
 {
+    public function __construct(private readonly MediaManager $media) {}
+
     public function search(array $scope, ?int $projectId = null, ?string $term = null): array
     {
         $query = DB::table('tasks')
@@ -89,12 +92,7 @@ class EloquentTaskRepository implements TaskRepository
                 'user_name' => $comment->user?->full_name,
                 'created_at' => $comment->created_at,
             ])->all(),
-            'attachments' => $task->getMedia('attachments')->map(fn ($media) => [
-                'id' => $media->id,
-                'name' => $media->file_name,
-                'size' => $media->size,
-                'mime_type' => $media->mime_type,
-            ])->all(),
+            'attachments' => $this->media->list(Task::class, $task->id, 'attachments'),
         ];
     }
 

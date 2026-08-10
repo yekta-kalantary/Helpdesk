@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Identity\Infrastructure\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Modules\Contacts\Infrastructure\Models\Contact;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['contact_id', 'password', 'is_active'])]
@@ -17,6 +18,11 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles;
+
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
 
     public function contact(): BelongsTo
     {

@@ -2,12 +2,12 @@
 
 namespace Modules\Tasks\Presentation\Livewire;
 
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Application\Actions\SaveTask;
 use Modules\Tasks\Application\Queries\TaskAccessScope;
 use Modules\Tasks\Application\Queries\TaskFormOptions;
@@ -88,6 +88,17 @@ class Form extends Component
         $this->spent_minutes = $item['spent_minutes'];
     }
 
+    public function updatedProjectId(): void
+    {
+        if (! $this->project_id || ! $this->assigned_to) {
+            return;
+        }
+
+        if (! $this->formOptions->isAssignableToProject($this->project_id, $this->assigned_to)) {
+            $this->assigned_to = null;
+        }
+    }
+
     public function save()
     {
         abort_unless(auth()->user()?->can($this->taskId ? 'tasks.update' : 'tasks.create'), 403);
@@ -98,7 +109,7 @@ class Form extends Component
         $data = $this->validate();
 
         $this->assertProjectAllowed((int) $data['project_id'], $scope);
-        $this->assertAssigneeAllowed($data['assigned_to'] ?? null);
+        $this->assertAssigneeAllowed((int) $data['project_id'], $data['assigned_to'] ?? null);
 
         $taskId = $this->saveTask->execute(
             $this->taskId,
@@ -151,14 +162,13 @@ class Form extends Component
         );
     }
 
-    private function assertAssigneeAllowed(?int $userId): void
+    private function assertAssigneeAllowed(int $projectId, ?int $userId): void
     {
         if (! $userId) {
             return;
         }
 
-        $user = User::query()->findOrFail($userId);
-        abort_if(! $user->is_active, 422);
+        abort_unless($this->formOptions->isAssignableToProject($projectId, $userId), 422);
     }
 
     public function render()
@@ -168,7 +178,7 @@ class Form extends Component
         $scope = $this->scopeBuilder->for($user);
 
         return view('tasks::form', [
-            'options' => $this->formOptions->get($user, $scope),
+            'options' => $this->formOptions->get($user, $scope, $this->project_id),
             'statuses' => TaskStatus::cases(),
             'priorities' => TaskPriority::cases(),
         ])->title($this->taskId ? __('tasks::messages.edit_task') : __('tasks::messages.new_task'));

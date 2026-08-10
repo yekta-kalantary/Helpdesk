@@ -2,11 +2,8 @@
 
 namespace Modules\Contacts\Infrastructure;
 
-use App\Models\Contact;
-use App\Models\User;
-use DomainException;
-use Illuminate\Support\Facades\DB;
 use Modules\Contacts\Domain\Contracts\ContactRepository;
+use Modules\Contacts\Infrastructure\Models\Contact;
 
 class EloquentContactRepository implements ContactRepository
 {
@@ -15,7 +12,6 @@ class EloquentContactRepository implements ContactRepository
         $term = trim((string) $term);
 
         return Contact::query()
-            ->with('user.roles:id,name')
             ->when($term !== '', fn ($query) => $query->where(function ($nested) use ($term): void {
                 foreach (preg_split('/\s+/u', $this->normalizeSearch($term)) ?: [] as $part) {
                     $like = '%'.addcslashes($part, '\\%_').'%';
@@ -35,66 +31,19 @@ class EloquentContactRepository implements ContactRepository
 
     public function find(int $id): array
     {
-        return $this->map(Contact::query()->with('user.roles:id,name')->findOrFail($id));
+        return $this->map(Contact::query()->findOrFail($id));
     }
 
-    public function save(?int $id, array $contactAttributes, array $account): int
+    public function save(?int $id, array $contactAttributes): int
     {
-        return DB::transaction(function () use ($id, $contactAttributes, $account): int {
-            $contact = $id
-                ? Contact::query()->with('user.roles:id,name')->findOrFail($id)
-                : new Contact;
+        $contact = $id
+            ? Contact::query()->findOrFail($id)
+            : new Contact;
 
-            $contact->fill($contactAttributes);
-            $contact->save();
+        $contact->fill($contactAttributes);
+        $contact->save();
 
-            $user = $contact->user;
-            $enabled = (bool) ($account['enabled'] ?? false);
-
-            if (! $enabled && ! $user) {
-                return $contact->id;
-            }
-
-            if (! $user) {
-                $role = (string) ($account['role'] ?? '');
-                $this->assertAssignableRole($role, null);
-
-                $user = User::create([
-                    'contact_id' => $contact->id,
-                    'password' => (string) $account['password'],
-                    'is_active' => true,
-                ]);
-                $user->syncRoles([$role]);
-
-                return $contact->id;
-            }
-
-            $attributes = ['is_active' => $enabled];
-            $password = (string) ($account['password'] ?? '');
-            if ($password !== '') {
-                $attributes['password'] = $password;
-            }
-            $user->update($attributes);
-
-            if ($enabled && isset($account['role']) && $account['role'] !== '') {
-                $role = (string) $account['role'];
-                $this->assertAssignableRole($role, $user);
-                $user->syncRoles([$role]);
-            }
-
-            return $contact->id;
-        });
-    }
-
-    private function assertAssignableRole(string $role, ?User $currentUser): void
-    {
-        if ($role === '') {
-            throw new DomainException('account_role_required');
-        }
-
-        if ($role === 'admin' && ! $currentUser?->hasRole('admin')) {
-            throw new DomainException('system_role_immutable');
-        }
+        return $contact->id;
     }
 
     /** @return array<string,mixed> */
@@ -112,9 +61,6 @@ class EloquentContactRepository implements ContactRepository
             'city' => $contact->city,
             'address' => $contact->address,
             'postal_code' => $contact->postal_code,
-            'user_id' => $contact->user?->id,
-            'account_enabled' => (bool) ($contact->user?->is_active ?? false),
-            'role' => $contact->user?->roles->first()?->name,
             'created_at' => $contact->created_at,
         ];
     }

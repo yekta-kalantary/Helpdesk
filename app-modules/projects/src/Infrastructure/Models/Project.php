@@ -2,12 +2,12 @@
 
 namespace Modules\Projects\Infrastructure\Models;
 
-use App\Models\Contact;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Contacts\Infrastructure\Models\Contact;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Domain\Enums\ProjectCategory;
 use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Projects\Domain\Enums\ProjectType;

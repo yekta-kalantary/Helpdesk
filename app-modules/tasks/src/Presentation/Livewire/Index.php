@@ -2,9 +2,9 @@
 
 namespace Modules\Tasks\Presentation\Livewire;
 
-use App\Models\User;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Application\Queries\TaskAccessScope;
 use Modules\Tasks\Domain\Contracts\TaskRepository;
 use Modules\Tasks\Domain\Enums\TaskStatus;

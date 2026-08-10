@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Models;
+namespace Modules\Contacts\Infrastructure\Models;
 
 use Database\Factories\ContactFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'first_name',
@@ -25,9 +24,9 @@ class Contact extends Model
     /** @use HasFactory<ContactFactory> */
     use HasFactory;
 
-    public function user(): HasOne
+    protected static function newFactory(): ContactFactory
     {
-        return $this->hasOne(User::class);
+        return ContactFactory::new();
     }
 
     protected function fullName(): Attribute

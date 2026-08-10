@@ -25,4 +25,7 @@ return [
     'password_confirmation' => 'Password confirmation',
     'password_hint' => 'Leave blank to keep the current password.',
     'search_placeholder' => 'Search name, last name, email or mobile',
+    'account_read_only' => 'You do not have permission to change account settings.',
+    'account_role_required' => 'An active account requires a valid role.',
+    'system_role_immutable' => 'The admin system role and its active state cannot be changed.',
 ];

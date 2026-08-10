@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Contact;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Contacts\Infrastructure\Models\Contact;
 
 /**
  * @extends Factory<Contact>

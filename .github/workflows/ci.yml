@@ -72,7 +72,13 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run database migrations
+      - name: Verify legacy database upgrade
+        run: |
+          php scripts/prepare-legacy-database.php
+          php artisan migrate --force
+          php scripts/assert-legacy-upgrade.php
+
+      - name: Verify fresh modular schema
         run: |
           php artisan migrate:fresh --force
           php artisan db:seed --force

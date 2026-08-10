@@ -2,8 +2,8 @@
 
 namespace Modules\Tasks\Presentation\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Routing\Controller;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Application\Queries\TaskAccessScope;
 use Modules\Tasks\Domain\Contracts\TaskAttachmentReader;
 use Modules\Tasks\Domain\Contracts\TaskRepository;
