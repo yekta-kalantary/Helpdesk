@@ -1,24 +1,22 @@
 <?php
 
-use Modules\Identity\Domain\Contracts\UserRepository;
 use Modules\Identity\Infrastructure\Models\User;
 
-it('keeps the seeded admin separate from normal users', function (): void {
+it('shows normal users to admin', function (): void {
     $admin = User::query()->where('is_admin', true)->firstOrFail();
     $normal = User::factory()->create();
 
-    $listedIds = collect(app(UserRepository::class)->search())->pluck('id')->all();
-
-    expect($admin->is_admin)->toBeTrue()
-        ->and($normal->is_admin)->toBeFalse()
-        ->and($listedIds)->toContain($normal->id)
-        ->not->toContain($admin->id);
+    $this->actingAs($admin)
+        ->get(route('users.index'))
+        ->assertOk()
+        ->assertSee($normal->email)
+        ->assertDontSee($admin->email);
 });
 
-it('allows only admin to open user management', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
+it('blocks normal users from user management', function (): void {
     $normal = User::factory()->create();
 
-    $this->actingAs($admin)->get(route('users.index'))->assertOk();
-    $this->actingAs($normal)->get(route('users.index'))->assertForbidden();
+    $this->actingAs($normal)
+        ->get(route('users.index'))
+        ->assertForbidden();
 });
