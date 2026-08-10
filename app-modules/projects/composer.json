@@ -3,7 +3,20 @@
     "description": "Project management bounded context.",
     "type": "library",
     "license": "proprietary",
-    "require": {"php": "^8.4", "laravel/framework": "^13.8"},
-    "autoload": {"psr-4": {"Modules\\Projects\\": "src/"}},
-    "extra": {"laravel": {"providers": ["Modules\\Projects\\ProjectsServiceProvider"]}}
+    "require": {
+        "php": "^8.4",
+        "laravel/framework": "^13.8",
+        "modules/contacts": "*",
+        "modules/identity": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Projects\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": ["Modules\\Projects\\ProjectsServiceProvider"]
+        }
+    }
 }
