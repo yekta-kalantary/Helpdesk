@@ -1,4 +1,4 @@
-# نصب و ارتقا
+# نصب
 
 ## نیازمندی‌ها
 
@@ -17,22 +17,13 @@ composer run setup
 php artisan serve
 ```
 
-Migrationهای اصلی مستقیماً جدول‌های ساده `users`، `projects`، `project_user` و `tasks` را می‌سازند.
+Migrationها مستقیماً جدول‌های `users`، `projects`، `project_user` و `tasks` را می‌سازند.
 
-## ارتقا از نسخه قبلی
-
-برای دیتابیس موجود از `migrate:fresh` استفاده نکنید:
+اگر پروژه را از ساختار توسعه قبلی جایگزین می‌کنید، دیتابیس را یک‌بار از نو بسازید:
 
 ```bash
-composer install
-php artisan optimize:clear
-php artisan migrate --force
-php artisan db:seed --force
+php artisan migrate:fresh --seed
 ```
-
-Migration ارتقا اطلاعات مورد نیاز User و Task را منتقل می‌کند و schemaهای legacy را حذف می‌کند.
-
-قبل از migration روی production از دیتابیس backup بگیرید.
 
 ## تست کامل
 
