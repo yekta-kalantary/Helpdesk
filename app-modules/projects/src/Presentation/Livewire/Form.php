@@ -5,9 +5,7 @@ namespace Modules\Projects\Presentation\Livewire;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Application\Actions\SaveProject;
-use Modules\Projects\Application\Queries\ProjectFormOptions;
-use Modules\Projects\Domain\Contracts\ProjectRepository;
+use Modules\Projects\Infrastructure\Models\Project;
 
 class Form extends Component
 {
@@ -20,19 +18,6 @@ class Form extends Component
 
     public array $member_ids = [];
 
-    protected ProjectRepository $projects;
-
-    protected SaveProject $saveProject;
-
-    protected ProjectFormOptions $options;
-
-    public function boot(ProjectRepository $projects, SaveProject $saveProject, ProjectFormOptions $options): void
-    {
-        $this->projects = $projects;
-        $this->saveProject = $saveProject;
-        $this->options = $options;
-    }
-
     public function mount(?int $project = null): void
     {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -41,11 +26,12 @@ class Form extends Component
             return;
         }
 
-        $item = $this->projects->find($project);
-        $this->projectId = $project;
-        $this->title = $item['title'];
-        $this->description = $item['description'];
-        $this->member_ids = array_map('intval', $item['member_ids'] ?? []);
+        $item = Project::query()->findOrFail($project);
+
+        $this->projectId = $item->id;
+        $this->title = $item->title;
+        $this->description = $item->description;
+        $this->member_ids = $item->members()->pluck('users.id')->map(fn ($id) => (int) $id)->all();
     }
 
     public function save()
@@ -53,21 +39,23 @@ class Form extends Component
         abort_unless(auth()->user()?->is_admin, 403);
 
         $data = $this->validate();
-        $members = User::query()
+        $memberIds = User::query()
             ->where('is_admin', false)
             ->where('is_active', true)
             ->whereIn('id', $data['member_ids'] ?? [])
             ->pluck('id')
             ->all();
 
-        $this->saveProject->execute(
-            $this->projectId,
-            [
-                'title' => $data['title'],
-                'description' => $data['description'] ?: null,
-            ],
-            $members,
-        );
+        $project = $this->projectId
+            ? Project::query()->findOrFail($this->projectId)
+            : new Project;
+
+        $project->fill([
+            'title' => $data['title'],
+            'description' => $data['description'] ?: null,
+        ])->save();
+
+        $project->members()->sync($memberIds);
 
         session()->flash('success', $this->projectId ? __('app.updated_successfully') : __('app.created_successfully'));
 
@@ -86,8 +74,14 @@ class Form extends Component
 
     public function render()
     {
-        return view('projects::form', [
-            'members' => $this->options->members(),
-        ])->title($this->projectId ? __('projects::messages.edit_project') : __('projects::messages.new_project'));
+        $members = User::query()
+            ->where('is_admin', false)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->orderBy('last_name')
+            ->get();
+
+        return view('projects::form', compact('members'))
+            ->title($this->projectId ? __('projects::messages.edit_project') : __('projects::messages.new_project'));
     }
 }
