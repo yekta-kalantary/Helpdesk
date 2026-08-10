@@ -28,24 +28,24 @@
         </thead>
         <tbody>
             @forelse($tasks as $task)
-                <tr wire:key="task-{{ $task['id'] }}">
+                <tr wire:key="task-{{ $task->id }}">
                     <td>
-                        <div class="font-semibold">{{ $task['title'] }}</div>
-                        @if($task['description'])
-                            <div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task['description'] }}</div>
+                        <div class="font-semibold">{{ $task->title }}</div>
+                        @if($task->description)
+                            <div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task->description }}</div>
                         @endif
                     </td>
-                    <td>{{ $task['project_title'] }}</td>
+                    <td>{{ $task->project->title }}</td>
                     <td>
-                        <x-ui.badge :tone="$task['is_done'] ? 'success' : 'neutral'">
-                            {{ $task['is_done'] ? 'انجام شده' : 'باز' }}
+                        <x-ui.badge :tone="$task->is_done ? 'success' : 'neutral'">
+                            {{ $task->is_done ? 'انجام شده' : 'باز' }}
                         </x-ui.badge>
                     </td>
                     <td>
                         @if($isAdmin)
                             <div class="flex flex-wrap gap-2">
-                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.edit', $task['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
-                                <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="delete({{ $task['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $task['id'] }})">{{ __('app.delete') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.edit', $task->id)" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="delete({{ $task->id }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $task->id }})">{{ __('app.delete') }}</x-ui.button>
                             </div>
                         @else
                             —
