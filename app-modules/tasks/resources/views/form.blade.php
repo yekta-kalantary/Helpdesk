@@ -6,13 +6,13 @@
             <div class="space-y-5">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <x-ui.input name="title" :label="__('app.title')" :value="$title" wire:model="title" required />
-                    <x-ui.select name="project_id" :label="__('tasks::messages.project')" wire:model.number="project_id" required>
+                    <x-ui.select name="project_id" :label="__('tasks::messages.project')" wire:model.live.number="project_id" required>
                         <option value="">—</option>
                         @foreach($options['projects'] as $project)
                             <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                         @endforeach
                     </x-ui.select>
-                    <x-ui.select name="assigned_to" :label="__('tasks::messages.assignee')" wire:model.number="assigned_to">
+                    <x-ui.select name="assigned_to" :label="__('tasks::messages.assignee')" wire:model.number="assigned_to" :disabled="! $project_id">
                         <option value="">{{ __('tasks::messages.unassigned') }}</option>
                         @foreach($options['members'] as $member)
                             <option value="{{ $member['id'] }}">{{ $member['name'] }}</option>
