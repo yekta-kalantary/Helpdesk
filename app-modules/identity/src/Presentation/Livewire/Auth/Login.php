@@ -2,11 +2,11 @@
 
 namespace Modules\Identity\Presentation\Livewire\Auth;
 
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Modules\Identity\Infrastructure\Models\User;
 
 #[Layout('layouts::guest')]
 class Login extends Component
