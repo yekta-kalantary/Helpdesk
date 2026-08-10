@@ -10,6 +10,7 @@ Route::middleware('web')->group(function (): void {
     Route::middleware('auth')->group(function (): void {
         Route::livewire('/users', 'identity::users.index')->name('users.index');
         Route::livewire('/users/create', 'identity::users.form')->name('users.create');
-        Route::livewire('/users/{user}/edit', 'identity::users.form')->name('users.edit');
+        Route::livewire('/users/{user}', 'identity::users.show')->name('users.show');
+        Route::livewire('/users/{user}/edit', 'identity::users.show')->name('users.edit');
     });
 });
