@@ -10,13 +10,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        // Cross-cutting bindings belong here. Domain bindings live inside modules.
+        //
     }
 
     public function boot(): void
     {
-        Gate::before(static function (User $user): ?bool {
-            return $user->hasRole('admin') ? true : null;
-        });
+        Gate::define('admin', static fn (User $user): bool => (bool) $user->is_admin);
     }
 }
