@@ -1,46 +1,24 @@
 <?php
 
-use DomainException;
-use Modules\Contacts\Domain\Contracts\ContactAccountGateway;
-use Modules\Contacts\Infrastructure\Models\Contact;
+use Modules\Identity\Domain\Contracts\UserRepository;
 use Modules\Identity\Infrastructure\Models\User;
-use Spatie\Permission\Models\Role;
 
-it('keeps admin account active and on the system role', function (): void {
-    $admin = User::query()->whereHas('roles', fn ($query) => $query->where('name', 'admin'))->firstOrFail();
-    $accounts = app(ContactAccountGateway::class);
+it('keeps the seeded admin separate from normal users', function (): void {
+    $admin = User::query()->where('is_admin', true)->firstOrFail();
+    $normal = User::factory()->create();
 
-    expect(fn () => $accounts->save($admin->contact_id, [
-        'enabled' => false,
-        'role' => 'admin',
-        'password' => null,
-    ]))->toThrow(DomainException::class, 'system_role_immutable');
+    $listedIds = collect(app(UserRepository::class)->search())->pluck('id')->all();
 
-    expect(fn () => $accounts->save($admin->contact_id, [
-        'enabled' => true,
-        'role' => 'staff-test',
-        'password' => null,
-    ]))->toThrow(DomainException::class, 'system_role_immutable');
-
-    $admin->refresh()->load('roles');
-
-    expect($admin->is_active)->toBeTrue()
-        ->and($admin->hasRole('admin'))->toBeTrue();
+    expect($admin->is_admin)->toBeTrue()
+        ->and($normal->is_admin)->toBeFalse()
+        ->and($listedIds)->toContain($normal->id)
+        ->not->toContain($admin->id);
 });
 
-it('creates a normal account through the Identity gateway', function (): void {
-    Role::findOrCreate('staff-test', 'web');
-    $contact = Contact::factory()->create();
-    $accounts = app(ContactAccountGateway::class);
+it('allows only admin to open user management', function (): void {
+    $admin = User::query()->where('is_admin', true)->firstOrFail();
+    $normal = User::factory()->create();
 
-    $accounts->save($contact->id, [
-        'enabled' => true,
-        'role' => 'staff-test',
-        'password' => 'password123',
-    ]);
-
-    $user = User::query()->with('roles')->where('contact_id', $contact->id)->firstOrFail();
-
-    expect($user->is_active)->toBeTrue()
-        ->and($user->hasRole('staff-test'))->toBeTrue();
+    $this->actingAs($admin)->get(route('users.index'))->assertOk();
+    $this->actingAs($normal)->get(route('users.index'))->assertForbidden();
 });
