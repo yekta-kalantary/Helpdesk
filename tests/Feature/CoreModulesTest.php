@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\Contact;
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Modules\Contacts\Infrastructure\Models\Contact;
+use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
 
 it('exposes only retained business routes', function (): void {
