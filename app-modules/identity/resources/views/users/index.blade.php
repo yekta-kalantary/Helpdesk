@@ -18,26 +18,39 @@
     <x-ui.table wire:loading.class="opacity-60" wire:target="q">
         <thead>
             <tr>
-                <th>{{ __('app.name_label') }}</th>
-                <th>{{ __('app.email') }}</th>
-                <th>{{ __('app.mobile') }}</th>
+                <th>{{ __('identity::messages.user') }}</th>
+                <th>{{ __('identity::messages.contact_info') }}</th>
+                <th>{{ __('app.projects') }}</th>
                 <th>{{ __('app.status') }}</th>
-                <th>{{ __('app.actions') }}</th>
             </tr>
         </thead>
         <tbody>
             @forelse($users as $user)
-                <tr wire:key="user-{{ $user['id'] }}">
-                    <td class="font-semibold">{{ $user['full_name'] }}</td>
-                    <td dir="ltr" class="text-right">{{ $user['email'] }}</td>
-                    <td dir="ltr" class="text-right">{{ $user['mobile'] ?: '—' }}</td>
-                    <td><x-ui.badge :tone="$user['is_active'] ? 'success' : 'neutral'">{{ $user['is_active'] ? __('app.active') : __('app.inactive') }}</x-ui.badge></td>
+                <tr
+                    wire:key="user-{{ $user->id }}"
+                    class="cursor-pointer transition hover:bg-slate-50"
+                    onclick="window.location.href='{{ route('users.show', $user->id) }}'"
+                >
                     <td>
-                        <x-ui.button size="sm" variant="secondary" :href="route('users.edit', $user['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
+                        <a href="{{ route('users.show', $user->id) }}" wire:navigate class="font-bold text-slate-950 hover:underline">
+                            {{ $user->full_name }}
+                        </a>
+                    </td>
+                    <td>
+                        <div dir="ltr" class="text-right">{{ $user->email ?: '—' }}</div>
+                        @if($user->mobile)
+                            <div dir="ltr" class="mt-1 text-right text-xs text-slate-500">{{ $user->mobile }}</div>
+                        @endif
+                    </td>
+                    <td class="font-semibold">{{ $projectCounts[$user->id] ?? 0 }}</td>
+                    <td>
+                        <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">
+                            {{ $user->is_active ? __('app.active') : __('app.inactive') }}
+                        </x-ui.badge>
                     </td>
                 </tr>
             @empty
-                <x-ui.empty-row colspan="5" />
+                <x-ui.empty-row colspan="4" />
             @endforelse
         </tbody>
     </x-ui.table>
