@@ -1,56 +1,60 @@
 <div>
+    @if(session('success'))
+        <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
+    @endif
+
     <x-ui.page-header :title="__('tasks::messages.tasks')">
-        <x-slot:actions>
-            @can('tasks.create')
+        @if($isAdmin)
+            <x-slot:actions>
                 <x-ui.button :href="route('tasks.create', ['project' => $projectId])" icon="fa-plus" wire:navigate>{{ __('tasks::messages.new_task') }}</x-ui.button>
-            @endcan
-        </x-slot:actions>
+            </x-slot:actions>
+        @endif
     </x-ui.page-header>
 
     <x-ui.filter-bar :livewire="true">
         <div class="min-w-0 flex-1">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('tasks::messages.search_placeholder')" />
         </div>
-        <span class="pb-2 text-xs text-slate-500" wire:loading wire:target="q"><i class="fa-light fa-spinner-third fa-spin ml-1" aria-hidden="true"></i>{{ __('app.loading') }}</span>
     </x-ui.filter-bar>
 
-    @php($grouped = collect($tasks)->groupBy('status'))
-
-    <div class="grid gap-4 xl:grid-cols-5" wire:loading.class="opacity-60" wire:target="q">
-        @foreach($statuses as $statusItem)
-            <section class="min-w-0 rounded-2xl border border-slate-200 bg-slate-100/80 p-3" wire:key="task-column-{{ $statusItem->value }}">
-                <div class="mb-3 flex items-center justify-between gap-3">
-                    <h2 class="font-bold text-slate-900">{{ __('tasks::messages.status.'.$statusItem->value) }}</h2>
-                    <x-ui.badge>{{ $grouped->get($statusItem->value, collect())->count() }}</x-ui.badge>
-                </div>
-
-                <div class="space-y-3">
-                    @forelse($grouped->get($statusItem->value, collect()) as $task)
-                        <a href="{{ route('tasks.show', $task['id']) }}" wire:navigate class="group block" wire:key="task-{{ $task['id'] }}">
-                            <x-ui.card class="transition group-hover:-translate-y-0.5 group-hover:border-slate-300 group-hover:shadow-md">
-                                <div class="font-bold text-slate-950">{{ $task['title'] }}</div>
-                                <div class="mt-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                                    <i class="fa-light fa-diagram-project" aria-hidden="true"></i>
-                                    <span>{{ $task['project_title'] }}</span>
-                                </div>
-                                <div class="mt-3 flex flex-wrap gap-1.5">
-                                    <x-ui.badge>{{ __('tasks::messages.priority.'.$task['priority']) }}</x-ui.badge>
-                                    <x-ui.badge>{{ $task['assignee_name'] ?: __('tasks::messages.unassigned') }}</x-ui.badge>
-                                </div>
-
-                                @if($task['due_at'])
-                                    <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-500" dir="ltr">
-                                        <i class="fa-light fa-calendar-clock" aria-hidden="true"></i>
-                                        <span>{{ \Illuminate\Support\Carbon::parse($task['due_at'])->format('Y-m-d H:i') }}</span>
-                                    </div>
-                                @endif
-                            </x-ui.card>
-                        </a>
-                    @empty
-                        <x-ui.empty-state :description="__('app.no_records')" class="px-3 py-5" />
-                    @endforelse
-                </div>
-            </section>
-        @endforeach
-    </div>
+    <x-ui.table wire:loading.class="opacity-60" wire:target="q,delete">
+        <thead>
+            <tr>
+                <th>{{ __('app.title') }}</th>
+                <th>{{ __('tasks::messages.project') }}</th>
+                <th>{{ __('app.status') }}</th>
+                <th>{{ __('app.actions') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($tasks as $task)
+                <tr wire:key="task-{{ $task['id'] }}">
+                    <td>
+                        <div class="font-semibold">{{ $task['title'] }}</div>
+                        @if($task['description'])
+                            <div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task['description'] }}</div>
+                        @endif
+                    </td>
+                    <td>{{ $task['project_title'] }}</td>
+                    <td>
+                        <x-ui.badge :tone="$task['is_done'] ? 'success' : 'neutral'">
+                            {{ $task['is_done'] ? 'انجام شده' : 'باز' }}
+                        </x-ui.badge>
+                    </td>
+                    <td>
+                        @if($isAdmin)
+                            <div class="flex flex-wrap gap-2">
+                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.edit', $task['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
+                                <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="delete({{ $task['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $task['id'] }})">{{ __('app.delete') }}</x-ui.button>
+                            </div>
+                        @else
+                            —
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <x-ui.empty-row colspan="4" />
+            @endforelse
+        </tbody>
+    </x-ui.table>
 </div>
