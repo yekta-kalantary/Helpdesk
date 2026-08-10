@@ -2,8 +2,8 @@
 
 namespace Modules\Projects\Application\Queries;
 
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Infrastructure\Models\User;
 
 class ProjectFormOptions
 {
