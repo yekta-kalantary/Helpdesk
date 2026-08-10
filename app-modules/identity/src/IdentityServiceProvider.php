@@ -4,22 +4,9 @@ namespace Modules\Identity;
 
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
-use Modules\Contacts\Domain\Contracts\ContactAccountGateway;
-use Modules\Identity\Domain\Contracts\AccessControl;
-use Modules\Identity\Domain\Contracts\UserRepository;
-use Modules\Identity\Infrastructure\ContactAccountGateway as IdentityContactAccountGateway;
-use Modules\Identity\Infrastructure\EloquentUserRepository;
-use Modules\Identity\Infrastructure\SpatieAccessControl;
 
 class IdentityServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        $this->app->bind(AccessControl::class, SpatieAccessControl::class);
-        $this->app->bind(UserRepository::class, EloquentUserRepository::class);
-        $this->app->bind(ContactAccountGateway::class, IdentityContactAccountGateway::class);
-    }
-
     public function boot(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');

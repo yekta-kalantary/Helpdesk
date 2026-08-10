@@ -1,13 +1,11 @@
 {
     "name": "modules/identity",
-    "description": "Identity and access control module for the Helpdesk modular monolith.",
+    "description": "User authentication and account management module.",
     "type": "library",
     "license": "proprietary",
     "require": {
         "php": "^8.4",
-        "laravel/framework": "^13.8",
-        "modules/contacts": "*",
-        "spatie/laravel-permission": "^8.3"
+        "laravel/framework": "^13.8"
     },
     "autoload": {
         "psr-4": {

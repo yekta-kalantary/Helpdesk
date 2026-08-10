@@ -2,8 +2,8 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "yekta-kalantary/helpdesk",
     "type": "project",
-    "description": "Persian modular monolith for contact, project and task management.",
-    "keywords": ["laravel", "contacts", "project-management", "task-management"],
+    "description": "Simple Persian project and task management application.",
+    "keywords": ["laravel", "project-management", "task-management"],
     "license": "MIT",
     "repositories": [
         {
@@ -12,9 +12,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "modules/contacts": "1.0.0",
                     "modules/identity": "1.0.0",
-                    "modules/media": "1.0.0",
                     "modules/projects": "1.0.0",
                     "modules/tasks": "1.0.0"
                 }
@@ -27,12 +25,9 @@
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.3",
-        "modules/contacts": "*",
         "modules/identity": "*",
-        "modules/media": "*",
         "modules/projects": "*",
-        "modules/tasks": "*",
-        "spatie/laravel-permission": "^8.3"
+        "modules/tasks": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

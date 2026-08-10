@@ -5,16 +5,12 @@ namespace Modules\Identity\Presentation\Livewire\Users;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Modules\Identity\Domain\Contracts\AccessControl;
-use Modules\Identity\Domain\Contracts\UserRepository;
+use Modules\Identity\Infrastructure\Models\User;
 
 class Form extends Component
 {
     #[Locked]
     public ?int $userId = null;
-
-    #[Locked]
-    public ?int $contactId = null;
 
     public string $name = '';
 
@@ -22,7 +18,7 @@ class Form extends Component
 
     public string $email = '';
 
-    public string $mobile = '';
+    public ?string $mobile = null;
 
     public string $password = '';
 
@@ -30,62 +26,54 @@ class Form extends Component
 
     public bool $is_active = true;
 
-    public string $role = '';
-
-    protected UserRepository $users;
-
-    protected AccessControl $access;
-
-    public function boot(UserRepository $users, AccessControl $access): void
-    {
-        $this->users = $users;
-        $this->access = $access;
-    }
-
     public function mount(?int $user = null): void
     {
+        abort_unless(auth()->user()?->is_admin, 403);
+
         if (! $user) {
             return;
         }
 
-        $item = $this->users->find($user);
-        $this->userId = $user;
-        $this->contactId = $item['contact_id'];
-        $this->name = $item['name'];
-        $this->last_name = $item['last_name'];
-        $this->email = $item['email'];
-        $this->mobile = $item['mobile'];
-        $this->is_active = $item['is_active'];
-        $this->role = $item['role'] ?? '';
+        $item = User::query()
+            ->where('is_admin', false)
+            ->findOrFail($user);
+
+        $this->userId = $item->id;
+        $this->name = $item->name;
+        $this->last_name = $item->last_name;
+        $this->email = $item->email;
+        $this->mobile = $item->mobile;
+        $this->is_active = $item->is_active;
     }
 
     public function save()
     {
-        abort_unless(auth()->user()?->can($this->userId ? 'users.update' : 'users.create'), 403);
+        abort_unless(auth()->user()?->is_admin, 403);
 
         $data = $this->validate();
+        $attributes = [
+            'name' => $data['name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'mobile' => $data['mobile'] ?: null,
+            'is_active' => $data['is_active'],
+        ];
 
         if ($this->userId) {
-            $this->users->update(
-                $this->userId,
-                $data['name'],
-                $data['last_name'],
-                $data['email'],
-                $data['mobile'],
-                $data['password'] ?: null,
-                $data['is_active'],
-                $data['role'],
-            );
+            $user = User::query()
+                ->where('is_admin', false)
+                ->findOrFail($this->userId);
+
+            if ($data['password'] !== '') {
+                $attributes['password'] = $data['password'];
+            }
+
+            $user->update($attributes);
         } else {
-            $this->users->create(
-                $data['name'],
-                $data['last_name'],
-                $data['email'],
-                $data['mobile'],
-                $data['password'],
-                $data['is_active'],
-                $data['role'],
-            );
+            User::query()->create($attributes + [
+                'password' => $data['password'],
+                'is_admin' => false,
+            ]);
         }
 
         session()->flash('success', $this->userId ? __('app.updated_successfully') : __('app.created_successfully'));
@@ -98,26 +86,16 @@ class Form extends Component
         return [
             'name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('contacts', 'email')->ignore($this->contactId)],
-            'mobile' => ['required', 'string', 'max:32'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
+            'mobile' => ['nullable', 'string', 'max:32'],
             'password' => [$this->userId ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
             'is_active' => ['boolean'],
-            'role' => ['required', 'string', Rule::notIn(['admin']), Rule::exists('roles', 'name')->where('guard_name', 'web')],
         ];
-    }
-
-    private function teamRoles(): array
-    {
-        return array_values(array_filter(
-            $this->access->roles(),
-            static fn (array $role) => ! $role['system'],
-        ));
     }
 
     public function render()
     {
-        return view('identity::users.form', [
-            'roles' => $this->teamRoles(),
-        ])->title($this->userId ? __('identity::messages.edit_user') : __('identity::messages.new_user'));
+        return view('identity::users.form')
+            ->title($this->userId ? __('identity::messages.edit_user') : __('identity::messages.new_user'));
     }
 }

@@ -7,60 +7,24 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Modules\Contacts\Infrastructure\Models\Contact;
-use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['contact_id', 'password', 'is_active'])]
+#[Fillable(['name', 'last_name', 'email', 'mobile', 'password', 'is_active', 'is_admin'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles;
+    use HasFactory;
 
     protected static function newFactory(): UserFactory
     {
         return UserFactory::new();
     }
 
-    public function contact(): BelongsTo
-    {
-        return $this->belongsTo(Contact::class);
-    }
-
-    protected function name(): Attribute
-    {
-        return Attribute::make(
-            get: fn (): string => $this->contact?->first_name ?? '',
-        );
-    }
-
-    protected function lastName(): Attribute
-    {
-        return Attribute::make(
-            get: fn (): string => $this->contact?->last_name ?? '',
-        );
-    }
-
-    protected function email(): Attribute
-    {
-        return Attribute::make(
-            get: fn (): string => $this->contact?->email ?? '',
-        );
-    }
-
-    protected function mobile(): Attribute
-    {
-        return Attribute::make(
-            get: fn (): string => $this->contact?->mobile ?? '',
-        );
-    }
-
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn (): string => $this->contact?->full_name ?? '',
+            get: fn (): string => trim($this->name.' '.$this->last_name),
         );
     }
 
@@ -70,6 +34,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_admin' => 'boolean',
         ];
     }
 }

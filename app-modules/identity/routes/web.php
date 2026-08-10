@@ -8,24 +8,8 @@ Route::middleware('web')->group(function (): void {
     });
 
     Route::middleware('auth')->group(function (): void {
-        Route::livewire('/users', 'identity::users.index')
-            ->middleware('permission:users.view')
-            ->name('users.index');
-        Route::livewire('/users/create', 'identity::users.form')
-            ->middleware('permission:users.create')
-            ->name('users.create');
-        Route::livewire('/users/{user}/edit', 'identity::users.form')
-            ->middleware('permission:users.update')
-            ->name('users.edit');
-
-        Route::livewire('/roles', 'identity::roles.index')
-            ->middleware('permission:roles.view')
-            ->name('roles.index');
-        Route::livewire('/roles/create', 'identity::roles.form')
-            ->middleware('permission:roles.create')
-            ->name('roles.create');
-        Route::livewire('/roles/{role}/edit', 'identity::roles.form')
-            ->middleware('permission:roles.update')
-            ->name('roles.edit');
+        Route::livewire('/users', 'identity::users.index')->name('users.index');
+        Route::livewire('/users/create', 'identity::users.form')->name('users.create');
+        Route::livewire('/users/{user}/edit', 'identity::users.form')->name('users.edit');
     });
 });

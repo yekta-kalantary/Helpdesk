@@ -1,125 +1,74 @@
 # مدل داده
 
-## Contacts module
+دیتابیس اصلی برنامه فقط چهار جدول domain دارد:
 
-### contacts
+```text
+users
+projects
+project_user
+tasks
+```
 
-منبع واحد اطلاعات شخصی:
+جدول‌های framework مثل `sessions`، `cache`، `jobs` و `migrations` جدا هستند.
+
+## users
 
 ```text
 id
-first_name
+name
 last_name
-gender
 email
 mobile
-province
-city
-address
-postal_code
+email_verified_at
+password
+is_active
+is_admin
+remember_token
 created_at
 updated_at
 ```
 
-Migrationهای `contacts` داخل `app-modules/contacts/database/migrations` هستند.
+`is_admin` تنها فلگ مدیریتی سیستم است.
 
-## Identity module
-
-### users
-
-حساب ورود اختیاری برای Contact:
+## projects
 
 ```text
 id
-contact_id (unique)
-email_verified_at
-password
-is_active
-remember_token
-```
-
-Role/Permission tables نیز متعلق به Identity هستند. `users.contact_id` به Contacts اشاره می‌کند، اما پروفایل شخصی داخل users تکرار نمی‌شود.
-
-## Projects module
-
-### projects
-
-```text
-id
-contact_id (nullable)
-category: contact | internal
 title
-type
-status
 description
-starts_at
-ends_at
+created_at
+updated_at
 ```
 
-Project نوع `contact` باید Contact داشته باشد؛ Project نوع `internal` بدون Contact است.
+## project_user
 
-### project_user
+```text
+project_id
+user_id
+created_at
+updated_at
+```
 
-عضویت کارکنان در پروژه را نگه می‌دارد.
+این جدول مشخص می‌کند هر کاربر عضو چه پروژه‌هایی است.
 
-## Tasks module
-
-### tasks
+## tasks
 
 ```text
 id
 project_id
-assigned_to (nullable)
-created_by
 title
 description
-priority
-status
-due_at
-estimated_minutes
-spent_minutes
+is_done
+created_at
+updated_at
 ```
 
-### task_comments
+Task فقط به Project تعلق دارد. کاربر عادی Task را زمانی می‌بیند که عضو همان Project باشد.
 
-کامنت‌های داخلی Task را نگه می‌دارد. `assigned_to` در سطح application باید User فعال و عضو همان Project باشد.
+## سیاست schema
 
-## Media module
+این نسخه فقط همین schema را پشتیبانی می‌کند. برای جایگزینی نسخه‌های توسعه قبلی:
 
-### media
-
-جدول polymorphic عمومی فایل‌ها متعلق به module `Media` است، نه Tasks. Business moduleها collection و authorization خود را تعریف می‌کنند و storage/read/delete را از `MediaManager` می‌گیرند.
-
-Task در حال حاضر collection زیر را استفاده می‌کند:
-
-```text
-attachments
+```bash
+php artisan migrate:fresh --seed
 ```
-
-همین زیرساخت می‌تواند بدون dependency به Tasks برای Project/Contact collectionهای دیگر استفاده شود.
-
-## Upgrade از schema قدیمی
-
-برای دیتابیس‌های قبلی `migrate:fresh` لازم نیست. Forward migrationهای جدید این مسیر را اجرا می‌کنند:
-
-```text
-people → contacts
-users.person_id → users.contact_id
-projects.customer_id → projects.contact_id
-project.category: customer → contact
-Spatie model_type: App\Models\User → Modules\Identity\Infrastructure\Models\User
-```
-
-بعد از صحت backfill، schemaهای حذف‌شده پاک می‌شوند:
-
-```text
-people
-customers
-tickets
-ticket_messages
-notifications
-settings
-tasks.is_customer_visible
-```
-
-هیچ migration اجراشده‌ای برای این upgrade rewrite نمی‌شود.

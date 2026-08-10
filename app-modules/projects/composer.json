@@ -1,12 +1,11 @@
 {
     "name": "modules/projects",
-    "description": "Project management bounded context.",
+    "description": "Simple project and membership management module.",
     "type": "library",
     "license": "proprietary",
     "require": {
         "php": "^8.4",
         "laravel/framework": "^13.8",
-        "modules/contacts": "*",
         "modules/identity": "*"
     },
     "autoload": {

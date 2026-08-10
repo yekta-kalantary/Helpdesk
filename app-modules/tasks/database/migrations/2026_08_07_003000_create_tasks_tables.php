@@ -13,31 +13,13 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
-            $table->string('priority', 20)->default('medium')->index();
-            $table->string('status', 20)->default('todo')->index();
-            $table->timestamp('due_at')->nullable()->index();
-            $table->unsignedInteger('estimated_minutes')->nullable();
-            $table->unsignedInteger('spent_minutes')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
-            $table->index(['project_id', 'status']);
-            $table->index(['assigned_to', 'status']);
-        });
-
-        Schema::create('task_comments', function (Blueprint $table): void {
-            $table->id();
-            $table->foreignId('task_id')->constrained('tasks')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
-            $table->text('body');
+            $table->boolean('is_done')->default(false)->index();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('task_comments');
         Schema::dropIfExists('tasks');
     }
 };
