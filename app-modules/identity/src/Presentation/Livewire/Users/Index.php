@@ -18,6 +18,11 @@ class Index extends Component
         $this->users = $users;
     }
 
+    public function mount(): void
+    {
+        abort_unless(auth()->user()?->is_admin, 403);
+    }
+
     public function render()
     {
         return view('identity::users.index', [
