@@ -1,6 +1,8 @@
 # مدل داده
 
-## contacts
+## Contacts module
+
+### contacts
 
 منبع واحد اطلاعات شخصی:
 
@@ -19,7 +21,11 @@ created_at
 updated_at
 ```
 
-## users
+Migrationهای `contacts` داخل `app-modules/contacts/database/migrations` هستند.
+
+## Identity module
+
+### users
 
 حساب ورود اختیاری برای Contact:
 
@@ -32,7 +38,11 @@ is_active
 remember_token
 ```
 
-## projects
+Role/Permission tables نیز متعلق به Identity هستند. `users.contact_id` به Contacts اشاره می‌کند، اما پروفایل شخصی داخل users تکرار نمی‌شود.
+
+## Projects module
+
+### projects
 
 ```text
 id
@@ -48,7 +58,13 @@ ends_at
 
 Project نوع `contact` باید Contact داشته باشد؛ Project نوع `internal` بدون Contact است.
 
-## tasks
+### project_user
+
+عضویت کارکنان در پروژه را نگه می‌دارد.
+
+## Tasks module
+
+### tasks
 
 ```text
 id
@@ -64,4 +80,46 @@ estimated_minutes
 spent_minutes
 ```
 
-Task comment و attachment همچنان بخشی از Tasks هستند. هیچ جدول Customer، Ticket، Notification یا Settings در baseline جدید ساخته نمی‌شود.
+### task_comments
+
+کامنت‌های داخلی Task را نگه می‌دارد. `assigned_to` در سطح application باید User فعال و عضو همان Project باشد.
+
+## Media module
+
+### media
+
+جدول polymorphic عمومی فایل‌ها متعلق به module `Media` است، نه Tasks. Business moduleها collection و authorization خود را تعریف می‌کنند و storage/read/delete را از `MediaManager` می‌گیرند.
+
+Task در حال حاضر collection زیر را استفاده می‌کند:
+
+```text
+attachments
+```
+
+همین زیرساخت می‌تواند بدون dependency به Tasks برای Project/Contact collectionهای دیگر استفاده شود.
+
+## Upgrade از schema قدیمی
+
+برای دیتابیس‌های قبلی `migrate:fresh` لازم نیست. Forward migrationهای جدید این مسیر را اجرا می‌کنند:
+
+```text
+people → contacts
+users.person_id → users.contact_id
+projects.customer_id → projects.contact_id
+project.category: customer → contact
+Spatie model_type: App\Models\User → Modules\Identity\Infrastructure\Models\User
+```
+
+بعد از صحت backfill، schemaهای حذف‌شده پاک می‌شوند:
+
+```text
+people
+customers
+tickets
+ticket_messages
+notifications
+settings
+tasks.is_customer_visible
+```
+
+هیچ migration اجراشده‌ای برای این upgrade rewrite نمی‌شود.
