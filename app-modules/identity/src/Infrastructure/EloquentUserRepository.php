@@ -4,13 +4,15 @@ namespace Modules\Identity\Infrastructure;
 
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use Modules\Contacts\Infrastructure\Models\Contact;
+use Modules\Contacts\Domain\Contracts\ContactRepository;
 use Modules\Identity\Domain\Contracts\UserRepository;
 use Modules\Identity\Infrastructure\Models\User;
 
 class EloquentUserRepository implements UserRepository
 {
     private const SYSTEM_ROLES = ['admin'];
+
+    public function __construct(private readonly ContactRepository $contacts) {}
 
     public function search(?string $term = null): array
     {
@@ -51,7 +53,7 @@ class EloquentUserRepository implements UserRepository
         return DB::transaction(function () use ($name, $lastName, $email, $mobile, $password, $isActive, $role): int {
             $this->assertTeamRole($role);
 
-            $contact = Contact::create([
+            $contactId = $this->contacts->save(null, [
                 'first_name' => $name,
                 'last_name' => $lastName,
                 'email' => $email,
@@ -59,7 +61,7 @@ class EloquentUserRepository implements UserRepository
             ]);
 
             $user = User::create([
-                'contact_id' => $contact->id,
+                'contact_id' => $contactId,
                 'password' => $password,
                 'is_active' => $isActive,
             ]);
@@ -85,7 +87,7 @@ class EloquentUserRepository implements UserRepository
             $this->assertTeamUser($user);
             $this->assertTeamRole($role);
 
-            $user->contact->update([
+            $this->contacts->save($user->contact_id, [
                 'first_name' => $name,
                 'last_name' => $lastName,
                 'email' => $email,
