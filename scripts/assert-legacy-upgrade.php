@@ -48,7 +48,7 @@ $columnExists('projects', 'contact_id') || $fail('projects.contact_id is missing
 ! $columnExists('projects', 'customer_id') || $fail('projects.customer_id still exists');
 ! $columnExists('tasks', 'is_customer_visible') || $fail('tasks.is_customer_visible still exists');
 
-$contact = $pdo->query("SELECT id, email FROM contacts WHERE id = 2")->fetch(PDO::FETCH_ASSOC);
+$contact = $pdo->query('SELECT id, email FROM contacts WHERE id = 2')->fetch(PDO::FETCH_ASSOC);
 if (! $contact || $contact['email'] !== 'legacy-customer@example.test') {
     $fail('legacy customer person was not preserved as contact id 2');
 }
