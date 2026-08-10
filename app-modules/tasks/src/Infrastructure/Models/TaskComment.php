@@ -2,9 +2,9 @@
 
 namespace Modules\Tasks\Infrastructure\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Identity\Infrastructure\Models\User;
 
 class TaskComment extends Model
 {
