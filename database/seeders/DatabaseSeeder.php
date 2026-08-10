@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Contact;
-use App\Models\User;
 use Illuminate\Database\Seeder;
+use Modules\Contacts\Infrastructure\Models\Contact;
 use Modules\Identity\Domain\Access\PermissionCatalog;
+use Modules\Identity\Infrastructure\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
