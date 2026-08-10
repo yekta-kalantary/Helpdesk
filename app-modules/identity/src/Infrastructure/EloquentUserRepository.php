@@ -2,11 +2,11 @@
 
 namespace Modules\Identity\Infrastructure;
 
-use App\Models\Contact;
-use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Modules\Contacts\Infrastructure\Models\Contact;
 use Modules\Identity\Domain\Contracts\UserRepository;
+use Modules\Identity\Infrastructure\Models\User;
 
 class EloquentUserRepository implements UserRepository
 {
