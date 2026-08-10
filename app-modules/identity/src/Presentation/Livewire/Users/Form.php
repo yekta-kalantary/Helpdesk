@@ -5,7 +5,7 @@ namespace Modules\Identity\Presentation\Livewire\Users;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
-use Modules\Identity\Domain\Contracts\UserRepository;
+use Modules\Identity\Infrastructure\Models\User;
 
 class Form extends Component
 {
@@ -26,13 +26,6 @@ class Form extends Component
 
     public bool $is_active = true;
 
-    protected UserRepository $users;
-
-    public function boot(UserRepository $users): void
-    {
-        $this->users = $users;
-    }
-
     public function mount(?int $user = null): void
     {
         abort_unless(auth()->user()?->is_admin, 403);
@@ -41,13 +34,16 @@ class Form extends Component
             return;
         }
 
-        $item = $this->users->find($user);
-        $this->userId = $user;
-        $this->name = $item['name'];
-        $this->last_name = $item['last_name'];
-        $this->email = $item['email'];
-        $this->mobile = $item['mobile'];
-        $this->is_active = $item['is_active'];
+        $item = User::query()
+            ->where('is_admin', false)
+            ->findOrFail($user);
+
+        $this->userId = $item->id;
+        $this->name = $item->name;
+        $this->last_name = $item->last_name;
+        $this->email = $item->email;
+        $this->mobile = $item->mobile;
+        $this->is_active = $item->is_active;
     }
 
     public function save()
@@ -55,26 +51,29 @@ class Form extends Component
         abort_unless(auth()->user()?->is_admin, 403);
 
         $data = $this->validate();
+        $attributes = [
+            'name' => $data['name'],
+            'last_name' => $data['last_name'],
+            'email' => $data['email'],
+            'mobile' => $data['mobile'] ?: null,
+            'is_active' => $data['is_active'],
+        ];
 
         if ($this->userId) {
-            $this->users->update(
-                $this->userId,
-                $data['name'],
-                $data['last_name'],
-                $data['email'],
-                $data['mobile'] ?: null,
-                $data['password'] ?: null,
-                $data['is_active'],
-            );
+            $user = User::query()
+                ->where('is_admin', false)
+                ->findOrFail($this->userId);
+
+            if ($data['password'] !== '') {
+                $attributes['password'] = $data['password'];
+            }
+
+            $user->update($attributes);
         } else {
-            $this->users->create(
-                $data['name'],
-                $data['last_name'],
-                $data['email'],
-                $data['mobile'] ?: null,
-                $data['password'],
-                $data['is_active'],
-            );
+            User::query()->create($attributes + [
+                'password' => $data['password'],
+                'is_admin' => false,
+            ]);
         }
 
         session()->flash('success', $this->userId ? __('app.updated_successfully') : __('app.created_successfully'));
