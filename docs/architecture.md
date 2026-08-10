@@ -8,7 +8,7 @@ Projects
 Tasks
 ```
 
-کد برای جداسازی مسئولیت‌ها در سه ماژول نگهداری می‌شود:
+کد در سه ماژول نگهداری می‌شود:
 
 ```text
 Identity   -> کاربران و ورود
@@ -28,8 +28,6 @@ Tasks
 
 `Projects` برای انتخاب اعضا از User استفاده می‌کند و `Tasks` به Project وابسته است.
 
-هیچ ماژول Contact، Customer، Media، Ticket، Report، Setting یا Role/Permission در برنامه وجود ندارد.
-
 ## دسترسی
 
 Authorization عمداً ساده است:
@@ -47,4 +45,4 @@ User N <-> N Project
 Project 1 -> N Task
 ```
 
-هیچ assignee جداگانه‌ای برای Task وجود ندارد. دسترسی Task از عضویت در Project به دست می‌آید.
+دسترسی Task مستقیماً از عضویت در Project به دست می‌آید.
