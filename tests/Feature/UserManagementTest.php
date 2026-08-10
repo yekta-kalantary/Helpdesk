@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Identity\Presentation\Livewire\Users\Form as UserForm;
+use Modules\Identity\Presentation\Livewire\Users\Show as UserShow;
+use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Tasks\Infrastructure\Models\Task;
 
 it('shows normal users to admin', function (): void {
     $admin = User::query()->where('is_admin', true)->firstOrFail();
@@ -13,27 +16,66 @@ it('shows normal users to admin', function (): void {
         ->get(route('users.index'))
         ->assertOk()
         ->assertSee($normal->email)
+        ->assertSee(route('users.show', $normal->id))
         ->assertDontSee($admin->email);
 });
 
 it('blocks normal users from user management', function (): void {
     $normal = User::factory()->create();
+    $otherUser = User::factory()->create();
 
     $this->actingAs($normal)
         ->get(route('users.index'))
         ->assertForbidden();
+
+    $this->get(route('users.show', $otherUser->id))
+        ->assertForbidden();
 });
 
-it('creates the user from general information only', function (): void {
+it('opens a user on the overview with project and task summary', function (): void {
+    $admin = User::query()->where('is_admin', true)->firstOrFail();
+    $user = User::factory()->create([
+        'name' => 'علی',
+        'last_name' => 'احمدی',
+    ]);
+    $project = Project::query()->create([
+        'title' => 'پروژه نمونه',
+        'description' => null,
+    ]);
+    $project->members()->attach($user->id);
+
+    Task::query()->create([
+        'project_id' => $project->id,
+        'title' => 'تسک باز',
+        'is_done' => false,
+    ]);
+    Task::query()->create([
+        'project_id' => $project->id,
+        'title' => 'تسک انجام شده',
+        'is_done' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('users.show', $user->id))
+        ->assertOk()
+        ->assertSee('علی احمدی')
+        ->assertSee('پروژه نمونه');
+
+    Livewire::test(UserShow::class, ['user' => $user->id])
+        ->assertSet('tab', 'overview')
+        ->assertSee('پروژه نمونه');
+});
+
+it('creates a user from general information then opens the profile', function (): void {
     $admin = User::query()->where('is_admin', true)->firstOrFail();
     $this->actingAs($admin);
 
     Livewire::test(UserForm::class)
         ->set('name', 'علی')
         ->set('last_name', 'احمدی')
-        ->call('saveGeneral')
+        ->call('save')
         ->assertHasNoErrors()
-        ->assertSet('activeTab', 'contact');
+        ->assertRedirect();
 
     $user = User::query()
         ->where('name', 'علی')
@@ -44,6 +86,31 @@ it('creates the user from general information only', function (): void {
         ->and($user->mobile)->toBeNull()
         ->and($user->getRawOriginal('password'))->toBeNull()
         ->and($user->is_active)->toBeFalse();
+});
+
+it('saves general information independently on the user profile', function (): void {
+    $admin = User::query()->where('is_admin', true)->firstOrFail();
+    $user = User::factory()->create([
+        'name' => 'علی',
+        'last_name' => 'احمدی',
+        'email' => 'ali@example.test',
+        'mobile' => '09120000000',
+    ]);
+
+    $this->actingAs($admin);
+
+    Livewire::test(UserShow::class, ['user' => $user->id])
+        ->set('name', 'رضا')
+        ->set('last_name', 'رضایی')
+        ->call('saveGeneral')
+        ->assertHasNoErrors();
+
+    $user->refresh();
+
+    expect($user->name)->toBe('رضا')
+        ->and($user->last_name)->toBe('رضایی')
+        ->and($user->email)->toBe('ali@example.test')
+        ->and($user->mobile)->toBe('09120000000');
 });
 
 it('saves contact information without changing general information', function (): void {
@@ -57,7 +124,7 @@ it('saves contact information without changing general information', function ()
 
     $this->actingAs($admin);
 
-    Livewire::test(UserForm::class, ['user' => $user->id])
+    Livewire::test(UserShow::class, ['user' => $user->id])
         ->set('email', 'ali@example.test')
         ->set('mobile', '09120000000')
         ->call('saveContact')
@@ -81,7 +148,7 @@ it('saves account settings separately', function (): void {
 
     $this->actingAs($admin);
 
-    Livewire::test(UserForm::class, ['user' => $user->id])
+    Livewire::test(UserShow::class, ['user' => $user->id])
         ->set('password', 'new-password')
         ->set('password_confirmation', 'new-password')
         ->set('is_active', true)
@@ -107,7 +174,7 @@ it('does not activate an incomplete user account', function (): void {
 
     $this->actingAs($admin);
 
-    Livewire::test(UserForm::class, ['user' => $user->id])
+    Livewire::test(UserShow::class, ['user' => $user->id])
         ->set('is_active', true)
         ->call('saveAccount')
         ->assertHasErrors(['is_active']);
