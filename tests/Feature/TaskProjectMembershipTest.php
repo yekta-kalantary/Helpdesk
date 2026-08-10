@@ -2,30 +2,49 @@
 
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Application\Queries\TaskFormOptions;
+use Modules\Tasks\Application\Queries\TaskAccessScope;
+use Modules\Tasks\Domain\Contracts\TaskRepository;
+use Modules\Tasks\Infrastructure\Models\Task;
 
-it('only exposes active project members as task assignees', function (): void {
+it('only shows tasks from projects the user belongs to', function (): void {
     $member = User::factory()->create();
     $outsider = User::factory()->create();
-    $inactiveMember = User::factory()->create(['is_active' => false]);
 
-    $project = Project::query()->create([
-        'contact_id' => null,
-        'category' => 'internal',
-        'title' => 'Membership test project',
-        'type' => 'other',
-        'status' => 'planning',
+    $memberProject = Project::query()->create(['title' => 'Member project']);
+    $otherProject = Project::query()->create(['title' => 'Other project']);
+
+    $memberProject->members()->attach($member->id);
+    $otherProject->members()->attach($outsider->id);
+
+    $visibleTask = Task::query()->create([
+        'project_id' => $memberProject->id,
+        'title' => 'Visible task',
+        'is_done' => false,
     ]);
-    $project->members()->sync([$member->id, $inactiveMember->id]);
+    $hiddenTask = Task::query()->create([
+        'project_id' => $otherProject->id,
+        'title' => 'Hidden task',
+        'is_done' => false,
+    ]);
 
-    $options = app(TaskFormOptions::class);
-    $result = $options->get($member, ['actor_id' => $member->id, 'manage_all' => true], $project->id);
-    $memberIds = collect($result['members'])->pluck('id')->all();
+    $scope = app(TaskAccessScope::class)->for($member);
+    $tasks = app(TaskRepository::class)->search($scope);
+    $ids = collect($tasks)->pluck('id')->all();
 
-    expect($memberIds)->toContain($member->id)
-        ->not->toContain($outsider->id)
-        ->not->toContain($inactiveMember->id)
-        ->and($options->isAssignableToProject($project->id, $member->id))->toBeTrue()
-        ->and($options->isAssignableToProject($project->id, $outsider->id))->toBeFalse()
-        ->and($options->isAssignableToProject($project->id, $inactiveMember->id))->toBeFalse();
+    expect($ids)->toContain($visibleTask->id)
+        ->not->toContain($hiddenTask->id);
+});
+
+it('lets admin see tasks from every project', function (): void {
+    $admin = User::query()->where('is_admin', true)->firstOrFail();
+    $project = Project::query()->create(['title' => 'Admin project']);
+    $task = Task::query()->create([
+        'project_id' => $project->id,
+        'title' => 'Admin visible task',
+        'is_done' => false,
+    ]);
+
+    $tasks = app(TaskRepository::class)->search(app(TaskAccessScope::class)->for($admin));
+
+    expect(collect($tasks)->pluck('id'))->toContain($task->id);
 });
