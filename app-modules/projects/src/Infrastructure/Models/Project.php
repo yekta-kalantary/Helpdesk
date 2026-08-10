@@ -4,9 +4,7 @@ namespace Modules\Projects\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Tasks\Infrastructure\Models\Task;
 
 class Project extends Model
 {
@@ -18,10 +16,5 @@ class Project extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_user')->withTimestamps();
-    }
-
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class);
     }
 }
