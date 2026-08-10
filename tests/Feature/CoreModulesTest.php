@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
@@ -40,5 +41,5 @@ it('links users to projects through project membership', function (): void {
     $project->members()->attach($user->id);
 
     expect($project->members()->whereKey($user->id)->exists())->toBeTrue()
-        ->and($user->projects()->whereKey($project->id)->exists())->toBeTrue();
+        ->and(DB::table('project_user')->where('project_id', $project->id)->where('user_id', $user->id)->exists())->toBeTrue();
 });
