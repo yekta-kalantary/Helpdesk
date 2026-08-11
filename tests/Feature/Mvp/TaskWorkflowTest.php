@@ -3,21 +3,10 @@
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
-use Modules\Projects\Domain\Enums\ProjectStatus;
-use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
 use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
-
-function mvpProject(Client $client, string $name = 'Project'): Project
-{
-    return Project::query()->create([
-        'client_id' => $client->id,
-        'name' => $name,
-        'status' => ProjectStatus::Active,
-    ]);
-}
 
 it('creates customer requests in the admin queue', function (): void {
     $client = Client::factory()->create();
