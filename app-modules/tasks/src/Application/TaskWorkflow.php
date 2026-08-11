@@ -2,6 +2,9 @@
 
 namespace Modules\Tasks\Application;
 
+use App\Notifications\ResourceChangedNotification;
+use App\Support\ActivityRecorder;
+use App\Support\NotificationDispatcher;
 use DomainException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -13,21 +16,44 @@ use Modules\Tasks\Infrastructure\Models\Task;
 
 class TaskWorkflow
 {
+    public function __construct(
+        private readonly ActivityRecorder $activities,
+        private readonly NotificationDispatcher $notifications,
+    ) {}
+
     public function createForCustomer(User $actor, Project $project, array $data): Task
     {
         $this->assertCustomerProjectAccess($actor, $project);
 
-        return DB::transaction(fn (): Task => Task::query()->create([
-            'project_id' => $project->id,
-            'created_by' => $actor->id,
-            'assigned_to' => null,
-            'title' => trim((string) $data['title']),
-            'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
-            'status' => TaskStatus::WaitingAdmin,
-            'priority' => TaskPriority::Normal,
-            'due_date' => null,
-            'completed_at' => null,
-        ]));
+        $task = DB::transaction(function () use ($actor, $project, $data): Task {
+            $task = Task::query()->create([
+                'project_id' => $project->id,
+                'created_by' => $actor->id,
+                'assigned_to' => null,
+                'title' => trim((string) $data['title']),
+                'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
+                'status' => TaskStatus::WaitingAdmin,
+                'priority' => TaskPriority::Normal,
+                'due_date' => null,
+                'completed_at' => null,
+            ]);
+
+            $this->activities->record($actor, 'task.created', $project, $task, [
+                'reference' => $task->reference,
+                'status' => $task->status->value,
+                'priority' => $task->priority->value,
+            ]);
+
+            return $task;
+        });
+
+        $this->notifications->send(
+            User::query()->active()->admins()->get(),
+            $this->notification($task, 'درخواست جدید مشتری', "تسک {$task->reference} وارد صف ادمین شد."),
+            $actor,
+        );
+
+        return $task;
     }
 
     public function createForAdmin(User $actor, Project $project, array $data): Task
@@ -39,17 +65,32 @@ class TaskWorkflow
         $assignedTo = isset($data['assigned_to']) ? (int) $data['assigned_to'] : null;
         $assignedTo = $this->normalizeWaitingAdminAssignee($status, $assignedTo);
 
-        return DB::transaction(fn (): Task => Task::query()->create([
-            'project_id' => $project->id,
-            'created_by' => $actor->id,
-            'assigned_to' => $assignedTo,
-            'title' => trim((string) $data['title']),
-            'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
-            'status' => $status,
-            'priority' => $this->priority($data['priority'] ?? TaskPriority::Normal),
-            'due_date' => $data['due_date'] ?? null,
-            'completed_at' => $status === TaskStatus::Completed ? now() : null,
-        ]));
+        $task = DB::transaction(function () use ($actor, $project, $data, $status, $assignedTo): Task {
+            $task = Task::query()->create([
+                'project_id' => $project->id,
+                'created_by' => $actor->id,
+                'assigned_to' => $assignedTo,
+                'title' => trim((string) $data['title']),
+                'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
+                'status' => $status,
+                'priority' => $this->priority($data['priority'] ?? TaskPriority::Normal),
+                'due_date' => $data['due_date'] ?? null,
+                'completed_at' => $status === TaskStatus::Completed ? now() : null,
+            ]);
+
+            $this->activities->record($actor, 'task.created', $project, $task, [
+                'reference' => $task->reference,
+                'status' => $task->status->value,
+                'priority' => $task->priority->value,
+                'assigned_to' => $task->assigned_to,
+            ]);
+
+            return $task;
+        });
+
+        $this->notifyTaskAudience($task, $actor, 'تسک جدید', "تسک {$task->reference} ایجاد شد.");
+
+        return $task;
     }
 
     public function updateByAdmin(User $actor, Task $task, array $data): Task
@@ -58,7 +99,15 @@ class TaskWorkflow
         $task->loadMissing('project');
         $this->assertProjectOpen($task->project);
 
-        return DB::transaction(function () use ($task, $data): Task {
+        $original = [
+            'status' => $task->status,
+            'priority' => $task->priority,
+            'assigned_to' => $task->assigned_to,
+            'due_date' => $task->due_date?->toDateString(),
+            'completed_at' => $task->completed_at,
+        ];
+
+        $task = DB::transaction(function () use ($actor, $task, $data, $original): Task {
             $status = array_key_exists('status', $data)
                 ? $this->status($data['status'])
                 : $task->status;
@@ -84,9 +133,15 @@ class TaskWorkflow
             }
 
             $task->fill($attributes)->save();
+            $task->refresh();
+            $this->recordTaskChanges($actor, $task, $original);
 
-            return $task->refresh();
+            return $task;
         });
+
+        $this->notifyTaskAudience($task, $actor, 'تغییر تسک', "تسک {$task->reference} به‌روزرسانی شد.");
+
+        return $task;
     }
 
     public function transitionByCustomer(User $actor, Task $task, TaskStatus $status): Task
@@ -111,7 +166,9 @@ class TaskWorkflow
             throw new DomainException('Customer transition is not allowed.');
         }
 
-        return DB::transaction(function () use ($task, $status): Task {
+        $oldStatus = $task->status;
+
+        $task = DB::transaction(function () use ($actor, $task, $status, $oldStatus): Task {
             $task->status = $status;
 
             if ($status === TaskStatus::WaitingAdmin) {
@@ -123,9 +180,99 @@ class TaskWorkflow
             }
 
             $task->save();
+            $task->refresh();
 
-            return $task->refresh();
+            $this->activities->record($actor, 'task.status_changed', $task->project, $task, [
+                'old' => $oldStatus->value,
+                'new' => $task->status->value,
+            ]);
+
+            if ($task->status === TaskStatus::Completed) {
+                $this->activities->record($actor, 'task.completed', $task->project, $task);
+            }
+
+            return $task;
         });
+
+        $this->notifyTaskAudience($task, $actor, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد.");
+
+        if ($task->status === TaskStatus::WaitingAdmin) {
+            $this->notifications->send(
+                User::query()->active()->admins()->get(),
+                $this->notification($task, 'اقدام ادمین لازم است', "تسک {$task->reference} در صف ادمین قرار گرفت."),
+                $actor,
+            );
+        }
+
+        return $task;
+    }
+
+    private function recordTaskChanges(User $actor, Task $task, array $original): void
+    {
+        if ($original['assigned_to'] !== $task->assigned_to) {
+            $this->activities->record($actor, 'task.assignee_changed', $task->project, $task, [
+                'old' => $original['assigned_to'],
+                'new' => $task->assigned_to,
+            ]);
+        }
+
+        if ($original['status'] !== $task->status) {
+            $this->activities->record($actor, 'task.status_changed', $task->project, $task, [
+                'old' => $original['status']->value,
+                'new' => $task->status->value,
+            ]);
+
+            if ($task->status === TaskStatus::Completed) {
+                $this->activities->record($actor, 'task.completed', $task->project, $task);
+            }
+
+            if ($task->status === TaskStatus::Cancelled) {
+                $this->activities->record($actor, 'task.cancelled', $task->project, $task);
+            }
+
+            if ($original['status'] === TaskStatus::Completed && $task->status !== TaskStatus::Completed) {
+                $this->activities->record($actor, 'task.reopened', $task->project, $task);
+            }
+        }
+
+        if ($original['priority'] !== $task->priority) {
+            $this->activities->record($actor, 'task.priority_changed', $task->project, $task, [
+                'old' => $original['priority']->value,
+                'new' => $task->priority->value,
+            ]);
+        }
+
+        $newDueDate = $task->due_date?->toDateString();
+        if ($original['due_date'] !== $newDueDate) {
+            $this->activities->record($actor, 'task.due_date_changed', $task->project, $task, [
+                'old' => $original['due_date'],
+                'new' => $newDueDate,
+            ]);
+        }
+    }
+
+    private function notifyTaskAudience(Task $task, User $actor, string $title, string $body): void
+    {
+        $task->loadMissing('project.activeMembers');
+        $recipients = collect($task->project->activeMembers)
+            ->push($task->creator)
+            ->when($task->assignee, fn ($users) => $users->push($task->assignee));
+
+        $this->notifications->send($recipients, $this->notification($task, $title, $body), $actor);
+    }
+
+    private function notification(Task $task, string $title, string $body): ResourceChangedNotification
+    {
+        return new ResourceChangedNotification(
+            $title,
+            $body,
+            url('/tasks/'.$task->id),
+            [
+                'resource_type' => 'task',
+                'resource_id' => $task->id,
+                'reference' => $task->reference,
+            ],
+        );
     }
 
     private function normalizeWaitingAdminAssignee(TaskStatus $status, ?int $assignedTo): ?int
