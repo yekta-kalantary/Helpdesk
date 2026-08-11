@@ -1,183 +1,135 @@
 <?php
 
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
+use Modules\Clients\Infrastructure\Models\Client;
+use Modules\Identity\Domain\Enums\UserRole;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Identity\Presentation\Livewire\Profile;
 use Modules\Identity\Presentation\Livewire\Users\Form as UserForm;
 use Modules\Identity\Presentation\Livewire\Users\Show as UserShow;
-use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Projects\Application\ProjectMembershipManager;
 
-it('shows normal users to admin', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $normal = User::factory()->create();
+it('shows customer users to admin and hides system admins from customer management', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create();
+    $customer = User::factory()->customer($client)->create();
 
     $this->actingAs($admin)
         ->get(route('users.index'))
         ->assertOk()
-        ->assertSee($normal->email)
-        ->assertSee(route('users.show', $normal->id))
+        ->assertSee($customer->email)
+        ->assertSee(route('users.show', $customer->id))
         ->assertDontSee($admin->email);
 });
 
-it('blocks normal users from user management', function (): void {
-    $normal = User::factory()->create();
-    $otherUser = User::factory()->create();
+it('blocks customers from user management', function (): void {
+    $client = Client::factory()->create();
+    $customer = User::factory()->customer($client)->create();
+    $other = User::factory()->customer($client)->create();
 
-    $this->actingAs($normal)
+    $this->actingAs($customer)
         ->get(route('users.index'))
         ->assertForbidden();
 
-    $this->get(route('users.show', $otherUser->id))
-        ->assertForbidden();
+    $this->get(route('users.show', $other->id))->assertForbidden();
 });
 
-it('opens a user on the overview with project and task summary', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $user = User::factory()->create([
-        'name' => 'علی',
-        'last_name' => 'احمدی',
-    ]);
-    $project = Project::query()->create([
-        'title' => 'پروژه نمونه',
-        'description' => null,
-    ]);
-    $project->members()->attach($user->id);
-
-    Task::query()->create([
-        'project_id' => $project->id,
-        'title' => 'تسک باز',
-        'is_done' => false,
-    ]);
-    Task::query()->create([
-        'project_id' => $project->id,
-        'title' => 'تسک انجام شده',
-        'is_done' => true,
-    ]);
-
-    $this->actingAs($admin)
-        ->get(route('users.show', $user->id))
-        ->assertOk()
-        ->assertSee('علی احمدی')
-        ->assertSee('پروژه نمونه');
-
-    Livewire::test(UserShow::class, ['user' => $user->id])
-        ->assertSet('tab', 'overview')
-        ->assertSee('پروژه نمونه');
-});
-
-it('creates a user from general information then opens the profile', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
+it('creates a customer under an active client and sends account setup mail', function (): void {
+    Notification::fake();
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create();
     $this->actingAs($admin);
 
     Livewire::test(UserForm::class)
+        ->set('client_id', $client->id)
         ->set('name', 'علی')
         ->set('last_name', 'احمدی')
+        ->set('email', ' Ali@Example.Test ')
+        ->set('mobile', '09120000000')
+        ->set('is_active', true)
         ->call('save')
         ->assertHasNoErrors()
         ->assertRedirect();
 
-    $user = User::query()
-        ->where('name', 'علی')
-        ->where('last_name', 'احمدی')
-        ->firstOrFail();
+    $user = User::query()->where('email', 'ali@example.test')->firstOrFail();
 
-    expect($user->email)->toBeNull()
-        ->and($user->mobile)->toBeNull()
+    expect($user->role)->toBe(UserRole::Customer)
+        ->and($user->client_id)->toBe($client->id)
         ->and($user->getRawOriginal('password'))->toBeNull()
-        ->and($user->is_active)->toBeFalse();
+        ->and($user->is_active)->toBeTrue();
+
+    Notification::assertSentTo($user, ResetPassword::class);
 });
 
-it('saves general information independently on the user profile', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $user = User::factory()->create([
+it('keeps client and role immutable in the admin user profile flow', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create();
+    $customer = User::factory()->customer($client)->create([
         'name' => 'علی',
         'last_name' => 'احمدی',
         'email' => 'ali@example.test',
-        'mobile' => '09120000000',
     ]);
-
     $this->actingAs($admin);
 
-    Livewire::test(UserShow::class, ['user' => $user->id])
+    Livewire::test(UserShow::class, ['user' => $customer->id])
         ->set('name', 'رضا')
         ->set('last_name', 'رضایی')
-        ->call('saveGeneral')
-        ->assertHasNoErrors();
-
-    $user->refresh();
-
-    expect($user->name)->toBe('رضا')
-        ->and($user->last_name)->toBe('رضایی')
-        ->and($user->email)->toBe('ali@example.test')
-        ->and($user->mobile)->toBe('09120000000');
-});
-
-it('saves contact information without changing general information', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $user = User::factory()->create([
-        'name' => 'علی',
-        'last_name' => 'احمدی',
-        'email' => null,
-        'mobile' => null,
-    ]);
-
-    $this->actingAs($admin);
-
-    Livewire::test(UserShow::class, ['user' => $user->id])
-        ->set('email', 'ali@example.test')
-        ->set('mobile', '09120000000')
-        ->call('saveContact')
-        ->assertHasNoErrors();
-
-    $user->refresh();
-
-    expect($user->name)->toBe('علی')
-        ->and($user->last_name)->toBe('احمدی')
-        ->and($user->email)->toBe('ali@example.test')
-        ->and($user->mobile)->toBe('09120000000');
-});
-
-it('saves account settings separately', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $user = User::factory()->create([
-        'email' => 'user@example.test',
-        'password' => null,
-        'is_active' => false,
-    ]);
-
-    $this->actingAs($admin);
-
-    Livewire::test(UserShow::class, ['user' => $user->id])
+        ->set('email', ' Reza@Example.Test ')
         ->set('password', 'new-password')
         ->set('password_confirmation', 'new-password')
-        ->set('is_active', true)
-        ->call('saveAccount')
+        ->call('saveProfile')
         ->assertHasNoErrors();
 
-    $user->refresh();
+    $customer->refresh();
 
-    expect($user->is_active)->toBeTrue()
-        ->and(Hash::check('new-password', $user->password))->toBeTrue();
+    expect($customer->name)->toBe('رضا')
+        ->and($customer->email)->toBe('reza@example.test')
+        ->and($customer->client_id)->toBe($client->id)
+        ->and($customer->role)->toBe(UserRole::Customer)
+        ->and(Hash::check('new-password', $customer->password))->toBeTrue();
 });
 
-it('does not activate an incomplete user account', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $user = User::query()->create([
-        'name' => 'علی',
-        'last_name' => 'احمدی',
-        'email' => null,
-        'password' => null,
-        'is_active' => false,
-        'is_admin' => false,
+it('shows only active project memberships on the customer identity page', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create();
+    $customer = User::factory()->customer($client)->create();
+    $activeProject = mvpProject($client, 'Active membership');
+    $removedProject = mvpProject($client, 'Removed membership');
+    $manager = app(ProjectMembershipManager::class);
+    $manager->add($activeProject, $customer, $admin);
+    $manager->add($removedProject, $customer, $admin);
+    $manager->remove($removedProject, $customer, $admin);
+
+    $this->actingAs($admin)
+        ->get(route('users.show', $customer))
+        ->assertOk()
+        ->assertSee('Active membership')
+        ->assertDontSee('Removed membership');
+});
+
+it('lets a customer update own name and password without exposing account boundaries', function (): void {
+    $client = Client::factory()->create();
+    $customer = User::factory()->customer($client)->create([
+        'name' => 'Old',
+        'last_name' => 'Name',
     ]);
+    $this->actingAs($customer);
 
-    $this->actingAs($admin);
+    Livewire::test(Profile::class)
+        ->set('name', 'New')
+        ->set('last_name', 'Name')
+        ->set('password', 'customer-password')
+        ->set('password_confirmation', 'customer-password')
+        ->call('save')
+        ->assertHasNoErrors();
 
-    Livewire::test(UserShow::class, ['user' => $user->id])
-        ->set('is_active', true)
-        ->call('saveAccount')
-        ->assertHasErrors(['is_active']);
+    $customer->refresh();
 
-    expect($user->fresh()->is_active)->toBeFalse();
+    expect($customer->name)->toBe('New')
+        ->and($customer->client_id)->toBe($client->id)
+        ->and($customer->role)->toBe(UserRole::Customer)
+        ->and(Hash::check('customer-password', $customer->password))->toBeTrue();
 });
