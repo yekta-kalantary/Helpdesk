@@ -2,6 +2,15 @@
 
 یک سامانه ساده مدیریت پروژه و تسک با Laravel و Livewire.
 
+## Documentation
+
+&rlm;مستندات محصول و تحلیل‌های مرجع در پوشه `docs/` نگهداری می‌شوند. نسخه Git این مستندات مرجع اصلی نسخه‌بندی پروژه است.
+
+- [Documentation Index](docs/README.md)
+- [Client Task Management MVP — PRD](docs/product/client-task-management-mvp.md)
+- [RISE CRM — Product Analysis](docs/research/rise-crm-product-analysis.md)
+- [Worksuite — Product Analysis](docs/research/worksuite-product-analysis.md)
+
 ## ساختار سیستم
 
 فقط سه بخش کاربردی وجود دارد:
