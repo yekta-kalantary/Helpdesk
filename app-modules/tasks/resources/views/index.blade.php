@@ -1,60 +1,81 @@
 <div>
+    @php($statusLabels = ['todo' => 'برای انجام', 'in_progress' => 'در حال انجام', 'waiting_admin' => 'منتظر ادمین', 'waiting_customer' => 'منتظر مشتری', 'completed' => 'تکمیل‌شده', 'cancelled' => 'لغوشده'])
+    @php($priorityLabels = ['low' => 'کم', 'normal' => 'عادی', 'high' => 'زیاد'])
+
     @if(session('success'))
         <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
     @endif
 
     <x-ui.page-header :title="__('tasks::messages.tasks')">
-        @if($isAdmin)
-            <x-slot:actions>
-                <x-ui.button :href="route('tasks.create', ['project' => $projectId])" icon="fa-plus" wire:navigate>{{ __('tasks::messages.new_task') }}</x-ui.button>
-            </x-slot:actions>
-        @endif
+        <x-slot:actions>
+            <x-ui.button :href="route('tasks.create', ['project' => $project ?: null])" icon="fa-plus" wire:navigate>{{ __('tasks::messages.new_task') }}</x-ui.button>
+        </x-slot:actions>
     </x-ui.page-header>
 
     <x-ui.filter-bar :livewire="true">
-        <div class="min-w-0 flex-1">
-            <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('tasks::messages.search_placeholder')" />
+        <div class="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" placeholder="جستجو با عنوان یا Reference" />
+            <x-ui.select name="project" wire:model.live="project">
+                <option value="">همه پروژه‌ها</option>
+                @foreach($projects as $projectItem)<option value="{{ $projectItem->id }}">{{ $projectItem->name }}</option>@endforeach
+            </x-ui.select>
+            <x-ui.select name="status" wire:model.live="status">
+                <option value="">همه وضعیت‌ها</option>
+                @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ $statusLabels[$statusItem->value] }}</option>@endforeach
+            </x-ui.select>
+            <x-ui.select name="priority" wire:model.live="priority">
+                <option value="">همه اولویت‌ها</option>
+                @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ $priorityLabels[$priorityItem->value] }}</option>@endforeach
+            </x-ui.select>
+            <x-ui.select name="assignee" wire:model.live="assignee">
+                <option value="">همه مسئول‌ها</option>
+                @foreach($assignees as $assigneeItem)<option value="{{ $assigneeItem->id }}">{{ $assigneeItem->full_name }}</option>@endforeach
+            </x-ui.select>
+            <x-ui.select name="overdue" wire:model.live="overdue">
+                <option value="">همه سررسیدها</option>
+                <option value="1">فقط عقب‌افتاده</option>
+            </x-ui.select>
+            <x-ui.select name="sort" wire:model.live="sort">
+                <option value="updated_desc">آخرین بروزرسانی</option>
+                <option value="due_asc">موعد نزدیک‌تر</option>
+                <option value="due_desc">موعد دورتر</option>
+            </x-ui.select>
         </div>
     </x-ui.filter-bar>
 
-    <x-ui.table wire:loading.class="opacity-60" wire:target="q,delete">
-        <thead>
-            <tr>
-                <th>{{ __('app.title') }}</th>
-                <th>{{ __('tasks::messages.project') }}</th>
-                <th>{{ __('app.status') }}</th>
-                <th>{{ __('app.actions') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($tasks as $task)
-                <tr wire:key="task-{{ $task->id }}">
-                    <td>
-                        <div class="font-semibold">{{ $task->title }}</div>
-                        @if($task->description)
-                            <div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task->description }}</div>
-                        @endif
-                    </td>
-                    <td>{{ $task->project->title }}</td>
-                    <td>
-                        <x-ui.badge :tone="$task->is_done ? 'success' : 'neutral'">
-                            {{ $task->is_done ? 'انجام شده' : 'باز' }}
-                        </x-ui.badge>
-                    </td>
-                    <td>
-                        @if($isAdmin)
-                            <div class="flex flex-wrap gap-2">
-                                <x-ui.button size="sm" variant="secondary" :href="route('tasks.edit', $task->id)" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
-                                <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="delete({{ $task->id }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $task->id }})">{{ __('app.delete') }}</x-ui.button>
-                            </div>
-                        @else
-                            —
-                        @endif
-                    </td>
+    <div class="overflow-x-auto">
+        <x-ui.table wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort">
+            <thead>
+                <tr>
+                    <th>Reference / عنوان</th>
+                    <th>پروژه</th>
+                    <th>وضعیت</th>
+                    <th>اولویت</th>
+                    <th>مسئول</th>
+                    <th>موعد</th>
+                    <th>بروزرسانی</th>
                 </tr>
-            @empty
-                <x-ui.empty-row colspan="4" />
-            @endforelse
-        </tbody>
-    </x-ui.table>
+            </thead>
+            <tbody>
+                @forelse($tasks as $task)
+                    <tr wire:key="task-{{ $task->id }}">
+                        <td>
+                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="font-bold text-slate-950 hover:underline">{{ $task->reference }} · {{ $task->title }}</a>
+                            @if($task->description)<div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task->description }}</div>@endif
+                        </td>
+                        <td>{{ $task->project->name }}</td>
+                        <td><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ $statusLabels[$task->status->value] }}</x-ui.badge></td>
+                        <td>{{ $priorityLabels[$task->priority->value] }}</td>
+                        <td>{{ $task->assignee?->full_name ?? 'صف ادمین' }}</td>
+                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isPast() && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</td>
+                        <td>{{ $task->updated_at?->diffForHumans() }}</td>
+                    </tr>
+                @empty
+                    <x-ui.empty-row colspan="7" />
+                @endforelse
+            </tbody>
+        </x-ui.table>
+    </div>
+
+    <div class="mt-5">{{ $tasks->links() }}</div>
 </div>
