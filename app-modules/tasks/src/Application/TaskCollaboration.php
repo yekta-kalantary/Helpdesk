@@ -2,7 +2,9 @@
 
 namespace Modules\Tasks\Application;
 
+use App\Notifications\ResourceChangedNotification;
 use App\Support\ActivityRecorder;
+use App\Support\NotificationDispatcher;
 use DomainException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,10 @@ use Throwable;
 
 class TaskCollaboration
 {
-    public function __construct(private readonly ActivityRecorder $activities) {}
+    public function __construct(
+        private readonly ActivityRecorder $activities,
+        private readonly NotificationDispatcher $notifications,
+    ) {}
 
     public function attach(User $actor, Task $task, UploadedFile $file, ?TaskComment $comment = null): Attachment
     {
@@ -43,12 +48,7 @@ class TaskCollaboration
             throw $e;
         }
 
-        $this->activities->record($actor, 'attachment.added', $task->project, $task, [
-            'attachment_id' => $attachment->id,
-            'name' => $attachment->original_name,
-            'mime_type' => $attachment->mime_type,
-            'size' => $attachment->size,
-        ]);
+        $this->recordAttachment($actor, $task, $attachment);
 
         return $attachment;
     }
@@ -71,9 +71,10 @@ class TaskCollaboration
         }
 
         $storedPaths = [];
+        $createdAttachments = collect();
 
         try {
-            $comment = DB::transaction(function () use ($actor, $task, $body, $files, &$storedPaths): TaskComment {
+            $comment = DB::transaction(function () use ($actor, $task, $body, $files, &$storedPaths, $createdAttachments): TaskComment {
                 $comment = TaskComment::query()->create([
                     'task_id' => $task->id,
                     'user_id' => $actor->id,
@@ -84,7 +85,7 @@ class TaskCollaboration
                     $path = $file->store('task-attachments/'.$task->id, 'local');
                     $storedPaths[] = $path;
 
-                    Attachment::query()->create([
+                    $createdAttachments->push(Attachment::query()->create([
                         'task_id' => $task->id,
                         'comment_id' => $comment->id,
                         'uploaded_by' => $actor->id,
@@ -92,7 +93,16 @@ class TaskCollaboration
                         'storage_path' => $path,
                         'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
                         'size' => $file->getSize(),
-                    ]);
+                    ]));
+                }
+
+                $this->activities->record($actor, 'comment.added', $task->project, $task, [
+                    'comment_id' => $comment->id,
+                    'attachment_count' => count($files),
+                ]);
+
+                foreach ($createdAttachments as $attachment) {
+                    $this->recordAttachment($actor, $task, $attachment);
                 }
 
                 return $comment;
@@ -102,10 +112,25 @@ class TaskCollaboration
             throw $e;
         }
 
-        $this->activities->record($actor, 'comment.added', $task->project, $task, [
-            'comment_id' => $comment->id,
-            'attachment_count' => count($files),
-        ]);
+        $task->loadMissing(['project.activeMembers', 'creator', 'assignee']);
+        $recipients = collect($task->project->activeMembers)
+            ->push($task->creator)
+            ->when($task->assignee, fn ($users) => $users->push($task->assignee));
+
+        $this->notifications->send(
+            $recipients,
+            new ResourceChangedNotification(
+                'نظر جدید روی تسک',
+                "برای تسک {$task->reference} نظر جدید ثبت شد.",
+                url('/tasks/'.$task->id),
+                [
+                    'resource_type' => 'task',
+                    'resource_id' => $task->id,
+                    'reference' => $task->reference,
+                ],
+            ),
+            $actor,
+        );
 
         return $comment->load('attachments');
     }
@@ -136,6 +161,16 @@ class TaskCollaboration
         $this->activities->record($actor, 'attachment.hidden', $attachment->task->project, $attachment->task, [
             'attachment_id' => $attachment->id,
             'name' => $attachment->original_name,
+        ]);
+    }
+
+    private function recordAttachment(User $actor, Task $task, Attachment $attachment): void
+    {
+        $this->activities->record($actor, 'attachment.added', $task->project, $task, [
+            'attachment_id' => $attachment->id,
+            'name' => $attachment->original_name,
+            'mime_type' => $attachment->mime_type,
+            'size' => $attachment->size,
         ]);
     }
 
