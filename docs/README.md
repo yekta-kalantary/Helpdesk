@@ -12,6 +12,7 @@ docs/
 └── research/
     ├── README.md
     ├── rise-crm-product-analysis.md
+    ├── rise-crm-version-evolution-3-to-4.md
     ├── rise-crm-revalidation-2026-08-11.md
     ├── worksuite-product-analysis.md
     └── worksuite-revalidation-2026-08-11.md
@@ -25,11 +26,12 @@ docs/
 
 - [Research Index & Usage Rules](research/README.md)
 - [RISE CRM — Base Product Analysis](research/rise-crm-product-analysis.md)
+- [RISE CRM — Version Evolution — 3.0 → 4.0](research/rise-crm-version-evolution-3-to-4.md)
 - [RISE CRM — Live Re-validation — 2026-08-11](research/rise-crm-revalidation-2026-08-11.md)
 - [Worksuite — Base Product Analysis](research/worksuite-product-analysis.md)
 - [Worksuite — Live Re-validation — 2026-08-11](research/worksuite-revalidation-2026-08-11.md)
 
-&rlm;برای تصمیم Product/Engineering، Base Analysis باید همراه با جدیدترین Re-validation خوانده شود. Scope نهایی همیشه از PRD می‌آید و Featureهای محصولات مرجع به‌صورت خودکار وارد MVP نمی‌شوند.
+&rlm;برای تصمیم Product/Engineering، ابتدا PRD و Base Analysis خوانده می‌شوند. اگر دلیل تکامل یا مرز تاریخی یک قابلیت مهم باشد، Version Evolution بررسی می‌شود و برای وضعیت فعلی Latest Re-validation مرجع نهایی Research است. Scope نهایی همیشه از PRD می‌آید و Featureهای محصولات مرجع به‌صورت خودکار وارد MVP نمی‌شوند.
 
 ## Writing & Direction Rules
 
