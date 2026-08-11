@@ -2,6 +2,7 @@
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
@@ -60,7 +61,7 @@ it('rejects executable or disallowed attachment types', function (): void {
         $member,
         $task,
         UploadedFile::fake()->create('payload.php', 2, 'text/x-php'),
-    ))->toThrow(Illuminate\Validation\ValidationException::class);
+    ))->toThrow(ValidationException::class);
 });
 
 it('requires comment text or at least one attachment', function (): void {
@@ -76,7 +77,7 @@ it('requires comment text or at least one attachment', function (): void {
     ]);
 
     expect(fn () => app(TaskCollaboration::class)->comment($member, $task, '   ', []))
-        ->toThrow(Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
 });
 
 it('blocks new collaboration on terminal tasks and completed projects', function (): void {
