@@ -33,7 +33,7 @@ class Show extends Component
         $this->taskId = Task::query()->visibleTo($user)->findOrFail($task)->id;
     }
 
-    public function transition(string $status, TaskWorkflow $workflow): void
+    public function changeStatus(string $status, TaskWorkflow $workflow): void
     {
         /** @var User $user */
         $user = auth()->user();
