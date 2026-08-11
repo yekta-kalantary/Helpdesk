@@ -43,6 +43,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Modules\\Clients\\": "app-modules/clients/src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }
@@ -85,7 +86,8 @@
             "@php artisan migrate --graceful --ansi"
         ],
         "pre-package-uninstall": [
-            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+            "Composer\\Config::disableProcessTimeout",
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
         ]
     },
     "extra": {
