@@ -184,9 +184,9 @@ class TaskCollaboration
             throw new DomainException('Task access is not allowed.');
         }
 
-        $task->loadMissing('project.client');
+        $project = $task->project()->with('client')->firstOrFail();
 
-        if (! $task->project->isActive() || ! $task->project->client->isActive() || $task->isTerminal()) {
+        if (! $project->isActive() || ! $project->client->isActive() || $task->isTerminal()) {
             throw new DomainException('Closed projects and tasks are read-only for collaboration.');
         }
     }
