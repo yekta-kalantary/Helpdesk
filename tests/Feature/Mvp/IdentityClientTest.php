@@ -40,7 +40,7 @@ it('allows admins without a client', function (): void {
         ->and($admin->client_id)->toBeNull();
 });
 
-it('blocks login when the customer client is inactive', function (): void {
+it('blocks customer authentication while its client is inactive', function (): void {
     $client = Client::query()->create([
         'name' => 'Acme',
         'status' => ClientStatus::Inactive,
@@ -54,7 +54,9 @@ it('blocks login when the customer client is inactive', function (): void {
         'is_active' => true,
     ]);
 
-    $this->post('/livewire/update', [])->assertStatus(419);
-
     expect($customer->canAuthenticate())->toBeFalse();
+
+    $client->update(['status' => ClientStatus::Active]);
+
+    expect($customer->refresh()->canAuthenticate())->toBeTrue();
 });
