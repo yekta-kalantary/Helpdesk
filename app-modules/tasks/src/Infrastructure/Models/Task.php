@@ -27,6 +27,17 @@ class Task extends Model
         'completed_at',
     ];
 
+    public function fill(array $attributes)
+    {
+        if ($this->exists
+            && array_key_exists('reference', $attributes)
+            && $attributes['reference'] !== $this->reference) {
+            throw new DomainException('Task reference is immutable after creation.');
+        }
+
+        return parent::fill($attributes);
+    }
+
     protected static function booted(): void
     {
         static::creating(function (Task $task): void {
