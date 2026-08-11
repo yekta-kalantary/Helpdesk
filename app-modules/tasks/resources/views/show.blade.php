@@ -32,7 +32,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 <span class="ml-2 text-sm font-semibold text-slate-600">تغییر وضعیت:</span>
                 @foreach($customerTransitions as $transition)
-                    <x-ui.button size="sm" variant="secondary" wire:click="transition('{{ $transition->value }}')" wire:loading.attr="disabled" wire:target="transition">
+                    <x-ui.button size="sm" variant="secondary" wire:click="changeStatus('{{ $transition->value }}')" wire:loading.attr="disabled" wire:target="changeStatus">
                         {{ $statusLabels[$transition->value] }}
                     </x-ui.button>
                 @endforeach
