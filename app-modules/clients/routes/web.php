@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', 'auth'])->group(function (): void {
+Route::middleware(['web', 'auth', 'account.active'])->group(function (): void {
     Route::livewire('/clients', 'clients::index')->name('clients.index');
     Route::livewire('/clients/create', 'clients::form')->name('clients.create');
     Route::livewire('/clients/{client}', 'clients::show')->name('clients.show');
