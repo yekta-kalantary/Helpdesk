@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Activity;
+use App\Notifications\ResourceChangedNotification;
 use Illuminate\Support\Facades\Notification;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
@@ -8,7 +9,6 @@ use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
 use Modules\Tasks\Domain\Enums\TaskStatus;
-use Modules\Tasks\Notifications\TaskChangedNotification;
 
 it('records task creation and state changes without sensitive metadata', function (): void {
     $client = Client::factory()->create();
@@ -48,8 +48,8 @@ it('notifies every active admin when a customer creates an admin queue task', fu
         'title' => 'Queue task',
     ]);
 
-    Notification::assertSentTo([$adminOne, $adminTwo], TaskChangedNotification::class);
-    Notification::assertNotSentTo($inactiveAdmin, TaskChangedNotification::class);
+    Notification::assertSentTo([$adminOne, $adminTwo], ResourceChangedNotification::class);
+    Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
 });
 
 it('records membership add and remove events and notifies the affected customer', function (): void {
@@ -66,5 +66,5 @@ it('records membership add and remove events and notifies the affected customer'
     expect(Activity::query()->where('project_id', $project->id)->where('action', 'membership.added')->exists())->toBeTrue()
         ->and(Activity::query()->where('project_id', $project->id)->where('action', 'membership.removed')->exists())->toBeTrue();
 
-    Notification::assertSentTo($customer, TaskChangedNotification::class, 2);
+    Notification::assertSentTo($customer, ResourceChangedNotification::class, 2);
 });
