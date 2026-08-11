@@ -3,9 +3,10 @@
 use App\Livewire\Dashboard;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/dashboard', Dashboard::class)
-    ->middleware('auth')
-    ->name('dashboard');
+Route::middleware(['auth', 'account.active'])->group(function (): void {
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::livewire('/notifications', 'notifications.index')->name('notifications.index');
+});
 
 Route::get('/', static function () {
     return auth()->check()
