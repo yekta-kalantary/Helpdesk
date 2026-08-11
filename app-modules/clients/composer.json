@@ -1,0 +1,15 @@
+{
+    "name": "modules/clients",
+    "description": "Client account management module.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.4",
+        "laravel/framework": "^13.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Clients\\": "src/"
+        }
+    }
+}
