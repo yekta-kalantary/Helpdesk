@@ -1,8 +1,11 @@
 <?php
 
+use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Projects\Application\ProjectMembershipManager;
+use Modules\Tasks\Application\TaskWorkflow;
+use Modules\Tasks\Domain\Enums\TaskPriority;
+use Modules\Tasks\Domain\Enums\TaskStatus;
 
 it('redirects authenticated users from home to dashboard', function (): void {
     $user = User::factory()->create();
@@ -13,60 +16,51 @@ it('redirects authenticated users from home to dashboard', function (): void {
 });
 
 it('shows the system overview to admin', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $project = Project::query()->create([
-        'title' => 'Admin dashboard project',
-        'description' => null,
-    ]);
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create(['name' => 'Admin dashboard client']);
+    $project = mvpProject($client, 'Admin dashboard project');
 
-    Task::query()->create([
-        'project_id' => $project->id,
+    app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Admin dashboard task',
-        'description' => null,
-        'is_done' => false,
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
     ]);
 
     $this->actingAs($admin)
         ->get(route('dashboard'))
         ->assertOk()
         ->assertSee('داشبورد')
-        ->assertSee('کاربران')
+        ->assertSee('مشتریان فعال')
+        ->assertSee('صف ادمین')
         ->assertSee('Admin dashboard project')
         ->assertSee('Admin dashboard task');
 });
 
-it('limits dashboard projects and tasks to normal user memberships', function (): void {
-    $user = User::factory()->create();
+it('limits customer dashboard projects and tasks to active memberships', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $customer = User::factory()->customer($client)->create();
 
-    $visibleProject = Project::query()->create([
-        'title' => 'Visible dashboard project',
-        'description' => null,
-    ]);
-    $visibleProject->members()->attach($user->id);
+    $visibleProject = mvpProject($client, 'Visible dashboard project');
+    $hiddenProject = mvpProject($client, 'Hidden dashboard project');
+    app(ProjectMembershipManager::class)->add($visibleProject, $customer, $admin);
 
-    $hiddenProject = Project::query()->create([
-        'title' => 'Hidden dashboard project',
-        'description' => null,
-    ]);
-
-    Task::query()->create([
-        'project_id' => $visibleProject->id,
+    app(TaskWorkflow::class)->createForAdmin($admin, $visibleProject, [
         'title' => 'Visible dashboard task',
-        'description' => null,
-        'is_done' => false,
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
     ]);
 
-    Task::query()->create([
-        'project_id' => $hiddenProject->id,
+    app(TaskWorkflow::class)->createForAdmin($admin, $hiddenProject, [
         'title' => 'Hidden dashboard task',
-        'description' => null,
-        'is_done' => true,
+        'status' => TaskStatus::Completed,
+        'priority' => TaskPriority::Normal,
     ]);
 
-    $this->actingAs($user)
+    $this->actingAs($customer)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('پروژه‌های من')
+        ->assertSee('پروژه‌های فعال من')
         ->assertSee('Visible dashboard project')
         ->assertSee('Visible dashboard task')
         ->assertDontSee('Hidden dashboard project')
