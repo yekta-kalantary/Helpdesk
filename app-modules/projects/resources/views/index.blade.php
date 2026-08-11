@@ -12,43 +12,53 @@
     </x-ui.page-header>
 
     <x-ui.filter-bar :livewire="true">
-        <div class="min-w-0 flex-1">
+        <div class="grid w-full gap-3 md:grid-cols-3">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('projects::messages.search_placeholder')" />
+            <x-ui.select name="status" wire:model.live="status">
+                <option value="">همه وضعیت‌ها</option>
+                <option value="active">فعال</option>
+                <option value="completed">تکمیل‌شده</option>
+            </x-ui.select>
+            @if($isAdmin)
+                <x-ui.select name="client" wire:model.live="client">
+                    <option value="">همه مشتریان</option>
+                    @foreach($clients as $clientItem)
+                        <option value="{{ $clientItem->id }}">{{ $clientItem->name }}</option>
+                    @endforeach
+                </x-ui.select>
+            @endif
         </div>
     </x-ui.filter-bar>
 
-    <x-ui.table wire:loading.class="opacity-60" wire:target="q,delete">
-        <thead>
-            <tr>
-                <th>{{ __('app.title') }}</th>
-                <th>{{ __('projects::messages.members') }}</th>
-                <th>{{ __('app.actions') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($projects as $project)
-                <tr wire:key="project-{{ $project['id'] }}">
-                    <td>
-                        <div class="font-semibold">{{ $project['title'] }}</div>
-                        @if($project['description'])
-                            <div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $project['description'] }}</div>
-                        @endif
-                    </td>
-                    <td>{{ $project['members_count'] }}</td>
-                    <td>
-                        <div class="flex flex-wrap gap-2">
-                            <x-ui.button size="sm" variant="secondary" :href="route('tasks.index', ['project' => $project['id']])" icon="fa-list-check" wire:navigate>{{ __('app.tasks') }}</x-ui.button>
-
-                            @if($isAdmin)
-                                <x-ui.button size="sm" variant="secondary" :href="route('projects.edit', $project['id'])" icon="fa-pen-to-square" wire:navigate>{{ __('app.edit') }}</x-ui.button>
-                                <x-ui.button size="sm" variant="danger" icon="fa-trash" wire:click="delete({{ $project['id'] }})" wire:confirm="{{ __('app.confirm_delete') }}" wire:loading.attr="disabled" wire:target="delete({{ $project['id'] }})">{{ __('app.delete') }}</x-ui.button>
-                            @endif
-                        </div>
-                    </td>
+    <div class="overflow-x-auto">
+        <x-ui.table wire:loading.class="opacity-60" wire:target="q,status,client">
+            <thead>
+                <tr>
+                    <th>پروژه</th>
+                    @if($isAdmin)<th>مشتری</th>@endif
+                    <th>اعضا</th>
+                    <th>تسک‌ها</th>
+                    <th>وضعیت</th>
                 </tr>
-            @empty
-                <x-ui.empty-row colspan="3" />
-            @endforelse
-        </tbody>
-    </x-ui.table>
+            </thead>
+            <tbody>
+                @forelse($projects as $project)
+                    <tr wire:key="project-{{ $project->id }}">
+                        <td>
+                            <a href="{{ route('projects.show', $project) }}" wire:navigate class="font-bold text-slate-950 hover:underline">{{ $project->name }}</a>
+                            @if($project->description)<div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $project->description }}</div>@endif
+                        </td>
+                        @if($isAdmin)<td>{{ $project->client->name }}</td>@endif
+                        <td>{{ $project->members_count }}</td>
+                        <td>{{ $project->tasks_count }}</td>
+                        <td><x-ui.badge :tone="$project->status->value === 'active' ? 'success' : 'neutral'">{{ $project->status->value === 'active' ? 'فعال' : 'تکمیل‌شده' }}</x-ui.badge></td>
+                    </tr>
+                @empty
+                    <x-ui.empty-row :colspan="$isAdmin ? 5 : 4" />
+                @endforelse
+            </tbody>
+        </x-ui.table>
+    </div>
+
+    <div class="mt-5">{{ $projects->links() }}</div>
 </div>
