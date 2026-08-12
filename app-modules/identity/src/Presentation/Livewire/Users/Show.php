@@ -2,6 +2,8 @@
 
 namespace Modules\Identity\Presentation\Livewire\Users;
 
+use App\Support\CustomerAssignmentRequeuer;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -39,7 +41,7 @@ class Show extends Component
         $this->fillFromUser();
     }
 
-    public function saveProfile(): void
+    public function saveProfile(CustomerAssignmentRequeuer $assignments): void
     {
         abort_unless(auth()->user()?->isAdmin(), 403);
         $this->email = Str::lower(trim($this->email));
@@ -55,6 +57,7 @@ class Show extends Component
 
         $user = $this->user();
         $wasInactive = ! $user->is_active;
+        $isDeactivating = $user->is_active && ! $data['is_active'];
         $attributes = [
             'name' => trim($data['name']),
             'last_name' => trim($data['last_name']),
@@ -67,7 +70,17 @@ class Show extends Component
             $attributes['password'] = $data['password'];
         }
 
-        $user->update($attributes);
+        /** @var User $actor */
+        $actor = auth()->user();
+
+        DB::transaction(function () use ($actor, $assignments, $attributes, $isDeactivating, $user): void {
+            if ($isDeactivating) {
+                $assignments->requeue($user, $actor);
+            }
+
+            $user->update($attributes);
+        });
+
         $this->password = '';
         $this->password_confirmation = '';
 
