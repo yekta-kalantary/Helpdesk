@@ -18,6 +18,7 @@ class TaskAssignmentRevoker
     public function __construct(
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
+        private readonly TaskNotificationRouter $notificationRouter,
     ) {}
 
     /** @return Collection<int, Task> */
@@ -66,7 +67,7 @@ class TaskAssignmentRevoker
 
         foreach ($tasks as $task) {
             $this->notifications->send(
-                User::query()->active()->admins()->get(),
+                $this->notificationRouter->adminQueue(),
                 new ResourceChangedNotification(
                     'اقدام ادمین لازم است',
                     "تسک {$task->reference} پس از لغو مسئولیت مشتری به صف ادمین برگشت.",

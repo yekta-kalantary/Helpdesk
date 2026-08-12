@@ -2,15 +2,21 @@
 
 namespace App\Support;
 
+use App\Notifications\ResourceChangedNotification;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Tasks\Application\TaskNotificationRouter;
 use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 class CustomerAssignmentRequeuer
 {
-    public function __construct(private readonly ActivityRecorder $activities) {}
+    public function __construct(
+        private readonly ActivityRecorder $activities,
+        private readonly NotificationDispatcher $notifications,
+        private readonly TaskNotificationRouter $notificationRouter,
+    ) {}
 
     public function requeue(User $customer, User $actor, ?Project $project = null): void
     {
@@ -43,6 +49,21 @@ class CustomerAssignmentRequeuer
                         'new' => TaskStatus::WaitingAdmin->value,
                     ]);
                 }
+
+                $this->notifications->send(
+                    $this->notificationRouter->adminQueue(),
+                    new ResourceChangedNotification(
+                        'اقدام ادمین لازم است',
+                        "تسک {$task->reference} به صف ادمین برگشت.",
+                        url('/tasks/'.$task->id),
+                        [
+                            'resource_type' => 'task',
+                            'resource_id' => $task->id,
+                            'reference' => $task->reference,
+                        ],
+                    ),
+                    $actor,
+                );
             });
     }
 }
