@@ -9,6 +9,14 @@ use Modules\Tasks\Infrastructure\Models\Task;
 class TaskNotificationRouter
 {
     /** @return Collection<int, User> */
+    public function created(Task $task): Collection
+    {
+        $task->loadMissing('assignee');
+
+        return collect([$task->assignee])->filter()->values();
+    }
+
+    /** @return Collection<int, User> */
     public function statusChanged(Task $task): Collection
     {
         $task->loadMissing(['creator', 'assignee']);
