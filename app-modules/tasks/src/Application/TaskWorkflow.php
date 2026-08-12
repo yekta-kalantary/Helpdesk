@@ -89,7 +89,15 @@ class TaskWorkflow
             return $task;
         });
 
-        $this->notifyTaskAudience($task, $actor, 'تسک جدید', "تسک {$task->reference} ایجاد شد.");
+        if ($task->assigned_to !== null) {
+            $this->notifications->send(
+                $this->notificationRouter->created($task),
+                $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
+                $actor,
+            );
+        } else {
+            $this->notifyTaskAudience($task, $actor, 'تسک جدید', "تسک {$task->reference} ایجاد شد.");
+        }
 
         return $task;
     }
