@@ -19,6 +19,7 @@ class TaskWorkflow
     public function __construct(
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
+        private readonly TaskNotificationRouter $notificationRouter,
     ) {}
 
     public function createForCustomer(User $actor, Project $project, array $data): Task
@@ -139,7 +140,11 @@ class TaskWorkflow
             return $task;
         });
 
-        $this->notifyTaskAudience($task, $actor, 'تغییر تسک', "تسک {$task->reference} به‌روزرسانی شد.");
+        $this->notifications->send(
+            $this->notificationRouter->statusChanged($task),
+            $this->notification($task, 'تغییر تسک', "تسک {$task->reference} به‌روزرسانی شد."),
+            $actor,
+        );
 
         return $task;
     }
