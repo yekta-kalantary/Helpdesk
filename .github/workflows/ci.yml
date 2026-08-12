@@ -84,32 +84,10 @@ jobs:
         run: php artisan view:cache
 
       - name: Run tests
-        shell: bash
-        run: |
-          set -o pipefail
-          php artisan test 2>&1 | tee test-output.txt
-
-      - name: Upload test diagnostics
-        if: always() && hashFiles('test-output.txt') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-output
-          path: test-output.txt
-          retention-days: 1
+        run: php artisan test
 
       - name: Check PHP style
-        shell: bash
-        run: |
-          set -o pipefail
-          ./vendor/bin/pint --test -v 2>&1 | tee pint-output.txt
-
-      - name: Upload Pint diagnostics
-        if: always() && hashFiles('pint-output.txt') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: pint-output
-          path: pint-output.txt
-          retention-days: 1
+        run: ./vendor/bin/pint --test
 
       - name: Install frontend dependencies
         run: npm ci
