@@ -65,7 +65,7 @@ it('records reopened exactly once when a completed task becomes non-terminal', f
     ]);
 
     app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::Todo,
+        'status' => TaskStatus::WaitingAdmin,
     ]);
 
     expect(Activity::query()->where('task_id', $task->id)->where('action', 'task.reopened')->count())->toBe(1)
@@ -83,7 +83,7 @@ it('records reopened exactly once when a cancelled task becomes non-terminal', f
     ]);
 
     app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::Todo,
+        'status' => TaskStatus::WaitingAdmin,
     ]);
 
     expect(Activity::query()->where('task_id', $task->id)->where('action', 'task.reopened')->count())->toBe(1)
@@ -98,7 +98,7 @@ it('does not record reopened for terminal-to-terminal transitions and records te
 
     $completedTask = $workflow->createForAdmin($admin, $project, [
         'title' => 'Completed then cancelled',
-        'status' => TaskStatus::InProgress,
+        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $workflow->updateByAdmin($admin, $completedTask, ['status' => TaskStatus::Completed]);
@@ -111,7 +111,7 @@ it('does not record reopened for terminal-to-terminal transitions and records te
 
     $cancelledTask = $workflow->createForAdmin($admin, $project, [
         'title' => 'Active then cancelled',
-        'status' => TaskStatus::InProgress,
+        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $workflow->updateByAdmin($admin, $cancelledTask, ['status' => TaskStatus::Cancelled]);
