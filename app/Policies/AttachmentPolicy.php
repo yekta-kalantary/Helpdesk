@@ -22,6 +22,10 @@ class AttachmentPolicy
             return false;
         }
 
+        if ($attachment->comment_id !== null && ! $attachment->comment()->whereNull('hidden_at')->exists()) {
+            return false;
+        }
+
         return Task::query()->visibleTo($user)->whereKey($attachment->task_id)->exists();
     }
 
