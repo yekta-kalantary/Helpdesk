@@ -66,19 +66,20 @@ class TaskNotificationRouter
             ->values();
     }
 
-    /** @param Collection<int, User> $recipients
-     *  @return Collection<int, User>
+    /**
+     * @param  Collection<int, User>  $recipients
+     * @return Collection<int, User>
      */
     private function withAdminQueueFallback(Task $task, Collection $recipients): Collection
     {
-        if (! $this->isUnassignedAdminQueue($task)) {
-            return $recipients;
+        if ($this->isUnassignedAdminQueue($task)) {
+            return $recipients
+                ->merge($this->adminQueue())
+                ->unique('id')
+                ->values();
         }
 
-        return $recipients
-            ->merge($this->adminQueue())
-            ->unique('id')
-            ->values();
+        return $recipients;
     }
 
     private function isUnassignedAdminQueue(Task $task): bool
