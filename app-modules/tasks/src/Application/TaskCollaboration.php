@@ -23,6 +23,7 @@ class TaskCollaboration
     public function __construct(
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
+        private readonly TaskNotificationRouter $notificationRouter,
     ) {}
 
     public function attach(User $actor, Task $task, UploadedFile $file, ?TaskComment $comment = null): Attachment
@@ -112,13 +113,8 @@ class TaskCollaboration
             throw $e;
         }
 
-        $task->loadMissing(['project.activeMembers', 'creator', 'assignee']);
-        $recipients = collect($task->project->activeMembers)
-            ->push($task->creator)
-            ->when($task->assignee, fn ($users) => $users->push($task->assignee));
-
         $this->notifications->send(
-            $recipients,
+            $this->notificationRouter->commentAdded($task),
             new ResourceChangedNotification(
                 'نظر جدید روی تسک',
                 "برای تسک {$task->reference} نظر جدید ثبت شد.",
