@@ -40,3 +40,29 @@ it('routes task status changes only to the creator and current assignee', functi
     Notification::assertNotSentTo($unrelatedMember, ResourceChangedNotification::class);
     Notification::assertNotSentTo($admin, ResourceChangedNotification::class);
 });
+
+it('routes an admin created assigned task only to its assignee', function (): void {
+    Notification::fake();
+
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $assignee = User::factory()->customer($client)->create();
+    $unrelatedMember = User::factory()->customer($client)->create();
+    $project = mvpProject($client);
+    $memberships = app(ProjectMembershipManager::class);
+    $memberships->add($project, $assignee, $admin);
+    $memberships->add($project, $unrelatedMember, $admin);
+
+    Notification::fake();
+
+    app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Assigned task',
+        'status' => TaskStatus::WaitingCustomer,
+        'priority' => TaskPriority::Normal,
+        'assigned_to' => $assignee->id,
+    ]);
+
+    Notification::assertSentTo($assignee, ResourceChangedNotification::class, 1);
+    Notification::assertNotSentTo($unrelatedMember, ResourceChangedNotification::class);
+    Notification::assertNotSentTo($admin, ResourceChangedNotification::class);
+});
