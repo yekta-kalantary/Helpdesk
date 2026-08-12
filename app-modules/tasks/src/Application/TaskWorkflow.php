@@ -49,7 +49,7 @@ class TaskWorkflow
         });
 
         $this->notifications->send(
-            User::query()->active()->admins()->get(),
+            $this->notificationRouter->created($task),
             $this->notification($task, 'درخواست جدید مشتری', "تسک {$task->reference} وارد صف ادمین شد."),
             $actor,
         );
@@ -89,15 +89,11 @@ class TaskWorkflow
             return $task;
         });
 
-        if ($task->assigned_to !== null) {
-            $this->notifications->send(
-                $this->notificationRouter->created($task),
-                $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
-                $actor,
-            );
-        } else {
-            $this->notifyTaskAudience($task, $actor, 'تسک جدید', "تسک {$task->reference} ایجاد شد.");
-        }
+        $this->notifications->send(
+            $this->notificationRouter->created($task),
+            $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
+            $actor,
+        );
 
         return $task;
     }
@@ -148,11 +144,19 @@ class TaskWorkflow
             return $task;
         });
 
-        $this->notifications->send(
-            $this->notificationRouter->statusChanged($task),
-            $this->notification($task, 'تغییر تسک', "تسک {$task->reference} به‌روزرسانی شد."),
-            $actor,
-        );
+        if ($original['status'] !== $task->status) {
+            $this->notifications->send(
+                $this->notificationRouter->statusChanged($task),
+                $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
+                $actor,
+            );
+        } elseif ($original['assigned_to'] !== $task->assigned_to) {
+            $this->notifications->send(
+                $this->notificationRouter->assigneeChanged($task),
+                $this->notification($task, 'تغییر مسئول تسک', "مسئول تسک {$task->reference} تغییر کرد."),
+                $actor,
+            );
+        }
 
         return $task;
     }
@@ -207,15 +211,11 @@ class TaskWorkflow
             return $task;
         });
 
-        $this->notifyTaskAudience($task, $actor, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد.");
-
-        if ($task->status === TaskStatus::WaitingAdmin) {
-            $this->notifications->send(
-                User::query()->active()->admins()->get(),
-                $this->notification($task, 'اقدام ادمین لازم است', "تسک {$task->reference} در صف ادمین قرار گرفت."),
-                $actor,
-            );
-        }
+        $this->notifications->send(
+            $this->notificationRouter->statusChanged($task),
+            $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
+            $actor,
+        );
 
         return $task;
     }
@@ -262,16 +262,6 @@ class TaskWorkflow
                 'new' => $newDueDate,
             ]);
         }
-    }
-
-    private function notifyTaskAudience(Task $task, User $actor, string $title, string $body): void
-    {
-        $task->loadMissing('project.activeMembers');
-        $recipients = collect($task->project->activeMembers)
-            ->push($task->creator)
-            ->when($task->assignee, fn ($users) => $users->push($task->assignee));
-
-        $this->notifications->send($recipients, $this->notification($task, $title, $body), $actor);
     }
 
     private function notification(Task $task, string $title, string $body): ResourceChangedNotification
