@@ -65,6 +65,8 @@ it('blocks customer access to an attachment after its parent comment is hidden',
     );
     $attachment = $comment->attachments->firstOrFail();
 
+    expect($attachment->comment_id)->toBe($comment->id);
+
     $this->actingAs($member)
         ->get(route('attachments.download', $attachment))
         ->assertOk();
