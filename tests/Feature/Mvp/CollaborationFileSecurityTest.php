@@ -44,6 +44,42 @@ it('stores approved files privately and serves them only to project members', fu
         ->assertNotFound();
 });
 
+it('blocks customer access to an attachment after its parent comment is hidden', function (): void {
+    Storage::fake('local');
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->customer($client)->create();
+    $project = mvpProject($client);
+    app(ProjectMembershipManager::class)->add($project, $member, $admin);
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Hidden comment attachment',
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
+    ]);
+
+    $comment = app(TaskCollaboration::class)->comment(
+        $member,
+        $task,
+        'Please review the attachment.',
+        [UploadedFile::fake()->create('brief.pdf', 50, 'application/pdf')],
+    );
+    $attachment = $comment->attachments->firstOrFail();
+
+    $this->actingAs($member)
+        ->get(route('attachments.download', $attachment))
+        ->assertOk();
+
+    app(TaskCollaboration::class)->hideComment($admin, $comment);
+
+    $this->actingAs($member)
+        ->get(route('attachments.download', $attachment))
+        ->assertNotFound();
+
+    $this->actingAs($admin)
+        ->get(route('attachments.download', $attachment))
+        ->assertOk();
+});
+
 it('rejects executable or disallowed attachment types', function (): void {
     Storage::fake('local');
     $client = Client::factory()->create();
