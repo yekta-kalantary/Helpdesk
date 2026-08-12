@@ -44,7 +44,7 @@ it('stores approved files privately and serves them only to project members', fu
         ->assertNotFound();
 });
 
-it('blocks customer access to an attachment after its parent comment is hidden', function (): void {
+it('enforces hidden collaboration content on direct attachment downloads', function (): void {
     Storage::fake('local');
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
@@ -52,33 +52,52 @@ it('blocks customer access to an attachment after its parent comment is hidden',
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-        'title' => 'Hidden comment attachment',
+        'title' => 'Hidden collaboration attachment',
         'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
+    $standaloneAttachment = app(TaskCollaboration::class)->attach(
+        $member,
+        $task,
+        UploadedFile::fake()->create('standalone.pdf', 50, 'application/pdf'),
+    );
     $comment = app(TaskCollaboration::class)->comment(
         $member,
         $task,
         'Please review the attachment.',
-        [UploadedFile::fake()->create('brief.pdf', 50, 'application/pdf')],
+        [UploadedFile::fake()->create('comment.pdf', 50, 'application/pdf')],
     );
-    $attachment = $comment->attachments->firstOrFail();
+    $commentAttachment = $comment->attachments->firstOrFail();
 
-    expect($attachment->comment_id)->toBe($comment->id);
+    expect($commentAttachment->comment_id)->toBe($comment->id);
 
     $this->actingAs($member)
-        ->get(route('attachments.download', $attachment))
+        ->get(route('attachments.download', $commentAttachment))
         ->assertOk();
 
     app(TaskCollaboration::class)->hideComment($admin, $comment);
 
     $this->actingAs($member)
-        ->get(route('attachments.download', $attachment))
+        ->get(route('attachments.download', $commentAttachment))
+        ->assertNotFound();
+
+    $this->actingAs($member)
+        ->get(route('attachments.download', $standaloneAttachment))
+        ->assertOk();
+
+    $this->actingAs($admin)
+        ->get(route('attachments.download', $commentAttachment))
+        ->assertOk();
+
+    app(TaskCollaboration::class)->hideAttachment($admin, $standaloneAttachment);
+
+    $this->actingAs($member)
+        ->get(route('attachments.download', $standaloneAttachment))
         ->assertNotFound();
 
     $this->actingAs($admin)
-        ->get(route('attachments.download', $attachment))
+        ->get(route('attachments.download', $standaloneAttachment))
         ->assertOk();
 });
 
