@@ -4,6 +4,7 @@ namespace Modules\Projects\Application;
 
 use App\Notifications\ResourceChangedNotification;
 use App\Support\ActivityRecorder;
+use App\Support\CustomerAssignmentRequeuer;
 use App\Support\NotificationDispatcher;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ class ProjectMembershipManager
     public function __construct(
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
+        private readonly CustomerAssignmentRequeuer $assignments,
     ) {}
 
     public function add(Project $project, User $user, User $actor): void
@@ -69,24 +71,35 @@ class ProjectMembershipManager
         $this->assertAdmin($actor);
 
         $changed = DB::transaction(function () use ($project, $user, $actor): bool {
+            $membership = DB::table('project_user')
+                ->where('project_id', $project->id)
+                ->where('user_id', $user->id)
+                ->whereNull('removed_at')
+                ->lockForUpdate()
+                ->first();
+
+            if (! $membership) {
+                return false;
+            }
+
+            $this->assignments->requeue($user, $actor, $project);
+
             $removedAt = now();
-            $changed = DB::table('project_user')
+            DB::table('project_user')
                 ->where('project_id', $project->id)
                 ->where('user_id', $user->id)
                 ->whereNull('removed_at')
                 ->update([
                     'removed_at' => $removedAt,
                     'updated_at' => $removedAt,
-                ]) > 0;
-
-            if ($changed) {
-                $this->activities->record($actor, 'membership.removed', $project, null, [
-                    'user_id' => $user->id,
-                    'removed_at' => $removedAt->toISOString(),
                 ]);
-            }
 
-            return $changed;
+            $this->activities->record($actor, 'membership.removed', $project, null, [
+                'user_id' => $user->id,
+                'removed_at' => $removedAt->toISOString(),
+            ]);
+
+            return true;
         });
 
         if ($changed) {
