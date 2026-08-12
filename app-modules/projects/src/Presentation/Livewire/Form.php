@@ -81,23 +81,12 @@ class Form extends Component
         /** @var User $actor */
         $actor = auth()->user();
 
-        $project = DB::transaction(function () use ($data): Project {
-            $project = $this->projectId
-                ? Project::query()->findOrFail($this->projectId)
-                : new Project([
-                    'client_id' => (int) $data['client_id'],
-                    'status' => ProjectStatus::Active,
-                ]);
-
-            $project->fill([
-                'name' => trim($data['name']),
-                'description' => filled($data['description']) ? trim($data['description']) : null,
-                'start_date' => $data['start_date'] ?: null,
-                'due_date' => $data['due_date'] ?: null,
-            ])->save();
-
-            return $project;
-        });
+        $project = $this->projectId
+            ? Project::query()->findOrFail($this->projectId)
+            : new Project([
+                'client_id' => (int) $data['client_id'],
+                'status' => ProjectStatus::Active,
+            ]);
 
         $selected = User::query()
             ->customers()
@@ -117,15 +106,29 @@ class Form extends Component
             return null;
         }
 
-        $current = $project->activeMembers()->pluck('users.id')->map(fn ($id): int => (int) $id)->all();
+        $project = DB::transaction(function () use ($actor, $data, $memberships, $project, $selected): Project {
+            $project->fill([
+                'name' => trim($data['name']),
+                'description' => filled($data['description']) ? trim($data['description']) : null,
+                'start_date' => $data['start_date'] ?: null,
+                'due_date' => $data['due_date'] ?: null,
+            ])->save();
 
-        foreach (array_diff($selected, $current) as $userId) {
-            $memberships->add($project, User::query()->findOrFail($userId), $actor);
-        }
+            $current = $project->activeMembers()
+                ->pluck('users.id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
 
-        foreach (array_diff($current, $selected) as $userId) {
-            $memberships->remove($project, User::query()->findOrFail($userId), $actor);
-        }
+            foreach (array_diff($selected, $current) as $userId) {
+                $memberships->add($project, User::query()->findOrFail($userId), $actor);
+            }
+
+            foreach (array_diff($current, $selected) as $userId) {
+                $memberships->remove($project, User::query()->findOrFail($userId), $actor);
+            }
+
+            return $project;
+        });
 
         session()->flash('success', $this->projectId ? __('app.updated_successfully') : __('app.created_successfully'));
 
