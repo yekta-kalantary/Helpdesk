@@ -184,8 +184,9 @@ class TaskWorkflow
         }
 
         $oldStatus = $task->status;
+        $oldAssignee = $task->assigned_to;
 
-        $task = DB::transaction(function () use ($actor, $task, $status, $oldStatus): Task {
+        $task = DB::transaction(function () use ($actor, $task, $status, $oldStatus, $oldAssignee): Task {
             $task->status = $status;
 
             if ($status === TaskStatus::WaitingAdmin) {
@@ -203,6 +204,13 @@ class TaskWorkflow
                 'old' => $oldStatus->value,
                 'new' => $task->status->value,
             ]);
+
+            if ($oldAssignee !== $task->assigned_to) {
+                $this->activities->record($actor, 'task.assignee_changed', $task->project, $task, [
+                    'old' => $oldAssignee,
+                    'new' => $task->assigned_to,
+                ]);
+            }
 
             if ($task->status === TaskStatus::Completed) {
                 $this->activities->record($actor, 'task.completed', $task->project, $task);
@@ -243,7 +251,7 @@ class TaskWorkflow
                 $this->activities->record($actor, 'task.cancelled', $task->project, $task);
             }
 
-            if ($original['status'] === TaskStatus::Completed && $task->status !== TaskStatus::Completed) {
+            if ($original['status']->isTerminal() && ! $task->status->isTerminal()) {
                 $this->activities->record($actor, 'task.reopened', $task->project, $task);
             }
         }
