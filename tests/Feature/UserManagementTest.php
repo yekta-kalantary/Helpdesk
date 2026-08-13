@@ -63,12 +63,12 @@ it('ignores invalid user list filter values and resets pagination when filters c
         ->test(UsersIndex::class)
         ->assertSet('client', '')
         ->assertSet('status', '')
-        ->set('page', 3)
+        ->call('gotoPage', 3)
         ->set('client', (string) $client->id)
-        ->assertSet('page', 1)
-        ->set('page', 3)
+        ->assertSet('paginators.page', 1)
+        ->call('gotoPage', 3)
         ->set('status', 'inactive')
-        ->assertSet('page', 1);
+        ->assertSet('paginators.page', 1);
 });
 
 it('blocks customers from user management', function (): void {

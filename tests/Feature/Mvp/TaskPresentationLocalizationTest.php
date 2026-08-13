@@ -34,7 +34,7 @@ it('renders Persian task labels and terminal unassigned presentation without raw
         ->assertSee('بدون مسئول')
         ->assertSee('تکمیل شد')
         ->assertDontSee('completed')
-        ->assertDontSee('high')
+        ->assertDontSee('>high<')
         ->assertDontSee('task.completed');
 });
 

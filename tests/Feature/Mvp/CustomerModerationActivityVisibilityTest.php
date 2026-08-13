@@ -18,14 +18,14 @@ it('hides moderation activity from customers but keeps it visible to admins on t
     $this->actingAs($admin)
         ->get(route('tasks.show', $task))
         ->assertOk()
-        ->assertSee('comment.hidden')
-        ->assertSee('task.priority_changed');
+        ->assertSee('نظر مخفی شد')
+        ->assertSee('اولویت تسک تغییر کرد');
 
     $this->actingAs($customer)
         ->get(route('tasks.show', $task))
         ->assertOk()
-        ->assertDontSee('comment.hidden')
-        ->assertSee('task.priority_changed');
+        ->assertDontSee('نظر مخفی شد')
+        ->assertSee('اولویت تسک تغییر کرد');
 });
 
 it('hides moderation activity from customers but keeps it visible to admins on project detail', function (): void {
@@ -35,14 +35,14 @@ it('hides moderation activity from customers but keeps it visible to admins on p
     $this->actingAs($admin)
         ->get(route('projects.show', $project))
         ->assertOk()
-        ->assertSee('attachment.hidden')
-        ->assertSee('project.status_changed');
+        ->assertSee('فایل مخفی شد')
+        ->assertSee('وضعیت پروژه تغییر کرد');
 
     $this->actingAs($customer)
         ->get(route('projects.show', $project))
         ->assertOk()
-        ->assertDontSee('attachment.hidden')
-        ->assertSee('project.status_changed');
+        ->assertDontSee('فایل مخفی شد')
+        ->assertSee('وضعیت پروژه تغییر کرد');
 });
 
 it('hides moderation activity from customers but keeps it visible to admins on the dashboard', function (): void {
@@ -52,14 +52,14 @@ it('hides moderation activity from customers but keeps it visible to admins on t
     $this->actingAs($admin)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('comment.hidden')
-        ->assertSee('task.priority_changed');
+        ->assertSee('نظر مخفی شد')
+        ->assertSee('اولویت تسک تغییر کرد');
 
     $this->actingAs($customer)
         ->get(route('dashboard'))
         ->assertOk()
-        ->assertDontSee('comment.hidden')
-        ->assertSee('task.priority_changed');
+        ->assertDontSee('نظر مخفی شد')
+        ->assertSee('اولویت تسک تغییر کرد');
 
     expect(Activity::query()->where('action', 'comment.hidden')->exists())->toBeTrue();
 });

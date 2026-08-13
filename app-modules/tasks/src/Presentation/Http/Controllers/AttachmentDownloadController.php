@@ -24,17 +24,20 @@ class AttachmentDownloadController
         $disk = Storage::disk('local');
         abort_unless($disk->exists($attachment->storage_path), 404);
 
-        return response()->file(
+        $response = response()->file(
             $disk->path($attachment->storage_path),
             [
                 'Content-Type' => $attachment->mime_type,
                 'Content-Disposition' => 'inline; filename='.$this->safeFilename($attachment->original_name),
                 'X-Content-Type-Options' => 'nosniff',
                 'Content-Security-Policy' => "sandbox; default-src 'none'",
-                'Cache-Control' => 'private, no-store',
                 'Referrer-Policy' => 'no-referrer',
             ],
         );
+
+        $response->headers->set('Cache-Control', 'private, no-store');
+
+        return $response;
     }
 
     private function download(Attachment $attachment): BinaryFileResponse|Response

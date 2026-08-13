@@ -31,7 +31,7 @@ it('bounds project detail collections while keeping their pagination reachable a
         Activity::query()->create([
             'project_id' => $project->id,
             'task_id' => $task->id,
-            'action' => "Project activity {$number}",
+            'action' => sprintf('Project activity %02d', $number),
             'created_at' => now()->subMinutes($number),
         ]);
     }
@@ -42,7 +42,7 @@ it('bounds project detail collections while keeping their pagination reachable a
         ->assertSee('Project task 1')
         ->assertDontSee('Project task 21')
         ->assertSee('Project activity 21')
-        ->assertDontSee('Project activity 1')
+        ->assertDontSee('Project activity 01')
         ->assertSee('tasksPage=2')
         ->assertSee('projectActivitiesPage=2');
 
@@ -50,7 +50,7 @@ it('bounds project detail collections while keeping their pagination reachable a
         ->get(route('projects.show', $project).'?tasksPage=2&projectActivitiesPage=2')
         ->assertOk()
         ->assertSee('Project task 21')
-        ->assertSee('Project activity 1')
+        ->assertSee('Project activity 01')
         ->assertDontSee('Project task 1')
         ->assertDontSee('Project activity 21');
 });
@@ -88,7 +88,7 @@ it('bounds task detail collections without exposing another tenant', function ()
         Activity::query()->create([
             'task_id' => $task->id,
             'project_id' => $project->id,
-            'action' => "Task activity {$number}",
+            'action' => sprintf('Task activity %02d', $number),
             'created_at' => now()->subMinutes($number),
         ]);
     }
@@ -99,7 +99,7 @@ it('bounds task detail collections without exposing another tenant', function ()
         ->assertSee('Task comment 1')
         ->assertDontSee('Task comment 21')
         ->assertSee('Task activity 21')
-        ->assertDontSee('Task activity 1')
+        ->assertDontSee('Task activity 01')
         ->assertSee('commentsPage=2')
         ->assertSee('taskActivitiesPage=2');
 
@@ -107,7 +107,7 @@ it('bounds task detail collections without exposing another tenant', function ()
         ->get(route('tasks.show', $task).'?commentsPage=2&taskActivitiesPage=2')
         ->assertOk()
         ->assertSee('Task comment 21')
-        ->assertSee('Task activity 1')
+        ->assertSee('Task activity 01')
         ->assertDontSee('Task comment 1')
         ->assertDontSee('Task activity 21');
 

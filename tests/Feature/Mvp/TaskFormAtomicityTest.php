@@ -40,6 +40,7 @@ it('rolls back task creation when its initial attachment fails after task creati
     $member = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
+    $notificationCount = DB::table('notifications')->count();
 
     $this->mock(TaskCollaboration::class, function ($mock): void {
         $mock->shouldReceive('attach')->once()->andThrow(new RuntimeException('attachment failed'));
@@ -57,5 +58,5 @@ it('rolls back task creation when its initial attachment fails after task creati
     expect(Task::query()->where('title', 'Atomic task')->exists())->toBeFalse()
         ->and(Activity::query()->where('action', 'task.created')->exists())->toBeFalse()
         ->and(Attachment::query()->exists())->toBeFalse()
-        ->and(DB::table('notifications')->exists())->toBeFalse();
+        ->and(DB::table('notifications')->count())->toBe($notificationCount);
 });
