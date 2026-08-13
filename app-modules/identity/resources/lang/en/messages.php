@@ -3,6 +3,7 @@
 return [
     'invalid_credentials' => 'The email or password is incorrect.',
     'inactive_account' => 'Your account is inactive.',
+    'too_many_password_reset_attempts' => 'Password reset attempts are temporarily blocked. Please try again later.',
     'users' => 'Users',
     'user' => 'User',
     'new_user' => 'New user',

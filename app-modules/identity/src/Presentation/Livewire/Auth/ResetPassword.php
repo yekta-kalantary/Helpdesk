@@ -4,6 +4,7 @@ namespace Modules\Identity\Presentation\Livewire\Auth;
 
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -26,13 +27,21 @@ class ResetPassword extends Component
         $this->email = Str::lower(trim((string) request()->query('email')));
     }
 
-    public function resetPassword()
+    public function resetPassword(): mixed
     {
         $data = $this->validate([
             'token' => ['required', 'string'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
+        $data['email'] = Str::lower(trim($data['email']));
+        $key = 'password-reset:'.sha1($data['email'].'|'.request()->ip());
+
+        if (! RateLimiter::attempt($key, 5, static fn (): bool => true, 60)) {
+            $this->addError('email', __('identity::messages.too_many_password_reset_attempts'));
+
+            return null;
+        }
 
         $status = Password::reset(
             $data,
@@ -52,6 +61,7 @@ class ResetPassword extends Component
             return null;
         }
 
+        RateLimiter::clear($key);
         session()->flash('success', 'رمز عبور با موفقیت تنظیم شد.');
 
         return redirect()->route('login');
