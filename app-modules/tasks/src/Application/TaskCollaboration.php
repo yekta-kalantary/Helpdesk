@@ -35,21 +35,25 @@ class TaskCollaboration
         $path = $file->store('task-attachments/'.$task->id, 'local');
 
         try {
-            $attachment = Attachment::query()->create([
-                'task_id' => $task->id,
-                'comment_id' => $comment?->id,
-                'uploaded_by' => $actor->id,
-                'original_name' => $file->getClientOriginalName(),
-                'storage_path' => $path,
-                'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
-                'size' => $file->getSize(),
-            ]);
+            $attachment = DB::transaction(function () use ($actor, $task, $comment, $file, $path): Attachment {
+                $attachment = Attachment::query()->create([
+                    'task_id' => $task->id,
+                    'comment_id' => $comment?->id,
+                    'uploaded_by' => $actor->id,
+                    'original_name' => $file->getClientOriginalName(),
+                    'storage_path' => $path,
+                    'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
+                    'size' => $file->getSize(),
+                ]);
+
+                $this->recordAttachment($actor, $task, $attachment);
+
+                return $attachment;
+            });
         } catch (Throwable $e) {
             Storage::disk('local')->delete($path);
             throw $e;
         }
-
-        $this->recordAttachment($actor, $task, $attachment);
 
         return $attachment;
     }
@@ -139,10 +143,12 @@ class TaskCollaboration
             return;
         }
 
-        $comment->update(['hidden_at' => now(), 'hidden_by' => $actor->id]);
-        $this->activities->record($actor, 'comment.hidden', $comment->task->project, $comment->task, [
-            'comment_id' => $comment->id,
-        ]);
+        DB::transaction(function () use ($actor, $comment): void {
+            $comment->update(['hidden_at' => now(), 'hidden_by' => $actor->id]);
+            $this->activities->record($actor, 'comment.hidden', $comment->task->project, $comment->task, [
+                'comment_id' => $comment->id,
+            ]);
+        });
     }
 
     public function hideAttachment(User $actor, Attachment $attachment): void
@@ -153,11 +159,13 @@ class TaskCollaboration
             return;
         }
 
-        $attachment->update(['hidden_at' => now(), 'hidden_by' => $actor->id]);
-        $this->activities->record($actor, 'attachment.hidden', $attachment->task->project, $attachment->task, [
-            'attachment_id' => $attachment->id,
-            'name' => $attachment->original_name,
-        ]);
+        DB::transaction(function () use ($actor, $attachment): void {
+            $attachment->update(['hidden_at' => now(), 'hidden_by' => $actor->id]);
+            $this->activities->record($actor, 'attachment.hidden', $attachment->task->project, $attachment->task, [
+                'attachment_id' => $attachment->id,
+                'name' => $attachment->original_name,
+            ]);
+        });
     }
 
     private function recordAttachment(User $actor, Task $task, Attachment $attachment): void
