@@ -37,7 +37,13 @@
                     @else
                         <div class="grid gap-2 sm:grid-cols-2">
                             @forelse($members as $member)
-                                <x-ui.checkbox name="member_ids[]" :label="$member->full_name" :value="$member->id" model="member_ids" />
+                                <x-ui.checkbox
+                                    name="member_ids[]"
+                                    :label="$member->full_name"
+                                    :hint="!$member->is_active ? 'کاربر غیرفعال؛ برای حذف عضویت، انتخاب را بردارید.' : null"
+                                    :value="$member->id"
+                                    model="member_ids"
+                                />
                             @empty
                                 <p class="text-sm text-slate-500">کاربر فعال قابل عضویت وجود ندارد.</p>
                             @endforelse

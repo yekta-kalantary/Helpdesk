@@ -90,9 +90,21 @@ class Form extends Component
 
         $selected = User::query()
             ->customers()
-            ->active()
             ->where('client_id', $project->client_id)
             ->whereIn('id', $data['member_ids'] ?? [])
+            ->where(function ($query) use ($project): void {
+                $query->active();
+
+                if ($project->exists) {
+                    $query->orWhereExists(function ($membership) use ($project): void {
+                        $membership->selectRaw('1')
+                            ->from('project_user')
+                            ->whereColumn('project_user.user_id', 'users.id')
+                            ->where('project_user.project_id', $project->id)
+                            ->whereNull('project_user.removed_at');
+                    });
+                }
+            })
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
             ->all();
@@ -141,8 +153,20 @@ class Form extends Component
         $members = $this->client_id
             ? User::query()
                 ->customers()
-                ->active()
                 ->where('client_id', $this->client_id)
+                ->where(function ($query): void {
+                    $query->active();
+
+                    if ($this->projectId) {
+                        $query->orWhereExists(function ($membership): void {
+                            $membership->selectRaw('1')
+                                ->from('project_user')
+                                ->whereColumn('project_user.user_id', 'users.id')
+                                ->where('project_user.project_id', $this->projectId)
+                                ->whereNull('project_user.removed_at');
+                        });
+                    }
+                })
                 ->orderBy('name')
                 ->orderBy('last_name')
                 ->get(['id', 'name', 'last_name'])
