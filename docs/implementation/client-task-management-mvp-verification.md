@@ -1,6 +1,6 @@
 # Client Task Management MVP — Implementation Verification
 
-Date: 2026-08-11
+Date: 2026-08-13
 
 Authoritative specification: `docs/product/client-task-management-mvp.md`
 
@@ -203,7 +203,7 @@ Automated evidence: E2E-002, E2E-004, E2E-005, E2E-006, E2E-008, `DashboardIsola
 - No Kanban, Gantt, calendar, dashboard builder, general chat, workflow builder, custom theme builder, or complex analytics were added.
 
 Automated isolation evidence: `DashboardTest`, `DashboardIsolationTest`.
-Frontend verification is performed by the CI Vite build and existing font-asset checks. There is no separate browser screenshot/visual-regression suite in this MVP repository.
+Frontend verification is partially covered by the CI Vite build and existing font-asset checks. A local browser/mobile/accessibility run was attempted on 2026-08-13, but the `agent-browser` executable was unavailable in the verification environment. Browser acceptance therefore remains unverified.
 
 ## 10. E2E acceptance scenarios
 
@@ -257,17 +257,18 @@ npm run build
 
 It also verifies the Vite font assets and builds the deployable source archive.
 
-Latest behavioral verification before this documentation-only commit:
+Latest local verification on commit `7f0279a`:
 
-- `php artisan test`: **62 passed, 217 assertions**
-- migration + seed: passed
+- `php artisan test`: **blocked locally** by MariaDB authentication for `helpdesk_testing`; no complete suite result is claimed
+- `php artisan test --compact tests/Unit/LegacyUpgradeTest.php`: **2 passed, 16 assertions**
+- migration + seed: not re-run locally against a clean test database
 - route list: passed
 - Blade view cache: passed
 - Pint: passed
 - frontend build: passed
-- Vite font-asset verification: passed
+- browser/mobile/accessibility verification: **blocked** because `agent-browser` is not installed
 
-A fresh CI run on the final PR head is required before merge/closure of this verification record.
+A fresh CI run on the final candidate HEAD is required before merge/closure of this verification record. The CI run must include the complete Pest suite, migration/seed, Pint, build, font-asset checks, and browser/mobile/accessibility evidence.
 
 ## 13. Explicitly deferred Post-MVP scope
 
@@ -294,8 +295,11 @@ Not implemented by design:
 - comment editing / nested comments
 - SMS / Push / Slack / Telegram / realtime websocket
 
-## 14. Remaining PRD gaps
+## 14. Remaining PRD Gaps
 
-No known functional or security requirement from `docs/product/client-task-management-mvp.md` is intentionally deferred inside the MVP scope.
+The following MVP verification work remains open:
 
-The final completion claim is conditional on a fresh successful GitHub Actions run for the exact final PR head after this document is committed.
+- Issue #46: browser/mobile/accessibility verification for Dashboard, Projects, Tasks, Task Create, Task Detail/Add Comment, Notifications, Login, and Profile across representative widths and browsers.
+- Issue #49: fresh release-gate CI run and final evidence update for the exact candidate HEAD.
+
+The final completion claim is not made while #46 or #49 remains open. Issues #35 and #36 are implemented in commits `9873389` and `7f0279a`, respectively, but still require the final CI release gate before closure.
