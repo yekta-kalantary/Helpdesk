@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Identity\Infrastructure\Models\User;
@@ -27,6 +28,11 @@ class Activity extends Model
             'metadata' => 'array',
             'created_at' => 'datetime',
         ];
+    }
+
+    public function scopeWithoutModeration(Builder $query): Builder
+    {
+        return $query->whereNotIn('action', ['comment.hidden', 'attachment.hidden']);
     }
 
     public function actor(): BelongsTo
