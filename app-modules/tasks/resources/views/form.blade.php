@@ -1,7 +1,4 @@
 <div>
-    @php($statusLabels = ['todo' => 'برای انجام', 'in_progress' => 'در حال انجام', 'waiting_admin' => 'منتظر ادمین', 'waiting_customer' => 'منتظر مشتری', 'completed' => 'تکمیل‌شده', 'cancelled' => 'لغوشده'])
-    @php($priorityLabels = ['low' => 'کم', 'normal' => 'عادی', 'high' => 'زیاد'])
-
     <x-ui.page-header :title="$taskId ? __('tasks::messages.edit_task') : __('tasks::messages.new_task')" />
 
     <form class="max-w-4xl" wire:submit="save">
@@ -29,13 +26,13 @@
                 @if($isAdmin)
                     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <x-ui.select name="status" label="وضعیت" wire:model.live="status" required>
-                            @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ $statusLabels[$statusItem->value] }}</option>@endforeach
+                            @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ __('tasks::messages.statuses.'.$statusItem->value) }}</option>@endforeach
                         </x-ui.select>
                         <x-ui.select name="priority" label="اولویت" wire:model="priority" required>
-                            @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ $priorityLabels[$priorityItem->value] }}</option>@endforeach
+                            @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</option>@endforeach
                         </x-ui.select>
                         <x-ui.select name="assigned_to" label="مسئول" wire:model="assigned_to">
-                            <option value="">بدون مسئول / صف ادمین</option>
+                            <option value="">{{ __('tasks::messages.assignee.none') }} / {{ __('tasks::messages.assignee.admin_queue') }}</option>
                             @foreach($assignees as $assignee)<option value="{{ $assignee->id }}">{{ $assignee->full_name }}</option>@endforeach
                         </x-ui.select>
                         <x-ui.input name="due_date" type="date" label="موعد" :value="$due_date" wire:model="due_date" />

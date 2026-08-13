@@ -1,7 +1,4 @@
 <div class="space-y-6">
-    @php($statusLabels = ['todo' => 'برای انجام', 'in_progress' => 'در حال انجام', 'waiting_admin' => 'منتظر ادمین', 'waiting_customer' => 'منتظر مشتری', 'completed' => 'تکمیل‌شده', 'cancelled' => 'لغوشده'])
-    @php($priorityLabels = ['low' => 'کم', 'normal' => 'عادی', 'high' => 'زیاد'])
-
     @if(session('success'))
         <x-ui.alert tone="success">{{ session('success') }}</x-ui.alert>
     @endif
@@ -16,10 +13,10 @@
     </x-ui.page-header>
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <x-ui.card><div class="text-sm text-slate-500">وضعیت</div><div class="mt-2"><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ $statusLabels[$task->status->value] }}</x-ui.badge></div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">اولویت</div><div class="mt-2 font-black">{{ $priorityLabels[$task->priority->value] }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">مسئول</div><div class="mt-2 font-black">{{ $task->assignee?->full_name ?? 'صف ادمین' }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div @class(['mt-2 font-black', 'text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">وضعیت</div><div class="mt-2"><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ __('tasks::messages.statuses.'.$task->status->value) }}</x-ui.badge></div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">اولویت</div><div class="mt-2 font-black">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">مسئول</div><div class="mt-2 font-black">{{ $task->assignee?->full_name ?? ($task->status->value === 'waiting_admin' ? __('tasks::messages.assignee.admin_queue') : __('tasks::messages.assignee.none')) }}</div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div @class(['mt-2 font-black', 'text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</div></x-ui.card>
         <x-ui.card><div class="text-sm text-slate-500">ایجادکننده</div><div class="mt-2 font-black">{{ $task->creator->full_name }}</div></x-ui.card>
     </div>
 
@@ -33,7 +30,7 @@
                 <span class="ml-2 text-sm font-semibold text-slate-600">تغییر وضعیت:</span>
                 @foreach($customerTransitions as $transition)
                     <x-ui.button size="sm" variant="secondary" wire:click="changeStatus('{{ $transition->value }}')" wire:loading.attr="disabled" wire:target="changeStatus">
-                        {{ $statusLabels[$transition->value] }}
+                        {{ __('tasks::messages.statuses.'.$transition->value) }}
                     </x-ui.button>
                 @endforeach
             </div>
@@ -50,7 +47,12 @@
                             @if($attachment->hidden_at)
                                 <span class="text-sm font-semibold text-slate-500">فایل مخفی‌شده: {{ $attachment->original_name }}</span>
                             @else
-                                <a class="font-semibold text-slate-900 hover:underline" href="{{ route('attachments.download', $attachment) }}">{{ $attachment->original_name }}</a>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <a class="font-semibold text-slate-900 hover:underline" href="{{ route('attachments.download', $attachment) }}">{{ $attachment->original_name }}</a>
+                                    @if($attachment->isPreviewable())
+                                        <a class="text-xs font-semibold text-slate-600 hover:text-slate-950" href="{{ route('attachments.preview', $attachment) }}" target="_blank" rel="noreferrer">پیش‌نمایش</a>
+                                    @endif
+                                </div>
                             @endif
                             <div class="mt-1 text-xs text-slate-500">{{ number_format($attachment->size / 1024, 1) }} KB · {{ $attachment->mime_type }}</div>
                         </div>
@@ -60,6 +62,7 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mt-4">{{ $taskAttachments->links() }}</div>
         </x-ui.card>
     @endif
 
@@ -72,7 +75,7 @@
                     <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                         <div class="font-bold">{{ $commentItem->user->full_name }}</div>
                         <div class="flex items-center gap-2 text-xs text-slate-500">
-                            <time>{{ $commentItem->created_at?->diffForHumans() }}</time>
+                            <time><x-ui.date :value="$commentItem->created_at" datetime /></time>
                             @if($isAdmin && !$commentItem->hidden_at)
                                 <button type="button" wire:click="hideComment({{ $commentItem->id }})" wire:confirm="این نظر از دید مشتری مخفی شود؟" class="font-semibold text-slate-600 hover:text-slate-950">مخفی‌کردن</button>
                             @endif
@@ -91,6 +94,9 @@
                                     @else
                                         <span class="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs">
                                             <a href="{{ route('attachments.download', $attachment) }}" class="font-semibold hover:underline">{{ $attachment->original_name }}</a>
+                                            @if($attachment->isPreviewable())
+                                                <a href="{{ route('attachments.preview', $attachment) }}" target="_blank" rel="noreferrer" class="font-semibold text-slate-600 hover:text-slate-950">پیش‌نمایش</a>
+                                            @endif
                                             @if($isAdmin)<button type="button" wire:click="hideAttachment({{ $attachment->id }})" class="text-slate-500 hover:text-slate-950">مخفی</button>@endif
                                         </span>
                                     @endif
@@ -103,6 +109,7 @@
                 <p class="text-sm text-slate-500">هنوز نظری ثبت نشده است.</p>
             @endforelse
         </div>
+        <div class="mt-4">{{ $comments->links() }}</div>
 
         @if($canCollaborate)
             <form wire:submit="addComment" class="mt-6 border-t border-slate-100 pt-5">
@@ -126,12 +133,13 @@
         <div class="space-y-3">
             @forelse($activities as $activity)
                 <div class="flex flex-col gap-1 border-b border-slate-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ $activity->action }}</span></div>
-                    <time class="text-xs text-slate-500">{{ $activity->created_at?->diffForHumans() }}</time>
+                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
+                    <time class="text-xs text-slate-500"><x-ui.date :value="$activity->created_at" datetime /></time>
                 </div>
             @empty
                 <p class="text-sm text-slate-500">فعالیتی ثبت نشده است.</p>
             @endforelse
         </div>
+        <div class="mt-4">{{ $activities->links() }}</div>
     </x-ui.card>
 </div>

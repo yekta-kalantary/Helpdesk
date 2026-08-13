@@ -1,6 +1,4 @@
 <div class="space-y-6">
-    @php($statusLabels = ['todo' => 'برای انجام', 'in_progress' => 'در حال انجام', 'waiting_admin' => 'منتظر ادمین', 'waiting_customer' => 'منتظر مشتری', 'completed' => 'تکمیل‌شده', 'cancelled' => 'لغوشده'])
-
     <x-ui.page-header :title="__('app.dashboard')">
         <p class="mt-1 text-sm text-slate-500">خلاصه وضعیت پروژه‌ها و تسک‌های قابل دسترسی شما</p>
     </x-ui.page-header>
@@ -80,7 +78,7 @@
                     <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block rounded-xl border border-slate-200 p-3 hover:bg-slate-50">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="font-bold">{{ $task->reference }} · {{ $task->title }}</span>
-                            <span class="text-xs text-slate-500">{{ $statusLabels[$task->status->value] }}</span>
+                            <span class="text-xs text-slate-500">{{ __('tasks::messages.statuses.'.$task->status->value) }}</span>
                         </div>
                         <p class="mt-1 text-sm text-slate-500">{{ $task->project->name }}</p>
                     </a>
@@ -96,8 +94,8 @@
         <div class="space-y-3">
             @forelse($recentActivities as $activity)
                 <div class="flex flex-col gap-1 border-b border-slate-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ $activity->action }}</span></div>
-                    <time class="text-xs text-slate-500">{{ $activity->created_at?->diffForHumans() }}</time>
+                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
+                    <time class="text-xs text-slate-500"><x-ui.date :value="$activity->created_at" datetime /></time>
                 </div>
             @empty
                 <p class="text-sm text-slate-500">فعالیتی ثبت نشده است.</p>

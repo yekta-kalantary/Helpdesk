@@ -1,7 +1,4 @@
 <div>
-    @php($statusLabels = ['todo' => 'برای انجام', 'in_progress' => 'در حال انجام', 'waiting_admin' => 'منتظر ادمین', 'waiting_customer' => 'منتظر مشتری', 'completed' => 'تکمیل‌شده', 'cancelled' => 'لغوشده'])
-    @php($priorityLabels = ['low' => 'کم', 'normal' => 'عادی', 'high' => 'زیاد'])
-
     @if(session('success'))
         <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
     @endif
@@ -21,11 +18,11 @@
             </x-ui.select>
             <x-ui.select name="status" wire:model.live="status">
                 <option value="">همه وضعیت‌ها</option>
-                @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ $statusLabels[$statusItem->value] }}</option>@endforeach
+                @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ __('tasks::messages.statuses.'.$statusItem->value) }}</option>@endforeach
             </x-ui.select>
             <x-ui.select name="priority" wire:model.live="priority">
                 <option value="">همه اولویت‌ها</option>
-                @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ $priorityLabels[$priorityItem->value] }}</option>@endforeach
+                @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</option>@endforeach
             </x-ui.select>
             <x-ui.select name="assignee" wire:model.live="assignee">
                 <option value="">همه مسئول‌ها</option>
@@ -64,11 +61,11 @@
                             @if($task->description)<div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task->description }}</div>@endif
                         </td>
                         <td>{{ $task->project->name }}</td>
-                        <td><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ $statusLabels[$task->status->value] }}</x-ui.badge></td>
-                        <td>{{ $priorityLabels[$task->priority->value] }}</td>
-                        <td>{{ $task->assignee?->full_name ?? 'صف ادمین' }}</td>
-                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</td>
-                        <td>{{ $task->updated_at?->diffForHumans() }}</td>
+                        <td><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ __('tasks::messages.statuses.'.$task->status->value) }}</x-ui.badge></td>
+                        <td>{{ __('tasks::messages.priorities.'.$task->priority->value) }}</td>
+                        <td>{{ $task->assignee?->full_name ?? ($task->status->value === 'waiting_admin' ? __('tasks::messages.assignee.admin_queue') : __('tasks::messages.assignee.none')) }}</td>
+                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</td>
+                        <td><x-ui.date :value="$task->updated_at" datetime /></td>
                     </tr>
                 @empty
                     <x-ui.empty-row colspan="7" />
