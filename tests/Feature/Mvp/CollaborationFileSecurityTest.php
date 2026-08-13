@@ -72,7 +72,7 @@ it('previews browser-supported attachments with protected inline headers', funct
         ->assertHeader('Content-Disposition', 'inline; filename=unsafe-name.pdf')
         ->assertHeader('X-Content-Type-Options', 'nosniff')
         ->assertHeader('Content-Security-Policy', "sandbox; default-src 'none'")
-        ->assertHeader('Cache-Control', 'private, no-store')
+        ->assertHeader('Cache-Control', 'no-store, private')
         ->assertHeader('Referrer-Policy', 'no-referrer');
 });
 

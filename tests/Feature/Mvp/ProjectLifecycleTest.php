@@ -59,8 +59,7 @@ it('locks the project before checking concurrent task state', function (): void 
         $queries[] = strtolower($query->sql);
     });
 
-    expect(fn () => app(ProjectLifecycle::class)->complete($project, $admin))
-        ->not->toThrow();
+    app(ProjectLifecycle::class)->complete($project, $admin);
 
     expect(collect($queries)->contains(fn (string $query): bool => str_contains($query, 'for update')))->toBeTrue();
 });
