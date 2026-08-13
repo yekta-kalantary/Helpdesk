@@ -23,10 +23,10 @@ class Dashboard extends Component
         $projects = Project::query()->visibleTo($user);
         $tasks = Task::query()->visibleTo($user);
 
-        $visibleProjectIds = (clone $projects)->pluck('id');
-
         $activities = Activity::query()
-            ->when(! $user->isAdmin(), fn ($query) => $query->whereIn('project_id', $visibleProjectIds));
+            ->when(! $user->isAdmin(), fn ($query) => $query
+                ->whereHas('project', fn ($projectQuery) => $projectQuery->visibleTo($user))
+                ->withoutModeration());
 
         return view('livewire.dashboard', [
             'isAdmin' => $user->isAdmin(),

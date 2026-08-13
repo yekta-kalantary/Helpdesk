@@ -6,6 +6,7 @@ use App\Models\Activity;
 use DomainException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectLifecycle;
 use Modules\Projects\Infrastructure\Models\Project;
@@ -13,6 +14,8 @@ use Modules\Tasks\Domain\Enums\TaskStatus;
 
 class Show extends Component
 {
+    use WithPagination;
+
     #[Locked]
     public int $projectId;
 
@@ -60,15 +63,14 @@ class Show extends Component
             ->where('users.is_active', true)
             ->orderBy('users.name')
             ->orderBy('users.last_name')
-            ->get($user->isAdmin()
+            ->paginate(20, $user->isAdmin()
                 ? ['users.id', 'users.name', 'users.last_name', 'users.email', 'users.mobile']
-                : ['users.id', 'users.name', 'users.last_name']);
+                : ['users.id', 'users.name', 'users.last_name'], 'membersPage');
 
         $tasks = $project->tasks()
             ->with('assignee:id,name,last_name')
             ->latest('updated_at')
-            ->limit(20)
-            ->get();
+            ->paginate(20, ['*'], 'tasksPage');
 
         $openTasksCount = $project->tasks()
             ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
@@ -76,10 +78,10 @@ class Show extends Component
 
         $activities = Activity::query()
             ->where('project_id', $project->id)
+            ->when(! $user->isAdmin(), fn ($query) => $query->withoutModeration())
             ->with('actor:id,name,last_name')
             ->latest('id')
-            ->limit(20)
-            ->get();
+            ->paginate(20, ['*'], 'projectActivitiesPage');
 
         return view('projects::show', [
             'project' => $project,

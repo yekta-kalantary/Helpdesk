@@ -7,6 +7,7 @@ use DomainException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Application\TaskCollaboration;
 use Modules\Tasks\Application\TaskWorkflow;
@@ -18,6 +19,7 @@ use Modules\Tasks\Infrastructure\Models\TaskComment;
 class Show extends Component
 {
     use WithFileUploads;
+    use WithPagination;
 
     #[Locked]
     public int $taskId;
@@ -111,21 +113,21 @@ class Show extends Component
                     ->orderBy('id'),
             ])
             ->orderBy('id')
-            ->get();
+            ->paginate(20, ['*'], 'commentsPage');
 
         $taskAttachments = Attachment::query()
             ->where('task_id', $task->id)
             ->whereNull('comment_id')
             ->when(! $user->isAdmin(), fn ($query) => $query->whereNull('hidden_at'))
             ->orderBy('id')
-            ->get();
+            ->paginate(20, ['*'], 'attachmentsPage');
 
         $activities = Activity::query()
             ->where('task_id', $task->id)
+            ->when(! $user->isAdmin(), fn ($query) => $query->withoutModeration())
             ->with('actor:id,name,last_name')
             ->latest('id')
-            ->limit(50)
-            ->get();
+            ->paginate(50, ['*'], 'taskActivitiesPage');
 
         $canCollaborate = $task->project->isActive()
             && $task->project->client->isActive()
