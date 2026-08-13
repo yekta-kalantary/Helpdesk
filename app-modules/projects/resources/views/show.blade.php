@@ -27,6 +27,8 @@
         <x-ui.card><div class="text-sm text-slate-500">وضعیت</div><div class="mt-2"><x-ui.badge :tone="$project->status->value === 'active' ? 'success' : 'neutral'">{{ $project->status->value === 'active' ? 'فعال' : 'تکمیل‌شده' }}</x-ui.badge></div></x-ui.card>
         <x-ui.card><div class="text-sm text-slate-500">اعضا</div><div class="mt-2 text-2xl font-black">{{ $members->count() }}</div></x-ui.card>
         <x-ui.card><div class="text-sm text-slate-500">تسک باز</div><div class="mt-2 text-2xl font-black">{{ $openTasksCount }}</div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">تاریخ شروع</div><div class="mt-2 font-black"><x-ui.date :value="$project->start_date" />{{ $project->start_date ? '' : '—' }}</div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div class="mt-2 font-black"><x-ui.date :value="$project->due_date" />{{ $project->due_date ? '' : '—' }}</div></x-ui.card>
     </div>
 
     @if($project->description)
@@ -51,6 +53,7 @@
                     <p class="text-sm text-slate-500">عضوی ندارد.</p>
                 @endforelse
             </div>
+            <div class="mt-4">{{ $members->links() }}</div>
         </x-ui.card>
 
         <x-ui.card>
@@ -60,13 +63,14 @@
                     <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block rounded-xl border border-slate-200 p-3 hover:bg-slate-50">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="font-bold">{{ $task->reference }} · {{ $task->title }}</span>
-                            <span class="text-xs text-slate-500">{{ $task->status->value }}</span>
+                            <span class="text-xs text-slate-500">{{ __('tasks::messages.statuses.'.$task->status->value) }}</span>
                         </div>
                     </a>
                 @empty
                     <p class="text-sm text-slate-500">تسکی ثبت نشده است.</p>
                 @endforelse
             </div>
+            <div class="mt-4">{{ $tasks->links() }}</div>
         </x-ui.card>
     </div>
 
@@ -75,12 +79,13 @@
         <div class="space-y-3">
             @forelse($activities as $activity)
                 <div class="flex flex-col gap-1 border-b border-slate-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ $activity->action }}</span></div>
-                    <time class="text-xs text-slate-500">{{ $activity->created_at?->diffForHumans() }}</time>
+                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
+                    <time class="text-xs text-slate-500"><x-ui.date :value="$activity->created_at" datetime /></time>
                 </div>
             @empty
                 <p class="text-sm text-slate-500">فعالیتی ثبت نشده است.</p>
             @endforelse
         </div>
+        <div class="mt-4">{{ $activities->links() }}</div>
     </x-ui.card>
 </div>
