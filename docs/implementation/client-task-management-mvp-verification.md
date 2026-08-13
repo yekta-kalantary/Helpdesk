@@ -257,16 +257,17 @@ npm run build
 
 It also verifies the Vite font assets and builds the deployable source archive.
 
-Latest local verification on commit `7f0279a`:
+Latest release-gate verification on commit `8c3b6006c380ac5e2ab5025fe76daf2fbe0a6f2c`:
 
-- `php artisan test`: **blocked locally** by MariaDB authentication for `helpdesk_testing`; no complete suite result is claimed
-- `php artisan test --compact tests/Unit/LegacyUpgradeTest.php`: **2 passed, 16 assertions**
-- migration + seed: not re-run locally against a clean test database
-- route list: passed
-- Blade view cache: passed
-- Pint: passed
-- frontend build: passed
-- browser/mobile/accessibility verification: **blocked** because `agent-browser` is not installed
+- GitHub Actions CI run [31698300991](https://github.com/yekta-kalantary/Helpdesk/actions/runs/31698300991): **passed**
+- `php artisan test`: **121 passed, 557 assertions**
+- migration + seed: passed in CI
+- route list: passed in CI
+- Blade view cache: passed in CI
+- Pint: passed in CI
+- frontend build: passed in CI
+- Vite font-asset verification: passed in CI
+- browser/mobile/accessibility verification: **blocked** because `agent-browser` is not installed in the local verification environment
 
 A fresh CI run on the final candidate HEAD is required before merge/closure of this verification record. The CI run must include the complete Pest suite, migration/seed, Pint, build, font-asset checks, and browser/mobile/accessibility evidence.
 
@@ -302,4 +303,4 @@ The following MVP verification work remains open:
 - Issue #46: browser/mobile/accessibility verification for Dashboard, Projects, Tasks, Task Create, Task Detail/Add Comment, Notifications, Login, and Profile across representative widths and browsers.
 - Issue #49: fresh release-gate CI run and final evidence update for the exact candidate HEAD.
 
-The final completion claim is not made while #46 or #49 remains open. Issues #35 and #36 are implemented in commits `9873389` and `7f0279a`, respectively, but still require the final CI release gate before closure.
+The final completion claim is not made while #46 or #49 remains open. Issues #35 and #36 are implemented in commits `9873389` and `7f0279a`, respectively, and covered by the passing release-gate run above.
