@@ -10,13 +10,24 @@
     </x-ui.page-header>
 
     <x-ui.filter-bar :livewire="true">
-        <div class="min-w-0 flex-1">
+        <div class="grid w-full gap-3 md:grid-cols-3">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('identity::messages.search_users')" />
+            <x-ui.select name="client" wire:model.live="client">
+                <option value="">همه مشتریان</option>
+                @foreach($clients as $clientItem)
+                    <option value="{{ $clientItem->id }}">{{ $clientItem->name }}</option>
+                @endforeach
+            </x-ui.select>
+            <x-ui.select name="status" wire:model.live="status">
+                <option value="">همه وضعیت‌ها</option>
+                <option value="active">فعال</option>
+                <option value="inactive">غیرفعال</option>
+            </x-ui.select>
         </div>
     </x-ui.filter-bar>
 
     <div class="overflow-x-auto">
-        <x-ui.table wire:loading.class="opacity-60" wire:target="q">
+        <x-ui.table wire:loading.class="opacity-60" wire:target="q,client,status">
             <thead>
                 <tr>
                     <th>نام</th>
@@ -35,7 +46,7 @@
                             @if($user->mobile)<div dir="ltr" class="mt-1 text-right text-xs text-slate-500">{{ $user->mobile }}</div>@endif
                         </td>
                         <td>{{ $user->client?->name ?? '—' }}</td>
-                        <td>{{ $user->last_login_at?->diffForHumans() ?? '—' }}</td>
+                        <td><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</td>
                         <td><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></td>
                     </tr>
                 @empty

@@ -9,6 +9,7 @@ use Modules\Identity\Domain\Enums\UserRole;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Identity\Presentation\Livewire\Profile;
 use Modules\Identity\Presentation\Livewire\Users\Form as UserForm;
+use Modules\Identity\Presentation\Livewire\Users\Index as UsersIndex;
 use Modules\Identity\Presentation\Livewire\Users\Show as UserShow;
 use Modules\Projects\Application\ProjectMembershipManager;
 
@@ -23,6 +24,51 @@ it('shows customer users to admin and hides system admins from customer manageme
         ->assertSee($customer->email)
         ->assertSee(route('users.show', $customer->id))
         ->assertDontSee($admin->email);
+});
+
+it('filters customer users by client and status while retaining search', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create(['name' => 'Acme Client']);
+    $otherClient = Client::factory()->create(['name' => 'Other Client']);
+    $match = User::factory()->customer($client)->create([
+        'name' => 'Ali',
+        'last_name' => 'Match',
+        'email' => 'ali-match@example.test',
+    ]);
+    $wrongStatus = User::factory()->customer($client)->inactive()->create([
+        'name' => 'Ali',
+        'email' => 'ali-inactive@example.test',
+    ]);
+    $wrongClient = User::factory()->customer($otherClient)->create([
+        'name' => 'Ali',
+        'email' => 'ali-other@example.test',
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test(UsersIndex::class)
+        ->set('q', 'Ali')
+        ->set('client', (string) $client->id)
+        ->set('status', 'active')
+        ->assertSee($match->email)
+        ->assertDontSee($wrongStatus->email)
+        ->assertDontSee($wrongClient->email);
+});
+
+it('ignores invalid user list filter values and resets pagination when filters change', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+    $client = Client::factory()->create();
+
+    Livewire::actingAs($admin)
+        ->withQueryParams(['client' => '999999', 'status' => 'unknown'])
+        ->test(UsersIndex::class)
+        ->assertSet('client', '')
+        ->assertSet('status', '')
+        ->set('page', 3)
+        ->set('client', (string) $client->id)
+        ->assertSet('page', 1)
+        ->set('page', 3)
+        ->set('status', 'inactive')
+        ->assertSet('page', 1);
 });
 
 it('blocks customers from user management', function (): void {
