@@ -24,7 +24,10 @@
 
             <a href="{{ route('notifications.index') }}" wire:navigate class="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" aria-label="اعلان‌ها">
                 <i class="fa-light fa-bell" aria-hidden="true"></i>
-                @if(auth()->user()->unreadNotifications()->exists())<span class="absolute left-2 top-2 h-2 w-2 rounded-full bg-slate-950"></span>@endif
+                @php($unreadNotificationCount = auth()->user()->unreadNotifications()->count())
+                @if($unreadNotificationCount > 0)
+                    <span class="absolute -left-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-slate-950 px-1 text-[10px] font-black leading-5 text-white" aria-label="{{ $unreadNotificationCount }} اعلان خوانده‌نشده">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+                @endif
             </a>
         </header>
 

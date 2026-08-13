@@ -13,11 +13,19 @@ class Index extends Component
 {
     use WithPagination;
 
+    public int $unreadCount = 0;
+
+    public function mount(): void
+    {
+        $this->refreshUnreadCount();
+    }
+
     public function markAllRead(): void
     {
         /** @var User $user */
         $user = auth()->user();
         $user->unreadNotifications()->update(['read_at' => now()]);
+        $this->refreshUnreadCount();
     }
 
     public function open(string $id)
@@ -38,8 +46,16 @@ class Index extends Component
 
         abort_unless($route, 404);
         $notification->markAsRead();
+        $this->refreshUnreadCount();
 
         return redirect()->to($route);
+    }
+
+    private function refreshUnreadCount(): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $this->unreadCount = $user->unreadNotifications()->count();
     }
 
     private function authorizedTaskRoute(User $user, int $taskId): ?string
