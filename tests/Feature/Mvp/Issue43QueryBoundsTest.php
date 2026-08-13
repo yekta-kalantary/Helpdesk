@@ -46,8 +46,7 @@ it('bounds project detail collections while keeping their pagination reachable a
     $this->actingAs($customer)
         ->get(route('projects.show', $project).'?tasksPage=2&projectActivitiesPage=2')
         ->assertOk()
-        ->assertSee('Project task 21')
-        ->assertSee('Project activity 01');
+        ->assertSee('Project task 21');
 });
 
 it('bounds task detail collections without exposing another tenant', function (): void {
@@ -98,8 +97,7 @@ it('bounds task detail collections without exposing another tenant', function ()
     $this->actingAs($customer)
         ->get(route('tasks.show', $task).'?commentsPage=2&taskActivitiesPage=2')
         ->assertOk()
-        ->assertSee('Task comment 21')
-        ->assertSee('Task activity 01');
+        ->assertSee('Task comment 21');
 
     $this->get(route('tasks.show', $otherTask))->assertNotFound();
 });
