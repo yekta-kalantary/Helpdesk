@@ -20,24 +20,23 @@ return new class extends Migration
             $table->renameColumn('title', 'name');
         });
 
-        if (DB::table('projects')->exists()) {
-            $clientId = DB::table('users')
-                ->where('role', 'customer')
-                ->whereNotNull('client_id')
-                ->value('client_id');
+        DB::table('projects')->orderBy('id')->get(['id'])->each(function (object $project): void {
+            $clientId = DB::table('project_user')
+                ->join('users', 'users.id', '=', 'project_user.user_id')
+                ->where('project_user.project_id', $project->id)
+                ->where('users.role', 'customer')
+                ->whereNotNull('users.client_id')
+                ->orderBy('users.id')
+                ->value('users.client_id');
 
             if (! $clientId) {
-                $clientId = DB::table('clients')->insertGetId([
-                    'name' => 'Migrated Client',
-                    'description' => 'Created automatically while upgrading existing projects.',
-                    'status' => 'active',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                throw new RuntimeException(
+                    "Legacy project {$project->id} has no customer membership with a Client; assign one before retrying the upgrade."
+                );
             }
 
-            DB::table('projects')->whereNull('client_id')->update(['client_id' => $clientId]);
-        }
+            DB::table('projects')->where('id', $project->id)->update(['client_id' => $clientId]);
+        });
 
         Schema::table('projects', function (Blueprint $table): void {
             $table->unsignedBigInteger('client_id')->nullable(false)->change();
@@ -54,6 +53,32 @@ return new class extends Migration
 
         Schema::table('project_user', function (Blueprint $table): void {
             $table->timestamp('joined_at')->nullable(false)->change();
+        });
+
+        DB::table('projects')->orderBy('id')->get(['id'])->each(function (object $project): void {
+            $clientId = DB::table('project_user')
+                ->join('users', 'users.id', '=', 'project_user.user_id')
+                ->where('project_user.project_id', $project->id)
+                ->where('users.role', 'customer')
+                ->whereNotNull('users.client_id')
+                ->orderBy('users.id')
+                ->value('users.client_id');
+
+            if (! $clientId) {
+                throw new RuntimeException(
+                    "Legacy project {$project->id} has no customer membership with a Client; assign one before retrying the upgrade."
+                );
+            }
+
+            DB::table('projects')->where('id', $project->id)->update(['client_id' => $clientId]);
+            DB::table('project_user')
+                ->join('users', 'users.id', '=', 'project_user.user_id')
+                ->where('project_user.project_id', $project->id)
+                ->where(function ($query) use ($clientId): void {
+                    $query->where('users.role', '!=', 'customer')
+                        ->orWhere('users.client_id', '!=', $clientId);
+                })
+                ->update(['removed_at' => now()]);
         });
     }
 
