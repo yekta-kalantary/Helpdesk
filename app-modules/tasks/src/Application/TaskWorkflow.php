@@ -298,7 +298,7 @@ class TaskWorkflow
         return new ResourceChangedNotification(
             $title,
             $body,
-            url('/tasks/'.$task->id),
+            route('tasks.show', $task),
             [
                 'resource_type' => 'task',
                 'resource_id' => $task->id,

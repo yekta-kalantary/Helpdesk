@@ -40,7 +40,7 @@ class Form extends Component
 
     public ?UploadedFile $attachment = null;
 
-    public function mount(?int $task = null): void
+    public function mount(?string $task = null): mixed
     {
         /** @var User $user */
         $user = auth()->user();
@@ -49,12 +49,19 @@ class Form extends Component
             $requestedProject = request()->integer('project');
             $this->project_id = $requestedProject ?: null;
 
-            return;
+            return null;
         }
 
         abort_unless($user->isAdmin(), 403);
 
-        $item = Task::query()->findOrFail($task);
+        $item = ctype_digit($task)
+            ? Task::query()->findOrFail((int) $task)
+            : Task::query()->where('reference', $task)->firstOrFail();
+
+        if (ctype_digit($task)) {
+            return redirect()->route('tasks.edit', $item);
+        }
+
         $this->taskId = $item->id;
         $this->project_id = $item->project_id;
         $this->title = $item->title;
@@ -63,6 +70,8 @@ class Form extends Component
         $this->priority = $item->priority->value;
         $this->assigned_to = $item->assigned_to ? (string) $item->assigned_to : '';
         $this->due_date = $item->due_date?->toDateString();
+
+        return null;
     }
 
     public function updatedProjectId(): void

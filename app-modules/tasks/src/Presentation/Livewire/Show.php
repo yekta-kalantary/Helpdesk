@@ -28,11 +28,21 @@ class Show extends Component
 
     public array $uploads = [];
 
-    public function mount(int $task): void
+    public function mount(string $task): mixed
     {
         /** @var User $user */
         $user = auth()->user();
-        $this->taskId = Task::query()->visibleTo($user)->findOrFail($task)->id;
+        $item = ctype_digit($task)
+            ? Task::query()->visibleTo($user)->findOrFail((int) $task)
+            : Task::query()->visibleTo($user)->where('reference', $task)->firstOrFail();
+
+        if (ctype_digit($task)) {
+            return redirect()->route('tasks.show', $item);
+        }
+
+        $this->taskId = $item->id;
+
+        return null;
     }
 
     public function changeStatus(string $status, TaskWorkflow $workflow): void

@@ -81,7 +81,7 @@ class CustomerAssignmentRequeuer
                 new ResourceChangedNotification(
                     'اقدام ادمین لازم است',
                     "تسک {$task->reference} به صف ادمین برگشت.",
-                    url('/tasks/'.$task->id),
+                    route('tasks.show', $task),
                     [
                         'resource_type' => 'task',
                         'resource_id' => $task->id,

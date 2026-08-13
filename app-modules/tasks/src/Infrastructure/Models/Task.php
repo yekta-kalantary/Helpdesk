@@ -27,6 +27,11 @@ class Task extends Model
         'completed_at',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'reference';
+    }
+
     public function fill(array $attributes)
     {
         if ($this->exists

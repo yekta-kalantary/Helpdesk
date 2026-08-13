@@ -122,7 +122,7 @@ class TaskCollaboration
             new ResourceChangedNotification(
                 'نظر جدید روی تسک',
                 "برای تسک {$task->reference} نظر جدید ثبت شد.",
-                url('/tasks/'.$task->id),
+                route('tasks.show', $task),
                 [
                     'resource_type' => 'task',
                     'resource_id' => $task->id,
