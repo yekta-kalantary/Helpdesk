@@ -18,19 +18,21 @@ class ProjectLifecycle
     {
         $this->assertAdmin($actor);
 
-        if ($project->status === ProjectStatus::Completed) {
-            return $project;
-        }
-
-        $hasOpenTasks = $project->tasks()
-            ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
-            ->exists();
-
-        if ($hasOpenTasks) {
-            throw new DomainException('A project with non-terminal tasks cannot be completed.');
-        }
-
         return DB::transaction(function () use ($project, $actor): Project {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
+
+            if ($project->status === ProjectStatus::Completed) {
+                return $project;
+            }
+
+            $hasOpenTasks = $project->tasks()
+                ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+                ->exists();
+
+            if ($hasOpenTasks) {
+                throw new DomainException('A project with non-terminal tasks cannot be completed.');
+            }
+
             $project->update(['status' => ProjectStatus::Completed]);
             $this->activities->record($actor, 'project.status_changed', $project, null, [
                 'old' => ProjectStatus::Active->value,

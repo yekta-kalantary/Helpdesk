@@ -27,6 +27,9 @@ class TaskWorkflow
         $this->assertCustomerProjectAccess($actor, $project);
 
         $task = DB::transaction(function () use ($actor, $project, $data): Task {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
+            $this->assertProjectOpen($project);
+
             $task = Task::query()->create([
                 'project_id' => $project->id,
                 'created_by' => $actor->id,
@@ -45,14 +48,14 @@ class TaskWorkflow
                 'priority' => $task->priority->value,
             ]);
 
+            $this->notifications->send(
+                $this->notificationRouter->created($task),
+                $this->notification($task, 'درخواست جدید مشتری', "تسک {$task->reference} وارد صف ادمین شد."),
+                $actor,
+            );
+
             return $task;
         });
-
-        $this->notifications->send(
-            $this->notificationRouter->created($task),
-            $this->notification($task, 'درخواست جدید مشتری', "تسک {$task->reference} وارد صف ادمین شد."),
-            $actor,
-        );
 
         return $task;
     }
@@ -67,6 +70,9 @@ class TaskWorkflow
         $assignedTo = $this->normalizeWaitingAdminAssignee($status, $assignedTo);
 
         $task = DB::transaction(function () use ($actor, $project, $data, $status, $assignedTo): Task {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
+            $this->assertProjectOpen($project);
+
             $task = Task::query()->create([
                 'project_id' => $project->id,
                 'created_by' => $actor->id,
@@ -86,14 +92,14 @@ class TaskWorkflow
                 'assigned_to' => $task->assigned_to,
             ]);
 
+            $this->notifications->send(
+                $this->notificationRouter->created($task),
+                $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
+                $actor,
+            );
+
             return $task;
         });
-
-        $this->notifications->send(
-            $this->notificationRouter->created($task),
-            $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
-            $actor,
-        );
 
         return $task;
     }
@@ -104,15 +110,22 @@ class TaskWorkflow
         $task->loadMissing('project');
         $this->assertProjectOpen($task->project);
 
-        $original = [
-            'status' => $task->status,
-            'priority' => $task->priority,
-            'assigned_to' => $task->assigned_to,
-            'due_date' => $task->due_date?->toDateString(),
-            'completed_at' => $task->completed_at,
-        ];
+        $original = [];
 
-        $task = DB::transaction(function () use ($actor, $task, $data, $original): Task {
+        $task = DB::transaction(function () use ($actor, $task, $data, &$original): Task {
+            $project = Project::query()->lockForUpdate()->findOrFail($task->project_id);
+            $task = Task::query()->lockForUpdate()->findOrFail($task->id);
+            $task->setRelation('project', $project);
+            $this->assertProjectOpen($project);
+
+            $original = [
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'assigned_to' => $task->assigned_to,
+                'due_date' => $task->due_date?->toDateString(),
+                'completed_at' => $task->completed_at,
+            ];
+
             $status = array_key_exists('status', $data)
                 ? $this->status($data['status'])
                 : $task->status;
@@ -183,10 +196,18 @@ class TaskWorkflow
             throw new DomainException('Customer transition is not allowed.');
         }
 
-        $oldStatus = $task->status;
-        $oldAssignee = $task->assigned_to;
+        $oldStatus = null;
+        $oldAssignee = null;
 
-        $task = DB::transaction(function () use ($actor, $task, $status, $oldStatus, $oldAssignee): Task {
+        $task = DB::transaction(function () use ($actor, $task, $status, &$oldStatus, &$oldAssignee): Task {
+            $project = Project::query()->lockForUpdate()->findOrFail($task->project_id);
+            $task = Task::query()->lockForUpdate()->findOrFail($task->id);
+            $task->setRelation('project', $project);
+            $this->assertProjectOpen($project);
+
+            $oldStatus = $task->status;
+            $oldAssignee = $task->assigned_to;
+
             $task->status = $status;
 
             if ($status === TaskStatus::WaitingAdmin) {

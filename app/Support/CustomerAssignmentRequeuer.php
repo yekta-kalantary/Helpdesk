@@ -27,6 +27,20 @@ class CustomerAssignmentRequeuer
         $this->assertValidActors($customer, $actor);
 
         $tasks = DB::transaction(function () use ($customer, $actor, $project): Collection {
+            $projectIds = $project
+                ? [$project->id]
+                : Task::query()
+                    ->where('assigned_to', $customer->id)
+                    ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+                    ->distinct()
+                    ->orderBy('project_id')
+                    ->pluck('project_id')
+                    ->all();
+
+            foreach ($projectIds as $projectId) {
+                Project::query()->whereKey($projectId)->lockForUpdate()->firstOrFail();
+            }
+
             $tasks = Task::query()
                 ->where('assigned_to', $customer->id)
                 ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])

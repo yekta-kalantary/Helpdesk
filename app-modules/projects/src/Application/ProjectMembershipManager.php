@@ -25,6 +25,7 @@ class ProjectMembershipManager
         $this->assertEligible($project, $user);
 
         DB::transaction(function () use ($project, $user, $actor): void {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $now = now();
             $existing = DB::table('project_user')
                 ->where('project_id', $project->id)
@@ -71,6 +72,7 @@ class ProjectMembershipManager
         $this->assertAdmin($actor);
 
         $changed = DB::transaction(function () use ($project, $user, $actor): bool {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $membership = DB::table('project_user')
                 ->where('project_id', $project->id)
                 ->where('user_id', $user->id)
