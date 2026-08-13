@@ -19,7 +19,7 @@
         <x-ui.card><div class="text-sm text-slate-500">وضعیت</div><div class="mt-2"><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ $statusLabels[$task->status->value] }}</x-ui.badge></div></x-ui.card>
         <x-ui.card><div class="text-sm text-slate-500">اولویت</div><div class="mt-2 font-black">{{ $priorityLabels[$task->priority->value] }}</div></x-ui.card>
         <x-ui.card><div class="text-sm text-slate-500">مسئول</div><div class="mt-2 font-black">{{ $task->assignee?->full_name ?? 'صف ادمین' }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div @class(['mt-2 font-black', 'text-red-600' => $task->due_date && $task->due_date->isPast() && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</div></x-ui.card>
+        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div @class(['mt-2 font-black', 'text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</div></x-ui.card>
         <x-ui.card><div class="text-sm text-slate-500">ایجادکننده</div><div class="mt-2 font-black">{{ $task->creator->full_name }}</div></x-ui.card>
     </div>
 

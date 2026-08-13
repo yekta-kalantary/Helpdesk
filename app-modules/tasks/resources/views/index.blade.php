@@ -67,7 +67,7 @@
                         <td><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ $statusLabels[$task->status->value] }}</x-ui.badge></td>
                         <td>{{ $priorityLabels[$task->priority->value] }}</td>
                         <td>{{ $task->assignee?->full_name ?? 'صف ادمین' }}</td>
-                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isPast() && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</td>
+                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])>{{ $task->due_date?->format('Y/m/d') ?? '—' }}</td>
                         <td>{{ $task->updated_at?->diffForHumans() }}</td>
                     </tr>
                 @empty

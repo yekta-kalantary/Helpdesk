@@ -47,6 +47,51 @@ it('uses membership rather than assignment for customer task visibility', functi
     expect(Task::query()->visibleTo($viewer)->whereKey($task)->exists())->toBeTrue();
 });
 
+it('marks only past non-terminal tasks as overdue', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $project = mvpProject($client);
+    $workflow = app(TaskWorkflow::class);
+
+    $yesterday = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Yesterday',
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
+        'due_date' => today()->subDay(),
+    ]);
+    $today = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Today',
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
+        'due_date' => today(),
+    ]);
+    $tomorrow = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Tomorrow',
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
+        'due_date' => today()->addDay(),
+    ]);
+    $completed = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Completed',
+        'status' => TaskStatus::Completed,
+        'priority' => TaskPriority::Normal,
+        'due_date' => today()->subDay(),
+    ]);
+    $cancelled = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Cancelled',
+        'status' => TaskStatus::Cancelled,
+        'priority' => TaskPriority::Normal,
+        'due_date' => today()->subDay(),
+    ]);
+
+    expect(Task::query()->overdue()->pluck('id')->all())
+        ->toBe([$yesterday->id])
+        ->and(Task::query()->overdue()->whereKey($today)->exists())->toBeFalse()
+        ->and(Task::query()->overdue()->whereKey($tomorrow)->exists())->toBeFalse()
+        ->and(Task::query()->overdue()->whereKey($completed)->exists())->toBeFalse()
+        ->and(Task::query()->overdue()->whereKey($cancelled)->exists())->toBeFalse();
+});
+
 it('requires a valid project member when waiting for customer', function (): void {
     $clientA = Client::factory()->create();
     $clientB = Client::factory()->create();
