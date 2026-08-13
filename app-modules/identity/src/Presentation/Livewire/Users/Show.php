@@ -2,20 +2,22 @@
 
 namespace Modules\Identity\Presentation\Livewire\Users;
 
+use App\Support\CustomerAssignmentRequeuer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Projects\Infrastructure\Models\Project;
+use Throwable;
 
 class Show extends Component
 {
     #[Locked]
     public int $userId;
-
-    #[Url(as: 'tab', except: 'overview')]
-    public string $tab = 'overview';
 
     public string $name = '';
 
@@ -33,83 +35,34 @@ class Show extends Component
 
     public function mount(int $user): void
     {
-        abort_unless(auth()->user()?->is_admin, 403);
+        abort_unless(auth()->user()?->isAdmin(), 403);
 
-        $this->userId = User::query()
-            ->where('is_admin', false)
-            ->findOrFail($user)
-            ->id;
-
-        if (request()->routeIs('users.edit') && $this->tab === 'overview') {
-            $this->tab = 'general';
-        }
-
+        $this->userId = User::query()->customers()->findOrFail($user)->id;
         $this->fillFromUser();
     }
 
-    public function selectTab(string $tab): void
+    public function saveProfile(CustomerAssignmentRequeuer $assignments): void
     {
-        abort_unless(in_array($tab, ['overview', 'general', 'contact', 'account', 'projects'], true), 404);
-
-        $this->resetValidation();
-        $this->tab = $tab;
-    }
-
-    public function saveGeneral(): void
-    {
-        abort_unless(auth()->user()?->is_admin, 403);
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $this->email = Str::lower(trim($this->email));
 
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-        ]);
-
-        $this->user()->update($data);
-
-        session()->flash('success', __('identity::messages.general_saved'));
-    }
-
-    public function saveContact(): void
-    {
-        abort_unless(auth()->user()?->is_admin, 403);
-
-        $data = $this->validate([
-            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->userId)],
             'mobile' => ['nullable', 'string', 'max:32'],
-        ]);
-
-        $this->user()->update([
-            'email' => $data['email'] ?: null,
-            'mobile' => $data['mobile'] ?: null,
-        ]);
-
-        session()->flash('success', __('identity::messages.contact_saved'));
-    }
-
-    public function saveAccount(): void
-    {
-        abort_unless(auth()->user()?->is_admin, 403);
-
-        $data = $this->validate([
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'is_active' => ['boolean'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = $this->user();
-
-        if ($data['is_active'] && blank($user->email)) {
-            $this->addError('is_active', __('identity::messages.email_required_to_activate'));
-
-            return;
-        }
-
-        if ($data['is_active'] && blank($user->getRawOriginal('password')) && $data['password'] === '') {
-            $this->addError('password', __('identity::messages.password_required_to_activate'));
-
-            return;
-        }
-
+        $wasInactive = ! $user->is_active;
+        $isDeactivating = $user->is_active && ! $data['is_active'];
         $attributes = [
+            'name' => trim($data['name']),
+            'last_name' => trim($data['last_name']),
+            'email' => $data['email'],
+            'mobile' => filled($data['mobile']) ? trim($data['mobile']) : null,
             'is_active' => $data['is_active'],
         ];
 
@@ -117,18 +70,47 @@ class Show extends Component
             $attributes['password'] = $data['password'];
         }
 
-        $user->update($attributes);
+        /** @var User $actor */
+        $actor = auth()->user();
+
+        DB::transaction(function () use ($actor, $assignments, $attributes, $isDeactivating, $user): void {
+            if ($isDeactivating) {
+                $assignments->requeue($user, $actor);
+            }
+
+            $user->update($attributes);
+        });
 
         $this->password = '';
         $this->password_confirmation = '';
 
-        session()->flash('success', __('identity::messages.account_saved'));
+        if ($wasInactive && $user->is_active && blank($user->getRawOriginal('password'))) {
+            $this->sendSetupLink();
+        }
+
+        session()->flash('success', __('app.updated_successfully'));
+    }
+
+    public function sendSetupLink(): void
+    {
+        abort_unless(auth()->user()?->isAdmin(), 403);
+        $user = $this->user();
+
+        try {
+            Password::sendResetLink(['email' => $user->email]);
+            session()->flash('success', 'لینک تنظیم رمز عبور ارسال شد.');
+        } catch (Throwable $e) {
+            Log::warning('Customer setup email delivery failed.', [
+                'user_id' => $user->id,
+                'exception' => $e::class,
+            ]);
+            session()->flash('success', 'کاربر ذخیره شد؛ ارسال ایمیل تنظیم رمز عبور ناموفق بود.');
+        }
     }
 
     private function fillFromUser(): void
     {
         $user = $this->user();
-
         $this->name = $user->name;
         $this->last_name = $user->last_name;
         $this->email = $user->email ?? '';
@@ -138,46 +120,20 @@ class Show extends Component
 
     private function user(): User
     {
-        return User::query()
-            ->where('is_admin', false)
-            ->findOrFail($this->userId);
+        return User::query()->customers()->with('client:id,name')->findOrFail($this->userId);
     }
 
     public function render()
     {
         $user = $this->user();
+        $projects = Project::query()
+            ->whereHas('members', fn ($members) => $members
+                ->whereKey($user->id)
+                ->whereNull('project_user.removed_at'))
+            ->orderBy('name')
+            ->get(['id', 'client_id', 'name', 'status']);
 
-        $projects = DB::table('projects')
-            ->join('project_user', 'projects.id', '=', 'project_user.project_id')
-            ->where('project_user.user_id', $this->userId)
-            ->select('projects.id', 'projects.title', 'projects.description')
-            ->orderBy('projects.title')
-            ->get();
-
-        $projectIds = $projects->pluck('id');
-        $taskCount = DB::table('tasks')->whereIn('project_id', $projectIds)->count();
-        $openTaskCount = DB::table('tasks')
-            ->whereIn('project_id', $projectIds)
-            ->where('is_done', false)
-            ->count();
-        $doneTaskCount = $taskCount - $openTaskCount;
-
-        $projectTaskCounts = DB::table('tasks')
-            ->whereIn('project_id', $projectIds)
-            ->selectRaw('project_id, count(*) as total')
-            ->groupBy('project_id')
-            ->pluck('total', 'project_id');
-
-        $hasPassword = filled($user->getRawOriginal('password'));
-
-        return view('identity::users.show', compact(
-            'user',
-            'projects',
-            'projectTaskCounts',
-            'taskCount',
-            'openTaskCount',
-            'doneTaskCount',
-            'hasPassword',
-        ))->title($user->full_name);
+        return view('identity::users.show', compact('user', 'projects'))
+            ->title($user->full_name);
     }
 }

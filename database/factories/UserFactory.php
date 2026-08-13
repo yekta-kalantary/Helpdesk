@@ -5,6 +5,8 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Modules\Clients\Infrastructure\Models\Client;
+use Modules\Identity\Domain\Enums\UserRole;
 use Modules\Identity\Infrastructure\Models\User;
 
 /**
@@ -19,6 +21,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'client_id' => Client::factory(),
+            'role' => UserRole::Customer,
             'name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
@@ -26,14 +30,30 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'is_active' => true,
-            'is_admin' => false,
+            'last_login_at' => null,
             'remember_token' => Str::random(10),
         ];
     }
 
     public function admin(): static
     {
-        return $this->state(fn () => ['is_admin' => true]);
+        return $this->state(fn () => [
+            'client_id' => null,
+            'role' => UserRole::Admin,
+        ]);
+    }
+
+    public function customer(Client $client): static
+    {
+        return $this->state(fn () => [
+            'client_id' => $client->id,
+            'role' => UserRole::Customer,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
     }
 
     public function unverified(): static

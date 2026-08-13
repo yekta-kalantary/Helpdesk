@@ -22,7 +22,13 @@
                 <span class="truncate">{{ __('app.name') }}</span>
             </a>
 
-            <span class="max-w-32 truncate text-xs font-semibold text-slate-500">{{ auth()->user()->full_name }}</span>
+            <a href="{{ route('notifications.index') }}" wire:navigate class="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" aria-label="اعلان‌ها">
+                <i class="fa-light fa-bell" aria-hidden="true"></i>
+                @php($unreadNotificationCount = auth()->user()->unreadNotifications()->count())
+                @if($unreadNotificationCount > 0)
+                    <span class="absolute -left-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-slate-950 px-1 text-[10px] font-black leading-5 text-white" aria-label="{{ $unreadNotificationCount }} اعلان خوانده‌نشده">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+                @endif
+            </a>
         </header>
 
         <button type="button" data-sidebar-backdrop data-open="false" aria-label="بستن منو" class="pointer-events-none fixed inset-0 z-40 bg-slate-950/40 opacity-0 transition-opacity duration-200 data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 lg:hidden"></button>
@@ -36,7 +42,7 @@
                     <span class="truncate">{{ __('app.name') }}</span>
                 </a>
                 @auth
-                    <p class="mt-1 truncate text-xs font-medium text-slate-500">{{ auth()->user()->full_name }}</p>
+                    <a href="{{ route('profile') }}" wire:navigate class="mt-1 block truncate text-xs font-medium text-slate-500 hover:text-slate-950">{{ auth()->user()->full_name }}</a>
                 @endauth
             </div>
 
@@ -50,12 +56,15 @@
         @auth
             <nav class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
                 <x-ui.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="fa-gauge-high">{{ __('app.dashboard') }}</x-ui.nav-link>
-                <x-ui.nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')" icon="fa-diagram-project">{{ __('app.projects') }}</x-ui.nav-link>
-                <x-ui.nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" icon="fa-list-check">{{ __('app.tasks') }}</x-ui.nav-link>
 
-                @if(auth()->user()->is_admin)
+                @if(auth()->user()->isAdmin())
+                    <x-ui.nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')" icon="fa-building">مشتریان</x-ui.nav-link>
                     <x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" icon="fa-users">{{ __('app.users') }}</x-ui.nav-link>
                 @endif
+
+                <x-ui.nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')" icon="fa-diagram-project">{{ __('app.projects') }}</x-ui.nav-link>
+                <x-ui.nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" icon="fa-list-check">{{ __('app.tasks') }}</x-ui.nav-link>
+                <x-ui.nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" icon="fa-bell">اعلان‌ها</x-ui.nav-link>
             </nav>
 
             <div class="mt-auto border-t border-slate-100 p-3">

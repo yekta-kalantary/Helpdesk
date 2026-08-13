@@ -1,29 +1,33 @@
 <?php
 
+use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Projects\Application\ProjectMembershipManager;
+use Modules\Tasks\Application\TaskWorkflow;
+use Modules\Tasks\Domain\Enums\TaskPriority;
+use Modules\Tasks\Domain\Enums\TaskStatus;
 
-it('only shows tasks from projects the user belongs to', function (): void {
-    $member = User::factory()->create();
-    $outsider = User::factory()->create();
+it('only shows tasks from projects with active membership', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $member = User::factory()->customer($client)->create();
+    $otherMember = User::factory()->customer($client)->create();
 
-    $memberProject = Project::query()->create(['title' => 'Member project']);
-    $otherProject = Project::query()->create(['title' => 'Other project']);
+    $memberProject = mvpProject($client, 'Member project');
+    $otherProject = mvpProject($client, 'Other project');
+    $manager = app(ProjectMembershipManager::class);
+    $manager->add($memberProject, $member, $admin);
+    $manager->add($otherProject, $otherMember, $admin);
 
-    $memberProject->members()->attach($member->id);
-    $otherProject->members()->attach($outsider->id);
-
-    Task::query()->create([
-        'project_id' => $memberProject->id,
+    app(TaskWorkflow::class)->createForAdmin($admin, $memberProject, [
         'title' => 'Visible task',
-        'is_done' => false,
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
     ]);
-
-    Task::query()->create([
-        'project_id' => $otherProject->id,
+    app(TaskWorkflow::class)->createForAdmin($admin, $otherProject, [
         'title' => 'Hidden task',
-        'is_done' => false,
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
     ]);
 
     $this->actingAs($member)
@@ -33,14 +37,35 @@ it('only shows tasks from projects the user belongs to', function (): void {
         ->assertDontSee('Hidden task');
 });
 
-it('lets admin see tasks from every project', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
-    $project = Project::query()->create(['title' => 'Admin project']);
+it('immediately removes task access when membership is removed', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client);
+    $manager = app(ProjectMembershipManager::class);
+    $manager->add($project, $customer, $admin);
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Membership protected',
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
+    ]);
 
-    Task::query()->create([
-        'project_id' => $project->id,
+    $this->actingAs($customer)->get(route('tasks.show', $task))->assertOk();
+
+    $manager->remove($project, $customer, $admin);
+
+    $this->get(route('tasks.show', $task))->assertNotFound();
+});
+
+it('lets admin see tasks from every project without membership', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $project = mvpProject($client, 'Admin project');
+
+    app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Admin visible task',
-        'is_done' => false,
+        'status' => TaskStatus::WaitingAdmin,
+        'priority' => TaskPriority::Normal,
     ]);
 
     $this->actingAs($admin)

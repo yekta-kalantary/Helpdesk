@@ -1,19 +1,23 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Projects\Application\ProjectMembershipManager;
 
-it('exposes users projects and tasks', function (): void {
-    $admin = User::query()->where('is_admin', true)->firstOrFail();
+it('exposes the MVP admin modules', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
 
-    $this->actingAs($admin)->get(route('projects.index'))->assertOk();
-    $this->get(route('tasks.index'))->assertOk();
+    $this->actingAs($admin)->get(route('clients.index'))->assertOk();
     $this->get(route('users.index'))->assertOk();
+    $this->get(route('projects.index'))->assertOk();
+    $this->get(route('tasks.index'))->assertOk();
+    $this->get(route('notifications.index'))->assertOk();
 });
 
-it('keeps user profile data directly on users', function (): void {
-    $user = User::factory()->create([
+it('keeps authenticated identity separate from the client account', function (): void {
+    $client = Client::factory()->create(['name' => 'Acme']);
+    $user = User::factory()->customer($client)->create([
         'name' => 'Yekta',
         'last_name' => 'Kalantary',
         'email' => 'yekta@example.test',
@@ -21,19 +25,25 @@ it('keeps user profile data directly on users', function (): void {
     ]);
 
     expect($user->full_name)->toBe('Yekta Kalantary')
-        ->and($user->email)->toBe('yekta@example.test')
-        ->and($user->mobile)->toBe('09120000000');
+        ->and($user->client->is($client))->toBeTrue()
+        ->and($user->client->name)->toBe('Acme');
 });
 
-it('links users to projects through project membership', function (): void {
-    $user = User::factory()->create();
-    $project = Project::query()->create([
-        'title' => 'Example project',
-        'description' => 'Simple project',
-    ]);
+it('links customer users to projects through auditable active membership', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client, 'Example project');
 
-    $project->members()->attach($user->id);
+    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
 
-    expect($project->members()->whereKey($user->id)->exists())->toBeTrue()
-        ->and(DB::table('project_user')->where('project_id', $project->id)->where('user_id', $user->id)->exists())->toBeTrue();
+    $row = DB::table('project_user')
+        ->where('project_id', $project->id)
+        ->where('user_id', $customer->id)
+        ->first();
+
+    expect($project->hasActiveMember($customer))->toBeTrue()
+        ->and($row)->not->toBeNull()
+        ->and($row->joined_at)->not->toBeNull()
+        ->and($row->removed_at)->toBeNull();
 });
