@@ -4,6 +4,7 @@ namespace Modules\Tasks\Presentation\Livewire;
 
 use DomainException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -132,20 +133,28 @@ class Form extends Component
                     'assigned_to' => $data['assigned_to'] === '' ? null : (int) $data['assigned_to'],
                     'due_date' => $data['due_date'] ?: null,
                 ]);
-            } elseif ($user->isAdmin()) {
-                $task = $workflow->createForAdmin($user, $project, [
-                    'title' => trim($data['title']),
-                    'description' => filled($data['description']) ? trim($data['description']) : null,
-                    'status' => TaskStatus::from($data['status']),
-                    'priority' => TaskPriority::from($data['priority']),
-                    'assigned_to' => $data['assigned_to'] === '' ? null : (int) $data['assigned_to'],
-                    'due_date' => $data['due_date'] ?: null,
-                ]);
             } else {
-                $task = $workflow->createForCustomer($user, $project, [
-                    'title' => trim($data['title']),
-                    'description' => filled($data['description']) ? trim($data['description']) : null,
-                ]);
+                $task = DB::transaction(function () use ($collaboration, $data, $project, $user, $workflow): Task {
+                    $task = $user->isAdmin()
+                        ? $workflow->createForAdmin($user, $project, [
+                            'title' => trim($data['title']),
+                            'description' => filled($data['description']) ? trim($data['description']) : null,
+                            'status' => TaskStatus::from($data['status']),
+                            'priority' => TaskPriority::from($data['priority']),
+                            'assigned_to' => $data['assigned_to'] === '' ? null : (int) $data['assigned_to'],
+                            'due_date' => $data['due_date'] ?: null,
+                        ])
+                        : $workflow->createForCustomer($user, $project, [
+                            'title' => trim($data['title']),
+                            'description' => filled($data['description']) ? trim($data['description']) : null,
+                        ]);
+
+                    if ($this->attachment) {
+                        $collaboration->attach($user, $task, $this->attachment);
+                    }
+
+                    return $task;
+                });
             }
         } catch (DomainException $e) {
             $this->addError('status', $this->domainMessage($e));
@@ -153,7 +162,7 @@ class Form extends Component
             return null;
         }
 
-        if ($this->attachment) {
+        if ($this->taskId && $this->attachment) {
             $collaboration->attach($user, $task, $this->attachment);
         }
 
