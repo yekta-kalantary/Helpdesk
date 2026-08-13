@@ -30,5 +30,9 @@ return [
             'application/vnd.rar', 'application/x-rar-compressed',
             'application/x-7z-compressed',
         ],
+        'preview_mime_types' => [
+            'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+            'application/pdf', 'text/plain', 'text/csv',
+        ],
     ],
 ];

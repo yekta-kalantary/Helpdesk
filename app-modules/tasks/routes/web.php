@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Tasks\Presentation\Http\Controllers\AttachmentDownloadController;
 
 Route::middleware(['web', 'auth', 'account.active'])->group(function (): void {
+    Route::get('/attachments/{attachment}/preview', [AttachmentDownloadController::class, 'preview'])->name('attachments.preview');
     Route::get('/attachments/{attachment}', AttachmentDownloadController::class)->name('attachments.download');
 
     Route::livewire('/tasks', 'tasks::index')->name('tasks.index');

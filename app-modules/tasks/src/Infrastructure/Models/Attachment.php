@@ -47,4 +47,10 @@ class Attachment extends Model
     {
         return $this->belongsTo(User::class, 'hidden_by');
     }
+
+    public function isPreviewable(): bool
+    {
+        return in_array($this->mime_type, config('helpdesk.attachments.mime_types', []), true)
+            && in_array($this->mime_type, config('helpdesk.attachments.preview_mime_types', []), true);
+    }
 }
