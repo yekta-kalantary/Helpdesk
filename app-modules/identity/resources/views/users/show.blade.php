@@ -42,9 +42,9 @@
             <x-ui.card>
                 <dl class="space-y-4 text-sm">
                     <div><dt class="text-slate-500">مشتری</dt><dd class="mt-1 font-bold">{{ $user->client?->name ?? '—' }}</dd></div>
-                    <div><dt class="text-slate-500">نقش</dt><dd class="mt-1 font-bold">Customer</dd></div>
+                    <div><dt class="text-slate-500">نقش</dt><dd class="mt-1 font-bold">{{ __('tasks::messages.roles.'.$user->role->value) }}</dd></div>
                     <div><dt class="text-slate-500">وضعیت</dt><dd class="mt-1"><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></dd></div>
-                    <div><dt class="text-slate-500">آخرین ورود</dt><dd class="mt-1 font-bold">{{ $user->last_login_at?->diffForHumans() ?? '—' }}</dd></div>
+                    <div><dt class="text-slate-500">آخرین ورود</dt><dd class="mt-1 font-bold"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
                 </dl>
             </x-ui.card>
 
