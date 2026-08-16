@@ -22,9 +22,9 @@
         </a>
 
         @if($isAdmin)
-            <a href="{{ route('tasks.index', ['status' => 'waiting_admin']) }}" wire:navigate class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
-                <div class="text-sm font-semibold text-slate-500">صف ادمین</div>
-                <div class="mt-4 text-3xl font-black text-slate-950">{{ number_format($adminQueueCount) }}</div>
+            <a href="{{ route('tasks.index', ['unassigned' => 1]) }}" wire:navigate class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                <div class="text-sm font-semibold text-slate-500">تسک‌های باز بدون مسئول</div>
+                <div class="mt-4 text-3xl font-black text-slate-950">{{ number_format($unassignedOpenTaskCount) }}</div>
             </a>
         @else
             <a href="{{ route('tasks.index', ['assignee' => auth()->id()]) }}" wire:navigate class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
@@ -36,17 +36,6 @@
         <a href="{{ route('tasks.index', ['overdue' => 1]) }}" wire:navigate class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow-md">
             <div class="text-sm font-semibold text-slate-500">عقب‌افتاده</div>
             <div class="mt-4 text-3xl font-black text-slate-950">{{ number_format($overdueCount) }}</div>
-        </a>
-    </div>
-
-    <div class="grid gap-4 sm:grid-cols-2">
-        <a href="{{ route('tasks.index', ['status' => 'waiting_admin']) }}" wire:navigate class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="text-sm font-semibold text-slate-500">منتظر ادمین</div>
-            <div class="mt-2 text-2xl font-black">{{ number_format($waitingAdminCount) }}</div>
-        </a>
-        <a href="{{ route('tasks.index', ['status' => 'waiting_customer']) }}" wire:navigate class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div class="text-sm font-semibold text-slate-500">منتظر مشتری</div>
-            <div class="mt-2 text-2xl font-black">{{ number_format($waitingCustomerCount) }}</div>
         </a>
     </div>
 
@@ -78,7 +67,7 @@
                     <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block rounded-xl border border-slate-200 p-3 hover:bg-slate-50">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <span class="font-bold">{{ $task->reference }} · {{ $task->title }}</span>
-                            <span class="text-xs text-slate-500">{{ __('tasks::messages.statuses.'.$task->status->value) }}</span>
+                            <span class="text-xs text-slate-500">{{ $task->projectStatus->title }}</span>
                         </div>
                         <p class="mt-1 text-sm text-slate-500">{{ $task->project->name }}</p>
                     </a>
