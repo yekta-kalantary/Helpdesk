@@ -3,7 +3,15 @@
         <x-ui.alert tone="success">{{ session('success') }}</x-ui.alert>
     @endif
 
-    <x-ui.page-header :title="$project->name">
+    <x-ui.page-header
+        :title="$project->name"
+        :subtitle="$project->description ? \Illuminate\Support\Str::limit($project->description, 140) : 'فضای کاری پروژه برای هماهنگی، پیگیری و تحویل کار.'"
+        :breadcrumbs="[
+            ['label' => 'پروژه‌ها', 'href' => route('projects.index')],
+            ['label' => $project->client->name, 'href' => $isAdmin ? route('clients.show', $project->client) : null],
+            ['label' => $project->name, 'href' => null],
+        ]"
+    >
         <x-slot:actions>
             <x-ui.button variant="secondary" :href="route('tasks.index', ['project' => $project->id])" icon="fa-list-check" wire:navigate>فهرست تسک‌ها</x-ui.button>
             @if($project->status->value === 'active')
@@ -22,19 +30,45 @@
 
     @error('project')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @if($isAdmin)<x-ui.card><div class="text-sm text-slate-500">مشتری</div><div class="mt-2 font-black">{{ $project->client->name }}</div></x-ui.card>@endif
-        <x-ui.card><div class="text-sm text-slate-500">وضعیت پروژه</div><div class="mt-2"><x-ui.badge :tone="$project->status->value === 'active' ? 'success' : 'neutral'">{{ $project->status->value === 'active' ? 'فعال' : 'تکمیل‌شده' }}</x-ui.badge></div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">اعضا</div><div class="mt-2 text-2xl font-black">{{ $members->total() }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">تسک باز</div><div class="mt-2 text-2xl font-black">{{ $openTasksCount }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">تاریخ شروع</div><div class="mt-2 font-black"><x-ui.date :value="$project->start_date" />{{ $project->start_date ? '' : '—' }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div class="mt-2 font-black"><x-ui.date :value="$project->due_date" />{{ $project->due_date ? '' : '—' }}</div></x-ui.card>
-    </div>
+    @php($progressPercentage = $totalTasksCount > 0 ? (int) round(($completedTasksCount / $totalTasksCount) * 100) : 0)
+
+    <section class="rounded-2xl border border-workspace-border bg-white p-4 shadow-sm sm:p-6" aria-labelledby="project-progress-heading">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 id="project-progress-heading" class="text-lg font-black text-slate-950">نمای کلی پروژه</h2>
+                    <x-ui.badge :tone="$project->status->value === 'active' ? 'success' : 'neutral'">{{ $project->status->value === 'active' ? 'فعال' : 'تکمیل‌شده' }}</x-ui.badge>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
+                    <span>{{ $openTasksCount }} تسک باز از {{ $totalTasksCount }}</span>
+                    <span>{{ $members->total() }} عضو</span>
+                    <span>شروع: <x-ui.date :value="$project->start_date" />{{ $project->start_date ? '' : '—' }}</span>
+                    <span>موعد: <x-ui.date :value="$project->due_date" />{{ $project->due_date ? '' : '—' }}</span>
+                </div>
+            </div>
+            <div class="w-full max-w-xs" aria-label="پیشرفت پروژه">
+                <div class="mb-1 flex items-center justify-between text-xs font-semibold text-slate-500">
+                    <span>پیشرفت</span><span>{{ $progressPercentage }}%</span>
+                </div>
+                <x-ui.progress :value="$progressPercentage" :show-value="false" />
+            </div>
+        </div>
+    </section>
 
     @if($project->description)
-        <x-ui.card><div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $project->description }}</div></x-ui.card>
+        <x-ui.card>
+            <div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $project->description }}</div>
+        </x-ui.card>
     @endif
 
+    <x-ui.section-tabs :tabs="array_merge([
+        ['label' => 'Kanban', 'href' => '#kanban', 'active' => true],
+        ['label' => 'Tasks', 'href' => '#tasks', 'active' => false],
+        ['label' => 'Activity', 'href' => '#activity', 'active' => false],
+        ['label' => 'Members', 'href' => '#members', 'active' => false],
+    ], $isAdmin ? [['label' => 'Project Management', 'href' => '#project-management', 'active' => false]] : [])" />
+
+    <section id="kanban" class="scroll-mt-6">
     <x-ui.card>
         <div class="mb-4 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
@@ -61,7 +95,8 @@
             </div>
         </div>
 
-        <div class="-mx-2 overflow-x-auto px-2 pb-3">
+        <div id="tasks" class="relative -mx-2 overflow-x-auto overscroll-x-contain px-2 pb-3">
+            <div wire:loading.flex wire:target="moveTask,taskSearch,workGroupFilter" class="absolute inset-0 z-10 items-start justify-center bg-white/70 pt-8 text-sm font-semibold text-workspace-teal" role="status">در حال به‌روزرسانی برد...</div>
             <div class="flex min-w-max gap-4" role="list" aria-label="کانبان پروژه">
                 @foreach($statuses as $status)
                     @php($columnTasks = $tasks->where('project_status_id', $status->id))
@@ -71,7 +106,7 @@
                         @dragover.prevent
                         @drop.prevent="$wire.moveTask(parseInt($event.dataTransfer.getData('text/plain')), {{ $status->id }})"
                     >
-                        <div class="mb-3 flex items-center justify-between gap-2">
+                        <div class="mb-3 flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
                             <div class="flex items-center gap-2">
                                 <h3 class="font-black">{{ $status->title }}</h3>
                                 @if($status->is_done)<x-ui.badge tone="success">Done</x-ui.badge>@endif
@@ -85,11 +120,12 @@
                                     wire:key="kanban-task-{{ $task->id }}"
                                     draggable="{{ $project->status->value === 'active' ? 'true' : 'false' }}"
                                     @dragstart="$event.dataTransfer.setData('text/plain', '{{ $task->id }}')"
-                                    class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                                    aria-label="{{ $task->reference }}: {{ $task->title }}"
+                                    class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-workspace-teal hover:shadow-md {{ $task->projectStatus?->is_done ? 'bg-emerald-50/50' : '' }}"
                                 >
                                     <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block">
                                         <div class="text-xs font-bold text-slate-400">{{ $task->reference }}</div>
-                                        <div class="mt-1 font-bold leading-6 text-slate-900">{{ $task->title }}</div>
+                                        <div class="mt-1 font-bold leading-6 text-slate-900 {{ $task->projectStatus?->is_done ? 'line-through decoration-emerald-600' : '' }}">{{ $task->title }}</div>
                                         <div class="mt-3 space-y-1 text-xs text-slate-500">
                                             <div>مسئول: {{ $task->assignee?->full_name ?? 'بدون مسئول' }}</div>
                                             <div>اولویت: {{ __('tasks::messages.priorities.'.$task->priority->value) }}</div>
@@ -117,6 +153,7 @@
             </div>
         </div>
     </x-ui.card>
+    </section>
 
     @if($workGroups->isNotEmpty())
         <x-ui.card>
@@ -180,6 +217,11 @@
     @endif
 
     @if($isAdmin)
+        <section id="project-management" class="scroll-mt-6 space-y-3" aria-labelledby="project-management-heading">
+            <div>
+                <h2 id="project-management-heading" class="text-lg font-black text-slate-950">Project Management</h2>
+                <p class="mt-1 text-sm text-slate-500">مدیریت Workflow و Work Group فقط برای مدیر پروژه فعال است؛ محدودیت‌های وضعیت و حداکثر پنج سطح سلسله‌مراتب همچنان از سمت دامنه enforce می‌شوند.</p>
+            </div>
         <div class="grid gap-5 xl:grid-cols-2">
             <x-ui.card>
                 <div class="mb-4">
@@ -283,8 +325,10 @@
                 @endif
             </x-ui.card>
         </div>
+        </section>
     @endif
 
+    <section id="members" class="scroll-mt-6">
     <x-ui.card>
         <div class="mb-4 flex items-center justify-between gap-3">
             <h2 class="font-black">اعضای پروژه</h2>
@@ -302,7 +346,9 @@
         </div>
         <div class="mt-4">{{ $members->links() }}</div>
     </x-ui.card>
+    </section>
 
+    <section id="activity" class="scroll-mt-6">
     <x-ui.card>
         <h2 class="mb-4 font-black">فعالیت‌های اخیر</h2>
         <div class="space-y-3">
@@ -317,4 +363,5 @@
         </div>
         <div class="mt-4">{{ $activities->links() }}</div>
     </x-ui.card>
+    </section>
 </div>

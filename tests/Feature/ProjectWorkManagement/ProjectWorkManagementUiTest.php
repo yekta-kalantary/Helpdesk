@@ -44,6 +44,36 @@ it('renders Kanban and hierarchy from project-owned workflow and searches indepe
         ->assertSee('Grouped needle task');
 });
 
+it('renders project workspace sections for admins and keeps management controls private', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client, 'Workspace project');
+    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+
+    $this->actingAs($admin);
+
+    Livewire::test(ProjectShow::class, ['project' => $project->id])
+        ->assertSee('Kanban')
+        ->assertSee('Tasks')
+        ->assertSee('Activity')
+        ->assertSee('Members')
+        ->assertSee('Project Management')
+        ->assertSee('Workflow پروژه')
+        ->assertSee('مدیریت Work Group');
+
+    $this->actingAs($customer);
+
+    Livewire::test(ProjectShow::class, ['project' => $project->id])
+        ->assertSee('Kanban')
+        ->assertSee('Tasks')
+        ->assertSee('Activity')
+        ->assertSee('Members')
+        ->assertDontSee('Project Management')
+        ->assertDontSee('Workflow پروژه')
+        ->assertDontSee('مدیریت Work Group');
+});
+
 it('lets a project member move any visible task through Kanban regardless of assignment', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();

@@ -326,6 +326,8 @@ class Show extends Component
             'tasksByWorkGroup' => $tasksByWorkGroup,
             'workGroupProgress' => $workGroupProgress,
             'activities' => $activities,
+            'totalTasksCount' => $allTasks->count(),
+            'completedTasksCount' => $allTasks->filter(fn (Task $task): bool => (bool) $task->projectStatus->is_done)->count(),
             'openTasksCount' => $allTasks->filter(fn (Task $task): bool => ! $task->projectStatus->is_done)->count(),
             'isAdmin' => $user->isAdmin(),
         ])->title($project->name);
