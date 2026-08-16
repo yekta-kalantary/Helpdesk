@@ -1,6 +1,7 @@
 <?php
 
 use App\Notifications\ResourceChangedNotification;
+use App\Support\CustomerAssignmentRequeuer;
 use Illuminate\Support\Facades\Notification;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
@@ -8,7 +9,6 @@ use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskCollaboration;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 it('routes task status changes only to the creator and current assignee', function (): void {
     Notification::fake();
@@ -31,7 +31,7 @@ it('routes task status changes only to the creator and current assignee', functi
     Notification::fake();
 
     app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::WaitingCustomer,
+        'project_status_id' => mvpOpenStatus($project, 1)->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $assignee->id,
     ]);
@@ -42,7 +42,7 @@ it('routes task status changes only to the creator and current assignee', functi
     Notification::assertNotSentTo($admin, ResourceChangedNotification::class);
 });
 
-it('routes an admin created assigned task only to its assignee', function (): void {
+it('routes an admin-created assigned task only to its assignee', function (): void {
     Notification::fake();
 
     $client = Client::factory()->create();
@@ -58,7 +58,6 @@ it('routes an admin created assigned task only to its assignee', function (): vo
 
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Assigned task',
-        'status' => TaskStatus::WaitingCustomer,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $assignee->id,
     ]);
@@ -68,13 +67,12 @@ it('routes an admin created assigned task only to its assignee', function (): vo
     Notification::assertNotSentTo($admin, ResourceChangedNotification::class);
 });
 
-it('routes an unassigned admin queue task to every active admin only', function (): void {
+it('does not recreate fixed admin queue routing for unassigned tasks', function (): void {
     Notification::fake();
 
     $client = Client::factory()->create();
     $actor = User::factory()->admin()->create();
     $otherAdmin = User::factory()->admin()->create();
-    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
     $member = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $member, $actor);
@@ -82,19 +80,17 @@ it('routes an unassigned admin queue task to every active admin only', function 
     Notification::fake();
 
     app(TaskWorkflow::class)->createForAdmin($actor, $project, [
-        'title' => 'Admin queue task',
-        'status' => TaskStatus::WaitingAdmin,
+        'title' => 'Unassigned task',
         'priority' => TaskPriority::Normal,
         'assigned_to' => null,
     ]);
 
-    Notification::assertSentTo($otherAdmin, ResourceChangedNotification::class, 1);
-    Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
+    Notification::assertNotSentTo($otherAdmin, ResourceChangedNotification::class);
     Notification::assertNotSentTo($member, ResourceChangedNotification::class);
     Notification::assertNotSentTo($actor, ResourceChangedNotification::class);
 });
 
-it('routes assignment-only changes only to the new assignee', function (): void {
+it('routes assignment-only changes to the creator and new assignee but not the old assignee', function (): void {
     Notification::fake();
 
     $client = Client::factory()->create();
@@ -104,66 +100,49 @@ it('routes assignment-only changes only to the new assignee', function (): void 
     $newAssignee = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     $memberships = app(ProjectMembershipManager::class);
-    $memberships->add($project, $creator, $admin);
-    $memberships->add($project, $oldAssignee, $admin);
-    $memberships->add($project, $newAssignee, $admin);
+    foreach ([$creator, $oldAssignee, $newAssignee] as $member) {
+        $memberships->add($project, $member, $admin);
+    }
 
-    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, [
-        'title' => 'Reassign task',
-    ]);
-    app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::WaitingCustomer,
-        'assigned_to' => $oldAssignee->id,
-    ]);
+    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, ['title' => 'Reassign task']);
+    app(TaskWorkflow::class)->updateByAdmin($admin, $task, ['assigned_to' => $oldAssignee->id]);
 
     Notification::fake();
 
-    app(TaskWorkflow::class)->updateByAdmin($admin, $task->refresh(), [
-        'assigned_to' => $newAssignee->id,
-    ]);
+    app(TaskWorkflow::class)->updateByAdmin($admin, $task->refresh(), ['assigned_to' => $newAssignee->id]);
 
+    Notification::assertSentTo($creator, ResourceChangedNotification::class, 1);
     Notification::assertSentTo($newAssignee, ResourceChangedNotification::class, 1);
-    Notification::assertNotSentTo($creator, ResourceChangedNotification::class);
     Notification::assertNotSentTo($oldAssignee, ResourceChangedNotification::class);
     Notification::assertNotSentTo($admin, ResourceChangedNotification::class);
 });
 
-it('adds active admins when a status change enters an unassigned admin queue', function (): void {
+it('routes member-driven status changes to task participants and excludes the actor', function (): void {
     Notification::fake();
 
     $client = Client::factory()->create();
-    $actor = User::factory()->admin()->create();
-    $otherAdmin = User::factory()->admin()->create();
-    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
+    $admin = User::factory()->admin()->create();
     $creator = User::factory()->customer($client)->create();
     $assignee = User::factory()->customer($client)->create();
+    $actor = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     $memberships = app(ProjectMembershipManager::class);
-    $memberships->add($project, $creator, $actor);
-    $memberships->add($project, $assignee, $actor);
+    foreach ([$creator, $assignee, $actor] as $member) {
+        $memberships->add($project, $member, $admin);
+    }
 
-    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, [
-        'title' => 'Return to admin queue',
-    ]);
-    app(TaskWorkflow::class)->updateByAdmin($actor, $task, [
-        'status' => TaskStatus::WaitingCustomer,
-        'assigned_to' => $assignee->id,
-    ]);
-
+    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, ['title' => 'Member move']);
+    $task = app(TaskWorkflow::class)->updateByAdmin($admin, $task, ['assigned_to' => $assignee->id]);
     Notification::fake();
 
-    app(TaskWorkflow::class)->updateByAdmin($actor, $task->refresh(), [
-        'status' => TaskStatus::WaitingAdmin,
-    ]);
+    app(TaskWorkflow::class)->changeStatus($actor, $task, mvpOpenStatus($project, 1));
 
     Notification::assertSentTo($creator, ResourceChangedNotification::class, 1);
-    Notification::assertSentTo($otherAdmin, ResourceChangedNotification::class, 1);
-    Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
-    Notification::assertNotSentTo($assignee, ResourceChangedNotification::class);
+    Notification::assertSentTo($assignee, ResourceChangedNotification::class, 1);
     Notification::assertNotSentTo($actor, ResourceChangedNotification::class);
 });
 
-it('routes comments only to the creator and current assignee', function (): void {
+it('routes comments to creator and assignee while excluding the commenter', function (): void {
     Notification::fake();
 
     $client = Client::factory()->create();
@@ -171,118 +150,45 @@ it('routes comments only to the creator and current assignee', function (): void
     $creator = User::factory()->customer($client)->create();
     $assignee = User::factory()->customer($client)->create();
     $commenter = User::factory()->customer($client)->create();
-    $observer = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     $memberships = app(ProjectMembershipManager::class);
-    foreach ([$creator, $assignee, $commenter, $observer] as $member) {
+    foreach ([$creator, $assignee, $commenter] as $member) {
         $memberships->add($project, $member, $admin);
     }
 
-    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, [
-        'title' => 'Comment routing',
-    ]);
-    app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::WaitingCustomer,
-        'assigned_to' => $assignee->id,
-    ]);
-
+    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, ['title' => 'Comment routing']);
+    $task = app(TaskWorkflow::class)->updateByAdmin($admin, $task, ['assigned_to' => $assignee->id]);
     Notification::fake();
 
-    app(TaskCollaboration::class)->comment($commenter, $task->refresh(), 'Status update', []);
+    app(TaskCollaboration::class)->comment($commenter, $task, 'Hello', []);
 
     Notification::assertSentTo($creator, ResourceChangedNotification::class, 1);
     Notification::assertSentTo($assignee, ResourceChangedNotification::class, 1);
     Notification::assertNotSentTo($commenter, ResourceChangedNotification::class);
-    Notification::assertNotSentTo($observer, ResourceChangedNotification::class);
 });
 
-it('routes admin queue comments to active admins without unrelated project members', function (): void {
-    Notification::fake();
-
-    $client = Client::factory()->create();
-    $adminA = User::factory()->admin()->create();
-    $adminB = User::factory()->admin()->create();
-    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
-    $creator = User::factory()->customer($client)->create();
-    $observer = User::factory()->customer($client)->create();
-    $project = mvpProject($client);
-    $memberships = app(ProjectMembershipManager::class);
-    $memberships->add($project, $creator, $adminA);
-    $memberships->add($project, $observer, $adminA);
-
-    $task = app(TaskWorkflow::class)->createForCustomer($creator, $project, [
-        'title' => 'Admin queue comment',
-    ]);
-
-    Notification::fake();
-
-    app(TaskCollaboration::class)->comment($creator, $task, 'Needs admin input', []);
-
-    Notification::assertSentTo($adminA, ResourceChangedNotification::class, 1);
-    Notification::assertSentTo($adminB, ResourceChangedNotification::class, 1);
-    Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
-    Notification::assertNotSentTo($creator, ResourceChangedNotification::class);
-    Notification::assertNotSentTo($observer, ResourceChangedNotification::class);
-});
-
-it('routes a customer transition into admin queue once to each active admin', function (): void {
-    Notification::fake();
-
-    $client = Client::factory()->create();
-    $adminA = User::factory()->admin()->create();
-    $adminB = User::factory()->admin()->create();
-    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
-    $assignee = User::factory()->customer($client)->create();
-    $observer = User::factory()->customer($client)->create();
-    $project = mvpProject($client);
-    $memberships = app(ProjectMembershipManager::class);
-    $memberships->add($project, $assignee, $adminA);
-    $memberships->add($project, $observer, $adminA);
-
-    $task = app(TaskWorkflow::class)->createForAdmin($adminA, $project, [
-        'title' => 'Customer transition',
-        'status' => TaskStatus::InProgress,
-        'priority' => TaskPriority::Normal,
-        'assigned_to' => $assignee->id,
-    ]);
-
-    Notification::fake();
-
-    app(TaskWorkflow::class)->transitionByCustomer($assignee, $task, TaskStatus::WaitingAdmin);
-
-    Notification::assertSentTo($adminA, ResourceChangedNotification::class, 1);
-    Notification::assertSentTo($adminB, ResourceChangedNotification::class, 1);
-    Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
-    Notification::assertNotSentTo($assignee, ResourceChangedNotification::class);
-    Notification::assertNotSentTo($observer, ResourceChangedNotification::class);
-});
-
-it('routes automatic membership-removal requeues to active admins', function (): void {
+it('notifies active admins when access changes automatically release a customer assignment', function (): void {
     Notification::fake();
 
     $client = Client::factory()->create();
     $actor = User::factory()->admin()->create();
     $otherAdmin = User::factory()->admin()->create();
-    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
-    $assignee = User::factory()->customer($client)->create();
+    $inactiveAdmin = User::factory()->admin()->inactive()->create();
+    $customer = User::factory()->customer($client)->create();
     $project = mvpProject($client);
-    $memberships = app(ProjectMembershipManager::class);
-    $memberships->add($project, $assignee, $actor);
+    app(ProjectMembershipManager::class)->add($project, $customer, $actor);
 
     $task = app(TaskWorkflow::class)->createForAdmin($actor, $project, [
-        'title' => 'Membership requeue',
-        'status' => TaskStatus::InProgress,
+        'title' => 'Assignment needs release',
         'priority' => TaskPriority::Normal,
-        'assigned_to' => $assignee->id,
+        'assigned_to' => $customer->id,
     ]);
-
     Notification::fake();
 
-    $memberships->remove($project, $assignee, $actor);
+    app(CustomerAssignmentRequeuer::class)->requeue($customer, $actor, $project);
 
-    expect($task->refresh()->status)->toBe(TaskStatus::WaitingAdmin)
-        ->and($task->assigned_to)->toBeNull();
     Notification::assertSentTo($otherAdmin, ResourceChangedNotification::class, 1);
     Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
     Notification::assertNotSentTo($actor, ResourceChangedNotification::class);
+    expect($task->refresh()->assigned_to)->toBeNull();
 });

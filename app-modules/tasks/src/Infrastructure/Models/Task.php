@@ -10,18 +10,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
+use Modules\Projects\Infrastructure\Models\WorkGroup;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 class Task extends Model
 {
     protected $fillable = [
         'project_id',
+        'project_status_id',
+        'work_group_id',
         'created_by',
         'assigned_to',
         'title',
         'description',
-        'status',
         'priority',
         'due_date',
         'completed_at',
@@ -64,7 +66,7 @@ class Task extends Model
         });
 
         static::saving(function (Task $task): void {
-            if (! $task->exists || $task->isDirty(['status', 'assigned_to'])) {
+            if (! $task->exists || $task->isDirty(['project_status_id', 'work_group_id', 'assigned_to'])) {
                 $task->assertStateIntegrity();
             }
         });
@@ -73,7 +75,6 @@ class Task extends Model
     protected function casts(): array
     {
         return [
-            'status' => TaskStatus::class,
             'priority' => TaskPriority::class,
             'due_date' => 'date',
             'completed_at' => 'datetime',
@@ -83,6 +84,16 @@ class Task extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function projectStatus(): BelongsTo
+    {
+        return $this->belongsTo(ProjectTaskStatus::class, 'project_status_id');
+    }
+
+    public function workGroup(): BelongsTo
+    {
+        return $this->belongsTo(WorkGroup::class);
     }
 
     public function creator(): BelongsTo
@@ -105,6 +116,16 @@ class Task extends Model
         return $this->hasMany(Attachment::class)->whereNull('comment_id')->orderBy('id');
     }
 
+    public function checklistItems(): HasMany
+    {
+        return $this->hasMany(TaskChecklistItem::class)->whereNull('removed_at')->orderBy('position')->orderBy('id');
+    }
+
+    public function allChecklistItems(): HasMany
+    {
+        return $this->hasMany(TaskChecklistItem::class)->orderBy('position')->orderBy('id');
+    }
+
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {
@@ -118,65 +139,63 @@ class Task extends Model
     {
         return $query
             ->whereDate('due_date', '<', today())
-            ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value]);
+            ->whereHas('projectStatus', fn (Builder $statuses): Builder => $statuses->where('is_done', false));
+    }
+
+    public function isDone(): bool
+    {
+        $this->loadMissing('projectStatus');
+
+        return (bool) $this->projectStatus?->is_done;
     }
 
     public function isTerminal(): bool
     {
-        return $this->status->isTerminal();
+        return $this->isDone();
     }
 
     private function assertStateIntegrity(): void
     {
-        $status = $this->status instanceof TaskStatus
-            ? $this->status
-            : TaskStatus::from((string) $this->status);
+        if (! $this->project_id) {
+            throw new DomainException('Task project is required.');
+        }
 
-        $assignee = $this->assigned_to
-            ? User::query()->find($this->assigned_to)
-            : null;
+        $status = ProjectTaskStatus::query()->find($this->project_status_id);
+        if (! $status || ! $status->is_active || $status->project_id !== (int) $this->project_id) {
+            throw new DomainException('Task Project Status must be active and belong to the same Project.');
+        }
 
-        if ($status === TaskStatus::WaitingAdmin) {
-            if ($assignee && (! $assignee->isAdmin() || ! $assignee->is_active)) {
-                throw new DomainException('Waiting Admin tasks may only be unassigned or assigned to an active admin.');
+        if ($this->work_group_id) {
+            $group = WorkGroup::query()->find($this->work_group_id);
+            if (! $group || $group->project_id !== (int) $this->project_id) {
+                throw new DomainException('Task Work Group must belong to the same Project.');
             }
 
+            if ((! $this->exists || $this->isDirty('work_group_id')) && ! $group->isActive()) {
+                throw new DomainException('A new Task Work Group assignment must target an active Work Group.');
+            }
+        }
+
+        if (! $this->assigned_to) {
             return;
         }
 
-        if ($status === TaskStatus::WaitingCustomer) {
-            if (! $assignee || ! $this->validCustomerAssignee($assignee)) {
-                throw new DomainException('Waiting Customer requires an active customer member from the same project.');
-            }
+        $assignee = User::query()->find($this->assigned_to);
+        if (! $assignee || ! $assignee->is_active) {
+            throw new DomainException('Task assignee must be active.');
+        }
 
+        if ($assignee->isAdmin()) {
             return;
         }
 
-        if (in_array($status, [TaskStatus::Todo, TaskStatus::InProgress], true)) {
-            if (! $assignee || ! $assignee->is_active) {
-                throw new DomainException('Todo and In Progress tasks require an active assignee.');
-            }
-
-            if ($assignee->isCustomer() && ! $this->validCustomerAssignee($assignee)) {
-                throw new DomainException('Customer assignee must be an active member of the task project.');
-            }
-
-            if (! $assignee->isAdmin() && ! $assignee->isCustomer()) {
-                throw new DomainException('Task assignee has an invalid role.');
-            }
-        }
-    }
-
-    private function validCustomerAssignee(User $user): bool
-    {
-        if (! $user->isCustomer() || ! $user->is_active || ! $user->client_id) {
-            return false;
+        if (! $assignee->isCustomer() || ! $assignee->client_id) {
+            throw new DomainException('Task assignee has an invalid role.');
         }
 
-        $project = $this->project()->first();
-
-        return $project !== null
-            && $project->client_id === $user->client_id
-            && $project->hasActiveMember($user);
+        $project = Project::query()->find($this->project_id);
+        if (! $project || $project->client_id !== $assignee->client_id || ! $project->hasActiveMember($assignee)) {
+            throw new DomainException('Customer assignee must be an active member of the task Project.');
+        }
     }
 }

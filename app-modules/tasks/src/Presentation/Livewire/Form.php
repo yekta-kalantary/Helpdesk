@@ -11,10 +11,11 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
+use Modules\Projects\Infrastructure\Models\WorkGroup;
 use Modules\Tasks\Application\TaskCollaboration;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 class Form extends Component
@@ -30,7 +31,9 @@ class Form extends Component
 
     public ?string $description = null;
 
-    public string $status = 'waiting_admin';
+    public string $project_status_id = '';
+
+    public string $work_group_id = '';
 
     public string $priority = 'normal';
 
@@ -62,11 +65,15 @@ class Form extends Component
             return redirect()->route('tasks.edit', $item);
         }
 
+        $item->loadMissing(['project.client', 'projectStatus']);
+        abort_if($item->isDone() || ! $item->project->isActive() || ! $item->project->client->isActive(), 403);
+
         $this->taskId = $item->id;
         $this->project_id = $item->project_id;
         $this->title = $item->title;
         $this->description = $item->description;
-        $this->status = $item->status->value;
+        $this->project_status_id = (string) $item->project_status_id;
+        $this->work_group_id = $item->work_group_id ? (string) $item->work_group_id : '';
         $this->priority = $item->priority->value;
         $this->assigned_to = $item->assigned_to ? (string) $item->assigned_to : '';
         $this->due_date = $item->due_date?->toDateString();
@@ -78,20 +85,12 @@ class Form extends Component
     {
         if (! $this->taskId) {
             $this->assigned_to = '';
+            $this->project_status_id = '';
+            $this->work_group_id = '';
         }
     }
 
-    public function updatedStatus(): void
-    {
-        if ($this->status === TaskStatus::WaitingAdmin->value && $this->assigned_to !== '') {
-            $assignee = User::query()->find((int) $this->assigned_to);
-            if ($assignee?->isCustomer()) {
-                $this->assigned_to = '';
-            }
-        }
-    }
-
-    public function save(TaskWorkflow $workflow, TaskCollaboration $collaboration)
+    public function save(TaskWorkflow $workflow, TaskCollaboration $collaboration): mixed
     {
         /** @var User $user */
         $user = auth()->user();
@@ -100,6 +99,8 @@ class Form extends Component
             'project_id' => ['required', 'integer', Rule::exists('projects', 'id')],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:10000'],
+            'project_status_id' => ['nullable', 'integer', Rule::exists('project_task_statuses', 'id')],
+            'work_group_id' => ['nullable', 'integer', Rule::exists('work_groups', 'id')],
             'attachment' => [
                 'nullable',
                 'file',
@@ -111,7 +112,6 @@ class Form extends Component
 
         if ($user->isAdmin()) {
             $rules += [
-                'status' => ['required', Rule::enum(TaskStatus::class)],
                 'priority' => ['required', Rule::enum(TaskPriority::class)],
                 'assigned_to' => ['nullable', 'integer', Rule::exists('users', 'id')],
                 'due_date' => ['nullable', 'date'],
@@ -119,11 +119,13 @@ class Form extends Component
         }
 
         $data = $this->validate($rules);
-
         $project = Project::query()
             ->visibleTo($user)
             ->where('status', 'active')
             ->findOrFail((int) $data['project_id']);
+
+        $projectStatusId = filled($data['project_status_id'] ?? null) ? (int) $data['project_status_id'] : null;
+        $workGroupId = filled($data['work_group_id'] ?? null) ? (int) $data['work_group_id'] : null;
 
         try {
             if ($this->taskId) {
@@ -137,26 +139,28 @@ class Form extends Component
                 $task = $workflow->updateByAdmin($user, $task, [
                     'title' => trim($data['title']),
                     'description' => filled($data['description']) ? trim($data['description']) : null,
-                    'status' => TaskStatus::from($data['status']),
+                    'project_status_id' => $projectStatusId ?: $task->project_status_id,
+                    'work_group_id' => $workGroupId,
                     'priority' => TaskPriority::from($data['priority']),
                     'assigned_to' => $data['assigned_to'] === '' ? null : (int) $data['assigned_to'],
                     'due_date' => $data['due_date'] ?: null,
                 ]);
             } else {
-                $task = DB::transaction(function () use ($collaboration, $data, $project, $user, $workflow): Task {
+                $task = DB::transaction(function () use ($collaboration, $data, $project, $projectStatusId, $user, $workGroupId, $workflow): Task {
+                    $payload = [
+                        'title' => trim($data['title']),
+                        'description' => filled($data['description']) ? trim($data['description']) : null,
+                        'project_status_id' => $projectStatusId,
+                        'work_group_id' => $workGroupId,
+                    ];
+
                     $task = $user->isAdmin()
-                        ? $workflow->createForAdmin($user, $project, [
-                            'title' => trim($data['title']),
-                            'description' => filled($data['description']) ? trim($data['description']) : null,
-                            'status' => TaskStatus::from($data['status']),
+                        ? $workflow->createForAdmin($user, $project, $payload + [
                             'priority' => TaskPriority::from($data['priority']),
                             'assigned_to' => $data['assigned_to'] === '' ? null : (int) $data['assigned_to'],
                             'due_date' => $data['due_date'] ?: null,
                         ])
-                        : $workflow->createForCustomer($user, $project, [
-                            'title' => trim($data['title']),
-                            'description' => filled($data['description']) ? trim($data['description']) : null,
-                        ]);
+                        : $workflow->createForCustomer($user, $project, $payload);
 
                     if ($this->attachment) {
                         $collaboration->attach($user, $task, $this->attachment);
@@ -166,7 +170,7 @@ class Form extends Component
                 });
             }
         } catch (DomainException $e) {
-            $this->addError('status', $this->domainMessage($e));
+            $this->addError('project_status_id', $e->getMessage());
 
             return null;
         }
@@ -177,7 +181,7 @@ class Form extends Component
 
         session()->flash('success', $this->taskId ? __('app.updated_successfully') : __('app.created_successfully'));
 
-        return $this->redirectRoute('tasks.show', ['task' => $task->id], navigate: true);
+        return $this->redirectRoute('tasks.show', ['task' => $task->reference], navigate: true);
     }
 
     public function render()
@@ -191,23 +195,31 @@ class Form extends Component
             ->orderBy('name')
             ->get(['id', 'client_id', 'name']);
 
-        $project = $this->project_id
-            ? $projects->firstWhere('id', (int) $this->project_id)
-            : null;
-
+        $project = $this->project_id ? $projects->firstWhere('id', (int) $this->project_id) : null;
+        $statuses = collect();
+        $workGroups = collect();
         $assignees = collect();
-        if ($user->isAdmin() && $project) {
-            $admins = User::query()->active()->admins()->orderBy('name')->get(['id', 'name', 'last_name', 'role']);
-            $customers = $project->activeMembers()
-                ->where('users.is_active', true)
-                ->orderBy('users.name')
-                ->get(['users.id', 'users.name', 'users.last_name', 'users.role']);
 
-            $assignees = match ($this->status) {
-                TaskStatus::WaitingCustomer->value => $customers,
-                TaskStatus::WaitingAdmin->value => $admins,
-                default => $admins->concat($customers)->unique('id')->values(),
-            };
+        if ($project) {
+            $statuses = ProjectTaskStatus::query()
+                ->where('project_id', $project->id)
+                ->active()
+                ->orderBy('position')
+                ->get(['id', 'title', 'is_done', 'position']);
+            $workGroups = WorkGroup::query()
+                ->where('project_id', $project->id)
+                ->active()
+                ->orderBy('position')
+                ->get(['id', 'parent_id', 'title', 'position']);
+
+            if ($user->isAdmin()) {
+                $admins = User::query()->active()->admins()->orderBy('name')->get(['id', 'name', 'last_name', 'role']);
+                $customers = $project->activeMembers()
+                    ->where('users.is_active', true)
+                    ->orderBy('users.name')
+                    ->get(['users.id', 'users.name', 'users.last_name', 'users.role']);
+                $assignees = $admins->concat($customers)->unique('id')->values();
+            }
         }
 
         $projectName = $this->taskId
@@ -217,20 +229,11 @@ class Form extends Component
         return view('tasks::form', [
             'projects' => $projects,
             'assignees' => $assignees,
-            'statuses' => TaskStatus::cases(),
+            'statuses' => $statuses,
+            'workGroups' => $workGroups,
             'priorities' => TaskPriority::cases(),
             'projectName' => $projectName,
             'isAdmin' => $user->isAdmin(),
         ])->title($this->taskId ? __('tasks::messages.edit_task') : __('tasks::messages.new_task'));
-    }
-
-    private function domainMessage(DomainException $e): string
-    {
-        return match (true) {
-            str_contains($e->getMessage(), 'Waiting Customer') => 'وضعیت منتظر مشتری به یک کاربر فعال عضو همین پروژه نیاز دارد.',
-            str_contains($e->getMessage(), 'Waiting Admin') => 'در وضعیت منتظر ادمین، مسئول باید ادمین فعال یا خالی باشد.',
-            str_contains($e->getMessage(), 'Todo'), str_contains($e->getMessage(), 'In Progress') => 'برای این وضعیت تعیین مسئول فعال الزامی است.',
-            default => 'ترکیب وضعیت و مسئول معتبر نیست.',
-        };
     }
 }

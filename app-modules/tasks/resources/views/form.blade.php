@@ -23,22 +23,39 @@
 
                 <x-ui.textarea name="description" :label="__('app.description')" :value="$description" wire:model="description" />
 
-                @if($isAdmin)
-                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <x-ui.select name="status" label="وضعیت" wire:model.live="status" required>
-                            @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ __('tasks::messages.statuses.'.$statusItem->value) }}</option>@endforeach
+                @if($project_id)
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <x-ui.select name="project_status_id" label="وضعیت پروژه‌ای تسک" wire:model="project_status_id">
+                            <option value="">اولین وضعیت باز پروژه (پیش‌فرض)</option>
+                            @foreach($statuses as $statusItem)
+                                <option value="{{ $statusItem->id }}">{{ $statusItem->title }}{{ $statusItem->is_done ? ' · Done' : '' }}</option>
+                            @endforeach
                         </x-ui.select>
+
+                        @if($isAdmin)
+                            <x-ui.select name="work_group_id" label="Work Group" wire:model="work_group_id">
+                                <option value="">ریشه پروژه</option>
+                                @foreach($workGroups as $group)
+                                    <option value="{{ $group->id }}">{{ $group->title }}</option>
+                                @endforeach
+                            </x-ui.select>
+                        @endif
+                    </div>
+                @endif
+
+                @if($isAdmin)
+                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         <x-ui.select name="priority" label="اولویت" wire:model="priority" required>
                             @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</option>@endforeach
                         </x-ui.select>
                         <x-ui.select name="assigned_to" label="مسئول" wire:model="assigned_to">
-                            <option value="">{{ __('tasks::messages.assignee.none') }} / {{ __('tasks::messages.assignee.admin_queue') }}</option>
+                            <option value="">{{ __('tasks::messages.assignee.none') }}</option>
                             @foreach($assignees as $assignee)<option value="{{ $assignee->id }}">{{ $assignee->full_name }}</option>@endforeach
                         </x-ui.select>
                         <x-ui.input name="due_date" type="date" label="موعد" :value="$due_date" wire:model="due_date" />
                     </div>
                 @else
-                    <x-ui.alert tone="neutral">درخواست مشتری با اولویت عادی و وضعیت «منتظر ادمین» وارد صف ادمین می‌شود.</x-ui.alert>
+                    <x-ui.alert tone="neutral">می‌توانید وضعیت اولیه را از Workflow همین پروژه انتخاب کنید. تسک مشتری در ریشه پروژه ایجاد می‌شود و انتقال آن به Work Group، تعیین مسئول و موعد در اختیار ادمین است.</x-ui.alert>
                 @endif
 
                 @if(!$taskId)
@@ -49,6 +66,8 @@
                         <p class="mt-1 text-xs text-slate-500">حداکثر ۲۰ مگابایت؛ فایل فقط از مسیر احراز هویت‌شده قابل دریافت است.</p>
                     </div>
                 @endif
+
+                @error('project_status_id')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
                 <x-ui.form-actions>
                     <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save,attachment">

@@ -12,7 +12,6 @@ use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Tasks\Application\TaskCollaboration;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 it('E2E-001 onboards a client customer project membership and visible task', function (): void {
@@ -23,7 +22,7 @@ it('E2E-001 onboards a client customer project membership and visible task', fun
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Onboarding Task',
-        'status' => TaskStatus::WaitingCustomer,
+        'project_status_id' => mvpOpenStatus($project, 1)->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $customer->id,
     ]);
@@ -53,7 +52,6 @@ it('E2E-002 isolates projects tasks and attachments across clients', function ()
 
     $taskB = app(TaskWorkflow::class)->createForAdmin($admin, $projectB, [
         'title' => 'Client B Secret Task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $attachmentB = app(TaskCollaboration::class)->attach(
@@ -72,34 +70,36 @@ it('E2E-002 isolates projects tasks and attachments across clients', function ()
         ->assertDontSee('Client B Secret Task');
 });
 
-it('E2E-003 moves a customer request through admin queue customer response and completion', function (): void {
+it('E2E-003 moves a customer request through project workflow without coupling assignment to status', function (): void {
     $admin = User::query()->admins()->firstOrFail();
     $client = Client::factory()->create();
     $customer = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $workflow = app(TaskWorkflow::class);
+    $openA = mvpOpenStatus($project);
+    $openB = mvpOpenStatus($project, 1);
+    $done = mvpDoneStatus($project);
 
     $task = $workflow->createForCustomer($customer, $project, ['title' => 'Customer request']);
-    expect($task->status)->toBe(TaskStatus::WaitingAdmin)->and($task->assigned_to)->toBeNull();
+    expect($task->project_status_id)->toBe($openA->id)->and($task->assigned_to)->toBeNull();
 
     $task = $workflow->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::InProgress,
+        'project_status_id' => $openB->id,
         'assigned_to' => $admin->id,
     ]);
-    expect($task->status)->toBe(TaskStatus::InProgress)->and($task->assigned_to)->toBe($admin->id);
+    expect($task->project_status_id)->toBe($openB->id)->and($task->assigned_to)->toBe($admin->id);
 
-    $task = $workflow->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::WaitingCustomer,
-        'assigned_to' => $customer->id,
-    ]);
-    expect($task->status)->toBe(TaskStatus::WaitingCustomer)->and($task->assigned_to)->toBe($customer->id);
+    $task = $workflow->updateByAdmin($admin, $task, ['assigned_to' => $customer->id]);
+    expect($task->project_status_id)->toBe($openB->id)->and($task->assigned_to)->toBe($customer->id);
 
-    $task = $workflow->transitionByCustomer($customer, $task, TaskStatus::WaitingAdmin);
-    expect($task->status)->toBe(TaskStatus::WaitingAdmin)->and($task->assigned_to)->toBeNull();
+    $task = $workflow->transitionByCustomer($customer, $task, $openA);
+    expect($task->project_status_id)->toBe($openA->id)->and($task->assigned_to)->toBe($customer->id);
 
-    $task = $workflow->updateByAdmin($admin, $task, ['status' => TaskStatus::Completed]);
-    expect($task->status)->toBe(TaskStatus::Completed)->and($task->completed_at)->not->toBeNull();
+    $task = $workflow->transitionByCustomer($customer, $task, $done);
+    expect($task->project_status_id)->toBe($done->id)
+        ->and($task->assigned_to)->toBe($customer->id)
+        ->and($task->completed_at)->not->toBeNull();
 });
 
 it('E2E-004 authorizes attachment access through the parent task', function (): void {
@@ -112,7 +112,6 @@ it('E2E-004 authorizes attachment access through the parent task', function (): 
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'File security',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $attachment = app(TaskCollaboration::class)->attach(
@@ -134,7 +133,6 @@ it('E2E-005 removes access immediately and reactivates the same membership row',
     $manager->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Membership lifecycle',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -156,7 +154,6 @@ it('E2E-006 blocks customers for an inactive client while preserving admin histo
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Historical task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -180,66 +177,69 @@ it('E2E-007 guards project completion makes closed projects read only and allows
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $workflow = app(TaskWorkflow::class);
     $lifecycle = app(ProjectLifecycle::class);
+    $done = mvpDoneStatus($project);
 
     $task = $workflow->createForAdmin($admin, $project, [
         'title' => 'Open task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
     expect(fn () => $lifecycle->complete($project, $admin))->toThrow(DomainException::class);
 
-    $workflow->updateByAdmin($admin, $task, ['status' => TaskStatus::Completed]);
+    $workflow->changeStatus($admin, $task, $done);
     $lifecycle->complete($project, $admin);
-    expect($project->refresh()->status)->toBe(ProjectStatus::Completed);
-    expect(fn () => $workflow->createForCustomer($customer, $project, ['title' => 'Blocked while closed']))
+    expect($project->refresh()->status)->toBe(ProjectStatus::Completed)
+        ->and(fn () => $workflow->createForCustomer($customer, $project, ['title' => 'Blocked while closed']))
         ->toThrow(DomainException::class);
 
     $lifecycle->reopen($project, $admin);
-    expect($project->refresh()->status)->toBe(ProjectStatus::Active);
-    expect($workflow->createForCustomer($customer, $project, ['title' => 'Allowed after reopen']))
+    expect($project->refresh()->status)->toBe(ProjectStatus::Active)
+        ->and($workflow->createForCustomer($customer, $project, ['title' => 'Allowed after reopen']))
         ->toBeInstanceOf(Task::class);
 });
 
-it('E2E-008 enforces state assignment completed at and immutable reference invariants', function (): void {
+it('E2E-008 enforces assignment project status completion and immutable reference invariants', function (): void {
     $admin = User::query()->admins()->firstOrFail();
     $client = Client::factory()->create();
     $otherClient = Client::factory()->create();
     $customer = User::factory()->customer($client)->create();
     $outsider = User::factory()->customer($otherClient)->create();
     $project = mvpProject($client);
+    $otherProject = mvpProject($client, 'Other workflow');
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $workflow = app(TaskWorkflow::class);
+    $open = mvpOpenStatus($project);
+    $done = mvpDoneStatus($project);
 
     expect(fn () => $workflow->createForAdmin($admin, $project, [
-        'title' => 'Invalid waiting customer',
-        'status' => TaskStatus::WaitingCustomer,
+        'title' => 'Invalid outsider assignment',
+        'project_status_id' => $open->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $outsider->id,
     ]))->toThrow(DomainException::class);
 
-    expect(fn () => $workflow->createForAdmin($admin, $project, [
-        'title' => 'Invalid todo',
-        'status' => TaskStatus::Todo,
+    $unassigned = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Valid unassigned open',
+        'project_status_id' => $open->id,
         'priority' => TaskPriority::Normal,
-        'assigned_to' => null,
-    ]))->toThrow(DomainException::class);
+    ]);
+    expect($unassigned->assigned_to)->toBeNull();
 
     $task = $workflow->createForAdmin($admin, $project, [
         'title' => 'Integrity',
-        'status' => TaskStatus::WaitingCustomer,
+        'project_status_id' => $open->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $customer->id,
     ]);
     $reference = $task->reference;
 
-    $task = $workflow->transitionByCustomer($customer, $task, TaskStatus::Completed);
-    expect($task->completed_at)->not->toBeNull();
+    $task = $workflow->transitionByCustomer($customer, $task, $done);
+    expect($task->completed_at)->not->toBeNull()->and($task->assigned_to)->toBe($customer->id);
 
-    $task = $workflow->updateByAdmin($admin, $task, ['status' => TaskStatus::WaitingAdmin]);
-    expect($task->completed_at)->toBeNull()->and($task->assigned_to)->toBeNull();
+    $task = $workflow->transitionByCustomer($customer, $task, $open);
+    expect($task->completed_at)->toBeNull()->and($task->assigned_to)->toBe($customer->id);
 
-    expect(fn () => $workflow->transitionByCustomer($customer, $task, TaskStatus::Cancelled))
+    expect(fn () => $workflow->changeStatus($admin, $task, mvpOpenStatus($otherProject)))
         ->toThrow(DomainException::class)
         ->and(fn () => $task->update(['reference' => 'TSK-CHANGED']))
         ->toThrow(DomainException::class)

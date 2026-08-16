@@ -16,9 +16,9 @@
                 <option value="">همه پروژه‌ها</option>
                 @foreach($projects as $projectItem)<option value="{{ $projectItem->id }}">{{ $projectItem->name }}</option>@endforeach
             </x-ui.select>
-            <x-ui.select name="status" wire:model.live="status">
-                <option value="">همه وضعیت‌ها</option>
-                @foreach($statuses as $statusItem)<option value="{{ $statusItem->value }}">{{ __('tasks::messages.statuses.'.$statusItem->value) }}</option>@endforeach
+            <x-ui.select name="status" wire:model.live="status" :disabled="$project === ''">
+                <option value="">{{ $project === '' ? 'برای فیلتر وضعیت، پروژه را انتخاب کنید' : 'همه وضعیت‌های پروژه' }}</option>
+                @foreach($statuses as $statusItem)<option value="{{ $statusItem->id }}">{{ $statusItem->title }}</option>@endforeach
             </x-ui.select>
             <x-ui.select name="priority" wire:model.live="priority">
                 <option value="">همه اولویت‌ها</option>
@@ -47,6 +47,7 @@
                     <th>Reference / عنوان</th>
                     <th>پروژه</th>
                     <th>وضعیت</th>
+                    <th>گروه کاری</th>
                     <th>اولویت</th>
                     <th>مسئول</th>
                     <th>موعد</th>
@@ -61,14 +62,15 @@
                             @if($task->description)<div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task->description }}</div>@endif
                         </td>
                         <td>{{ $task->project->name }}</td>
-                        <td><x-ui.badge :tone="$task->status->value === 'completed' ? 'success' : 'neutral'">{{ __('tasks::messages.statuses.'.$task->status->value) }}</x-ui.badge></td>
+                        <td><x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge></td>
+                        <td>{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</td>
                         <td>{{ __('tasks::messages.priorities.'.$task->priority->value) }}</td>
-                        <td>{{ $task->assignee?->full_name ?? ($task->status->value === 'waiting_admin' ? __('tasks::messages.assignee.admin_queue') : __('tasks::messages.assignee.none')) }}</td>
-                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isTerminal()])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</td>
+                        <td>{{ $task->assignee?->full_name ?? __('tasks::messages.assignee.none') }}</td>
+                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isDone()])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</td>
                         <td><x-ui.date :value="$task->updated_at" datetime /></td>
                     </tr>
                 @empty
-                    <x-ui.empty-row colspan="7" />
+                    <x-ui.empty-row colspan="8" />
                 @endforelse
             </tbody>
         </x-ui.table>
