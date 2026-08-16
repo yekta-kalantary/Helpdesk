@@ -1,6 +1,14 @@
 const sidebar = () => document.querySelector('[data-sidebar]');
 const sidebarBackdrop = () => document.querySelector('[data-sidebar-backdrop]');
 const sidebarOpeners = () => document.querySelectorAll('[data-sidebar-open]');
+let lastSidebarOpener = null;
+
+function focusSidebar() {
+    const element = sidebar();
+    const target = element?.querySelector('[data-sidebar-close], a, button, input, select, textarea');
+
+    target?.focus({ preventScroll: true });
+}
 
 function setSidebarOpen(open) {
     const element = sidebar();
@@ -21,6 +29,13 @@ function setSidebarOpen(open) {
     });
 
     document.body.style.overflow = open && window.innerWidth < 1024 ? 'hidden' : '';
+
+    if (open) {
+        window.requestAnimationFrame(focusSidebar);
+    } else if (lastSidebarOpener) {
+        lastSidebarOpener.focus({ preventScroll: true });
+        lastSidebarOpener = null;
+    }
 }
 
 function closeSidebar() {
@@ -29,6 +44,7 @@ function closeSidebar() {
 
 document.addEventListener('click', (event) => {
     if (event.target.closest('[data-sidebar-open]')) {
+        lastSidebarOpener = event.target.closest('[data-sidebar-open]');
         setSidebarOpen(true);
         return;
     }
