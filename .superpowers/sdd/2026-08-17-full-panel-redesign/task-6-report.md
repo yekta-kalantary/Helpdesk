@@ -40,7 +40,7 @@
 ## Commits
 
 - `9983836` Redesign task list and creation panel
-- Report commit pending.
+- `5916b36` Document Task 6 redesign verification
 
 ## Concerns
 
