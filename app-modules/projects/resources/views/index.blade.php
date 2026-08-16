@@ -30,7 +30,26 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="overflow-x-auto">
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        @forelse($projects as $project)
+            <article wire:key="project-card-{{ $project->id }}" class="flex min-w-0 flex-col rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)]">
+                <div class="flex items-start justify-between gap-3">
+                    <a href="{{ route('projects.show', $project) }}" wire:navigate class="min-w-0 font-bold text-slate-950 hover:text-workspace-teal hover:underline">{{ $project->name }}</a>
+                    <x-ui.badge :tone="$project->status->value === 'active' ? 'success' : 'neutral'">{{ $project->status->value === 'active' ? 'فعال' : 'تکمیل‌شده' }}</x-ui.badge>
+                </div>
+                @if($isAdmin)<div class="mt-2 text-sm text-slate-500">{{ $project->client->name }}</div>@endif
+                @if($project->description)<p class="mt-3 line-clamp-2 text-sm leading-6 text-slate-500">{{ $project->description }}</p>@endif
+                <dl class="mt-auto grid grid-cols-2 gap-3 pt-5 text-sm">
+                    <div><dt class="text-slate-500">اعضا</dt><dd class="mt-1 font-bold">{{ $project->members_count }}</dd></div>
+                    <div><dt class="text-slate-500">تسک‌ها</dt><dd class="mt-1 font-bold">{{ $project->tasks_count }}</dd></div>
+                </dl>
+            </article>
+        @empty
+            <div class="sm:col-span-2 xl:col-span-3"><x-ui.card><div class="text-center text-sm text-slate-500">پروژه‌ای پیدا نشد.@if($isAdmin) <a class="font-bold text-workspace-teal hover:underline" href="{{ route('projects.create') }}" wire:navigate>پروژه جدید بسازید.</a>@endif</div></x-ui.card></div>
+        @endforelse
+    </div>
+
+    <div class="mt-4 hidden sm:block">
         <x-ui.table wire:loading.class="opacity-60" wire:target="q,status,client">
             <thead>
                 <tr>

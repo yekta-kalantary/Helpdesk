@@ -2,19 +2,19 @@
     <x-ui.page-header :title="$projectId ? __('projects::messages.edit_project') : __('projects::messages.new_project')" />
 
     <form class="max-w-4xl" wire:submit="save">
-        <x-ui.card>
-            <div class="space-y-5">
+        <div class="space-y-4">
+            <x-ui.card title="هویت پروژه" subtitle="نام پروژه و مشتری مربوط به آن را مشخص کنید.">
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <x-ui.input name="name" :label="__('app.title')" :value="$name" wire:model="name" required />
+                    <x-ui.input name="name" :label="__('app.title')" :value="$name" hint="الزامی" wire:model="name" required />
 
                     @if($projectId)
                         <div>
-                            <label class="mb-2 block text-sm font-semibold text-slate-700">مشتری</label>
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">مشتری <span class="text-xs font-normal text-slate-500">الزامی</span></label>
                             <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-semibold text-slate-800">{{ $clientName }}</div>
                             <p class="mt-1 text-xs text-slate-500">مشتری پروژه بعد از ایجاد قابل تغییر نیست.</p>
                         </div>
                     @else
-                        <x-ui.select name="client_id" label="مشتری" wire:model.live.number="client_id" required>
+                        <x-ui.select name="client_id" label="مشتری (الزامی)" wire:model.live.number="client_id" required>
                             <option value="">—</option>
                             @foreach($clients as $client)
                                 <option value="{{ $client->id }}">{{ $client->name }}</option>
@@ -22,14 +22,19 @@
                         </x-ui.select>
                     @endif
                 </div>
+            </x-ui.card>
 
-                <x-ui.textarea name="description" :label="__('app.description')" :value="$description" wire:model="description" />
-
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <x-ui.input name="start_date" type="date" label="تاریخ شروع" :value="$start_date" wire:model="start_date" />
-                    <x-ui.input name="due_date" type="date" label="موعد" :value="$due_date" wire:model="due_date" />
+            <x-ui.card title="جزئیات و زمان‌بندی" subtitle="توضیحات و تاریخ‌ها اختیاری هستند.">
+                <div class="space-y-5">
+                    <x-ui.textarea name="description" :label="__('app.description').' (اختیاری)'" :value="$description" wire:model="description" />
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <x-ui.input name="start_date" type="date" label="تاریخ شروع (اختیاری)" :value="$start_date" wire:model="start_date" />
+                        <x-ui.input name="due_date" type="date" label="موعد (اختیاری)" :value="$due_date" wire:model="due_date" />
+                    </div>
                 </div>
+            </x-ui.card>
 
+            <x-ui.card title="عضویت" subtitle="اعضای فعال این مشتری را به پروژه اضافه کنید.">
                 <div>
                     <div class="mb-2 text-sm font-semibold text-slate-700">اعضای مشتری پروژه</div>
                     @if(!$client_id)
@@ -52,12 +57,12 @@
                     @error('member_ids')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
                     @error('member_ids.*')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
                 </div>
+            </x-ui.card>
 
-                <x-ui.form-actions>
-                    <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">{{ __('app.save') }}</x-ui.button>
-                    <x-ui.button variant="secondary" :href="route('projects.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
-                </x-ui.form-actions>
-            </div>
-        </x-ui.card>
+            <x-ui.form-actions>
+                <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">{{ __('app.save') }}</x-ui.button>
+                <x-ui.button variant="secondary" :href="route('projects.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
+            </x-ui.form-actions>
+        </div>
     </form>
 </div>
