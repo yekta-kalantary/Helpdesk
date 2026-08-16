@@ -9,42 +9,52 @@ use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
 use Modules\Tasks\Infrastructure\Models\TaskComment;
 
-it('bounds project detail collections while keeping their pagination reachable and ordered', function (): void {
+it('bounds project detail membership and activity collections while keeping Kanban tasks reachable', function (): void {
     $client = Client::factory()->create();
     $admin = User::query()->admins()->firstOrFail();
     $customer = User::factory()->customer($client)->create();
     $project = mvpProject($client, 'Bounded project');
+    $memberships = app(ProjectMembershipManager::class);
 
-    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+    $memberships->add($project, $customer, $admin);
 
     foreach (range(1, 21) as $number) {
-        $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-            'title' => "Project task {$number}",
-            'priority' => TaskPriority::Normal,
+        $member = User::factory()->customer($client)->create([
+            'name' => 'Bounded Member',
+            'last_name' => sprintf('%02d', $number),
         ]);
-        DB::table('tasks')->where('id', $task->id)->update([
-            'updated_at' => now()->subMinutes($number),
-        ]);
+        $memberships->add($project, $member, $admin);
+    }
 
+    foreach (range(1, 21) as $number) {
         Activity::query()->create([
             'project_id' => $project->id,
-            'task_id' => $task->id,
             'action' => sprintf('Project activity %02d', $number),
             'created_at' => now()->subMinutes($number),
+        ]);
+    }
+
+    foreach (range(1, 21) as $number) {
+        app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+            'title' => "Project task {$number}",
+            'priority' => TaskPriority::Normal,
         ]);
     }
 
     $response = $this->actingAs($customer)->get(route('projects.show', $project));
 
     $response->assertOk()
+        ->assertSee('Bounded Member 01')
+        ->assertDontSee('Bounded Member 21')
         ->assertSee('Project task 1')
-        ->assertDontSee('Project task 21')
+        ->assertSee('Project task 21')
         ->assertSee('Project activity 21');
 
     $this->actingAs($customer)
-        ->get(route('projects.show', $project).'?tasksPage=2&projectActivitiesPage=2')
+        ->get(route('projects.show', $project).'?membersPage=2&projectActivitiesPage=2')
         ->assertOk()
-        ->assertSee('Project task 21');
+        ->assertSee('Bounded Member 21')
+        ->assertSee('Project activity 01');
 });
 
 it('bounds task detail collections without exposing another tenant', function (): void {
