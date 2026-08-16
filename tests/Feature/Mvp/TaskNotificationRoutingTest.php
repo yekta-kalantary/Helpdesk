@@ -77,6 +77,8 @@ it('does not recreate fixed admin queue routing for unassigned tasks', function 
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $member, $actor);
 
+    Notification::fake();
+
     app(TaskWorkflow::class)->createForAdmin($actor, $project, [
         'title' => 'Unassigned task',
         'priority' => TaskPriority::Normal,
