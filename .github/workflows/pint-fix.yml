@@ -1,0 +1,44 @@
+name: Pint Fix
+
+on:
+  push:
+    branches:
+      - wip/pint-project-work-management-20260816
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: wip/pint-project-work-management-20260816
+          fetch-depth: 0
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, exif, fileinfo
+          coverage: none
+          tools: composer:v2
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: ./vendor/bin/pint
+
+      - name: Commit formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/pint-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No formatting changes.'
+            exit 0
+          fi
+          git diff --cached --check
+          git commit -m 'style: format project work management changes'
+          git push origin HEAD:wip/pint-project-work-management-20260816
