@@ -61,7 +61,6 @@ it('logically inactivates empty work groups and never hard deletes them', functi
         ->and(WorkGroup::query()->whereKey($group)->exists())->toBeTrue();
 });
 
-
 it('rejects a branch move when any descendant would exceed level five', function (): void {
     $project = mvpProject(Client::factory()->create());
     $admin = User::factory()->admin()->create();
@@ -79,7 +78,7 @@ it('rejects a branch move when any descendant would exceed level five', function
         ->and($a1->refresh()->parent_id)->toBeNull();
 });
 
-it('enforces Work Group inactivation rules while allowing Done task history to remain', function (): void {
+it('enforces Work Group inactivation rules while allowing Done task history and independent reopen', function (): void {
     $project = mvpProject(Client::factory()->create());
     $admin = User::factory()->admin()->create();
     $manager = app(WorkGroupManager::class);
@@ -99,10 +98,12 @@ it('enforces Work Group inactivation rules while allowing Done task history to r
 
     $task = $workflow->changeStatus($admin, $task, mvpDoneStatus($project));
     $manager->inactivate($admin, $child);
+    $task = $workflow->changeStatus($admin, $task, mvpOpenStatus($project));
 
     expect($child->refresh()->isActive())->toBeFalse()
-        ->and($task->refresh()->work_group_id)->toBe($child->id)
-        ->and(fn () => $workflow->changeStatus($admin, $task, mvpOpenStatus($project)))->toThrow(DomainException::class);
+        ->and($task->work_group_id)->toBe($child->id)
+        ->and($task->isDone())->toBeFalse()
+        ->and($task->completed_at)->toBeNull();
 });
 
 it('updates description reorders siblings and blocks customer management actions', function (): void {
