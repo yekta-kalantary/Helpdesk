@@ -1,0 +1,43 @@
+name: Apply Work Management Batch
+
+on:
+  push:
+    branches:
+      - wip/project-work-management-batch-20260816
+    paths:
+      - '.batch/**'
+      - '.github/workflows/apply-batch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: wip/project-work-management-batch-20260816
+          fetch-depth: 0
+
+      - name: Apply verified batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .batch/chunk-1.b64 .batch/chunk-2.b64 .batch/chunk-3.b64 .batch/chunk-4.b64 .batch/chunk-5.b64 | base64 -d > /tmp/work-management-batch.zip
+          echo 'a974f10dbb6e289c63036ec5f17e680c8a92b1b93d8c9b865127275d334f43a5  /tmp/work-management-batch.zip' | sha256sum -c -
+          unzip -oq /tmp/work-management-batch.zip -d .
+          rm -f app-modules/tasks/src/Domain/Enums/TaskStatus.php
+          rm -rf .batch
+          rm -f .github/workflows/apply-batch.yml
+
+      - name: Commit applied batch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'feat: close project work management PRD gaps'
+          git push origin HEAD:wip/project-work-management-batch-20260816
