@@ -58,7 +58,6 @@ it('never hard deletes project task statuses and rejects invalid inactivation', 
         ->and(ProjectTaskStatus::query()->whereKey($extra)->exists())->toBeTrue();
 });
 
-
 it('reconciles completed timestamps atomically when the project Done status changes', function (): void {
     $project = mvpProject(Client::factory()->create());
     $admin = User::factory()->admin()->create();

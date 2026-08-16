@@ -3,10 +3,8 @@
 use App\Models\Activity;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Application\ProjectLifecycle;
-use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
+use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
 use Modules\Tasks\Infrastructure\Models\Task;
