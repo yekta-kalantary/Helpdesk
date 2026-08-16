@@ -20,6 +20,7 @@ it('lets project members manage one level checklist without independent task sem
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Parent', 'priority' => TaskPriority::Normal]);
+    Notification::fake();
     $checklist = app(TaskChecklist::class);
 
     $item = $checklist->add($customer, $task, 'First step');
@@ -62,7 +63,6 @@ it('makes checklist read only on done tasks and completed projects', function ()
     $admin = User::factory()->admin()->create();
     $workflow = app(TaskWorkflow::class);
     $checklist = app(TaskChecklist::class);
-    $open = $project->taskStatuses()->active()->where('is_done', false)->firstOrFail();
     $done = $project->taskStatuses()->active()->where('is_done', true)->firstOrFail();
     $task = $workflow->createForAdmin($admin, $project, ['title' => 'Readonly', 'priority' => TaskPriority::Normal]);
     $item = $checklist->add($admin, $task, 'Before done');
