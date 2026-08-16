@@ -122,12 +122,21 @@ class ProjectWorkflowManager
                 ->update(['is_done' => false]);
             $status->update(['is_done' => true]);
 
+            $reopenedTaskCount = $previous
+                ? $previous->tasks()->whereNotNull('completed_at')->update(['completed_at' => null])
+                : 0;
+            $completedTaskCount = $status->tasks()
+                ->whereNull('completed_at')
+                ->update(['completed_at' => now()]);
+
             $this->assertWorkflowValid($project);
             $this->activities->record($actor, 'project_status.done_changed', $project, null, [
                 'previous_status_id' => $previous?->id,
                 'previous_status_title_snapshot' => $previous?->title,
                 'new_status_id' => $status->id,
                 'new_status_title_snapshot' => $status->title,
+                'reopened_task_count' => $reopenedTaskCount,
+                'completed_task_count' => $completedTaskCount,
             ]);
         });
     }

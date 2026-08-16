@@ -8,7 +8,6 @@ use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Presentation\Livewire\Index;
 use Modules\Tasks\Presentation\Livewire\Show;
@@ -78,7 +77,6 @@ it('uses canonical task URLs in notifications while keeping numeric resource ids
     $task = taskForRouting($admin);
 
     app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::InProgress,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $assignee->id,
     ]);
@@ -95,7 +93,6 @@ function taskForRouting(?User $admin = null): Task
     $admin ??= User::factory()->admin()->create();
     $task = app(TaskWorkflow::class)->createForAdmin($admin, mvpProject(Client::factory()->create()), [
         'title' => 'Routing task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
         'assigned_to' => null,
     ]);

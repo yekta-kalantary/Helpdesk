@@ -7,7 +7,6 @@ use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\TaskComment;
 
 it('bounds project detail collections while keeping their pagination reachable and ordered', function (): void {
@@ -21,7 +20,6 @@ it('bounds project detail collections while keeping their pagination reachable a
     foreach (range(1, 21) as $number) {
         $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
             'title' => "Project task {$number}",
-            'status' => TaskStatus::WaitingAdmin,
             'priority' => TaskPriority::Normal,
         ]);
         DB::table('tasks')->where('id', $task->id)->update([
@@ -63,12 +61,10 @@ it('bounds task detail collections without exposing another tenant', function ()
 
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Bounded task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $otherTask = app(TaskWorkflow::class)->createForAdmin($admin, $otherProject, [
         'title' => 'Other tenant task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 

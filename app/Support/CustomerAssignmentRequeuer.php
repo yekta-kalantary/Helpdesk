@@ -53,7 +53,7 @@ class CustomerAssignmentRequeuer
 
         foreach ($tasks as $task) {
             $this->notifications->send(
-                $this->notificationRouter->adminQueue(),
+                $this->notificationRouter->activeAdmins(),
                 new ResourceChangedNotification(
                     'مسئول تسک نیاز به بازبینی دارد',
                     "مسئول تسک {$task->reference} به‌دلیل تغییر دسترسی مشتری خالی شد.",

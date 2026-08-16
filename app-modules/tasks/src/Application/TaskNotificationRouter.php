@@ -33,7 +33,7 @@ class TaskNotificationRouter
     }
 
     /** @return Collection<int, User> */
-    public function adminQueue(): Collection
+    public function activeAdmins(): Collection
     {
         return User::query()->active()->admins()->get();
     }

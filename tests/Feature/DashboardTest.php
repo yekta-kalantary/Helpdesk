@@ -5,7 +5,6 @@ use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 it('redirects authenticated users from home to dashboard', function (): void {
     $user = User::factory()->create();
@@ -15,14 +14,13 @@ it('redirects authenticated users from home to dashboard', function (): void {
         ->assertRedirect(route('dashboard'));
 });
 
-it('shows the system overview to admin', function (): void {
+it('shows the generic project workflow overview to admin', function (): void {
     $admin = User::query()->admins()->firstOrFail();
     $client = Client::factory()->create(['name' => 'Admin dashboard client']);
     $project = mvpProject($client, 'Admin dashboard project');
 
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Admin dashboard task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -31,7 +29,9 @@ it('shows the system overview to admin', function (): void {
         ->assertOk()
         ->assertSee('داشبورد')
         ->assertSee('مشتریان فعال')
-        ->assertSee('صف ادمین')
+        ->assertSee('تسک‌های باز بدون مسئول')
+        ->assertDontSee('صف ادمین')
+        ->assertDontSee('منتظر مشتری')
         ->assertSee('Admin dashboard project')
         ->assertSee('Admin dashboard task');
 });
@@ -47,13 +47,12 @@ it('limits customer dashboard projects and tasks to active memberships', functio
 
     app(TaskWorkflow::class)->createForAdmin($admin, $visibleProject, [
         'title' => 'Visible dashboard task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
     app(TaskWorkflow::class)->createForAdmin($admin, $hiddenProject, [
         'title' => 'Hidden dashboard task',
-        'status' => TaskStatus::Completed,
+        'project_status_id' => mvpDoneStatus($hiddenProject)->id,
         'priority' => TaskPriority::Normal,
     ]);
 

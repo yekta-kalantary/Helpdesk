@@ -5,7 +5,6 @@ use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 it('only shows tasks from projects with active membership', function (): void {
     $client = Client::factory()->create();
@@ -21,12 +20,10 @@ it('only shows tasks from projects with active membership', function (): void {
 
     app(TaskWorkflow::class)->createForAdmin($admin, $memberProject, [
         'title' => 'Visible task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     app(TaskWorkflow::class)->createForAdmin($admin, $otherProject, [
         'title' => 'Hidden task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -46,7 +43,6 @@ it('immediately removes task access when membership is removed', function (): vo
     $manager->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Membership protected',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -64,7 +60,6 @@ it('lets admin see tasks from every project without membership', function (): vo
 
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Admin visible task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 

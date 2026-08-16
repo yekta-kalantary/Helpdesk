@@ -8,7 +8,6 @@ use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 it('hides moderation activity from customers but keeps it visible to admins on task detail', function (): void {
@@ -76,7 +75,6 @@ function customerActivityFixture(): array
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Activity visibility task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 

@@ -49,8 +49,12 @@
     <x-ui.card>
         <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 class="font-black">چک‌لیست تسک</h2>
-            <span class="text-sm text-slate-500">{{ $checklistCompleted }}/{{ $task->checklistItems->count() }} انجام‌شده</span>
+            @if($task->checklistItems->isNotEmpty())
+                <span class="text-sm text-slate-500">{{ $checklistCompleted }}/{{ $task->checklistItems->count() }} انجام‌شده</span>
+            @endif
         </div>
+
+        @error('checklist')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
         <div class="space-y-2">
             @forelse($task->checklistItems as $item)

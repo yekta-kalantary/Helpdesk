@@ -1,9 +1,12 @@
 <?php
 
+use App\Models\Activity;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectWorkflowManager;
 use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
+use Modules\Tasks\Application\TaskWorkflow;
+use Modules\Tasks\Domain\Enums\TaskPriority;
 
 it('bootstraps every new project with a valid project owned workflow', function (): void {
     $project = mvpProject(Client::factory()->create());
@@ -53,4 +56,54 @@ it('never hard deletes project task statuses and rejects invalid inactivation', 
     expect($extra->refresh()->is_active)->toBeFalse()
         ->and($extra->inactivated_at)->not->toBeNull()
         ->and(ProjectTaskStatus::query()->whereKey($extra)->exists())->toBeTrue();
+});
+
+
+it('reconciles completed timestamps atomically when the project Done status changes', function (): void {
+    $project = mvpProject(Client::factory()->create());
+    $admin = User::factory()->admin()->create();
+    $workflow = app(TaskWorkflow::class);
+    $manager = app(ProjectWorkflowManager::class);
+    $oldDone = mvpDoneStatus($project);
+    $newDone = mvpOpenStatus($project, 1);
+    $otherOpen = mvpOpenStatus($project);
+
+    $oldDoneTask = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Previously done',
+        'project_status_id' => $oldDone->id,
+        'priority' => TaskPriority::Normal,
+    ]);
+    $newDoneTask = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Becomes done by workflow definition',
+        'project_status_id' => $newDone->id,
+        'priority' => TaskPriority::Normal,
+    ]);
+    $otherOpenTask = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Stays open',
+        'project_status_id' => $otherOpen->id,
+        'priority' => TaskPriority::Normal,
+    ]);
+
+    $manager->setDone($admin, $newDone);
+
+    $activity = Activity::query()
+        ->where('project_id', $project->id)
+        ->where('action', 'project_status.done_changed')
+        ->latest('id')
+        ->firstOrFail();
+
+    expect($oldDone->refresh()->is_done)->toBeFalse()
+        ->and($newDone->refresh()->is_done)->toBeTrue()
+        ->and($oldDoneTask->refresh()->completed_at)->toBeNull()
+        ->and($newDoneTask->refresh()->completed_at)->not->toBeNull()
+        ->and($otherOpenTask->refresh()->completed_at)->toBeNull()
+        ->and($project->taskStatuses()->active()->where('is_done', true)->count())->toBe(1)
+        ->and($activity->metadata)->toMatchArray([
+            'previous_status_id' => $oldDone->id,
+            'previous_status_title_snapshot' => $oldDone->title,
+            'new_status_id' => $newDone->id,
+            'new_status_title_snapshot' => $newDone->title,
+            'reopened_task_count' => 1,
+            'completed_task_count' => 1,
+        ]);
 });

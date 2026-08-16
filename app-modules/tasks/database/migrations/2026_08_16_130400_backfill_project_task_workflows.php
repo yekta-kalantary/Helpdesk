@@ -47,14 +47,16 @@ return new class extends Migration
                 ->orderBy('id')
                 ->get(['id', 'status', 'completed_at', 'updated_at'])
                 ->each(function (object $task) use ($openId, $inProgressId, $doneId): void {
-                    $isDone = $task->status === 'completed' || $task->completed_at !== null;
-                    $statusId = $isDone
-                        ? $doneId
-                        : ($task->status === 'in_progress' ? $inProgressId : $openId);
+                    $statusId = match ($this->legacyStatusKey($task)) {
+                        'done' => $doneId,
+                        'in_progress' => $inProgressId,
+                        default => $openId,
+                    };
 
                     $updates = ['project_status_id' => $statusId];
-                    if ($task->status === 'completed' && $task->completed_at === null) {
-                        $updates['completed_at'] = $task->updated_at ?? now();
+                    $completionTimestamp = $this->completionTimestamp($task);
+                    if ($completionTimestamp !== null && $task->completed_at === null) {
+                        $updates['completed_at'] = $completionTimestamp;
                     }
 
                     DB::table('tasks')->where('id', $task->id)->update($updates);
@@ -65,5 +67,23 @@ return new class extends Migration
     public function down(): void
     {
         // The following schema rollback reconstructs legacy task status values.
+    }
+
+    private function legacyStatusKey(object $task): string
+    {
+        if ($task->status === 'completed' || $task->completed_at !== null) {
+            return 'done';
+        }
+
+        return $task->status === 'in_progress' ? 'in_progress' : 'open';
+    }
+
+    private function completionTimestamp(object $task): mixed
+    {
+        if ($task->completed_at !== null) {
+            return $task->completed_at;
+        }
+
+        return $task->status === 'completed' ? ($task->updated_at ?? now()) : null;
     }
 };

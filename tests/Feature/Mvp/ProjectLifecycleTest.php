@@ -8,16 +8,14 @@ use Modules\Projects\Application\ProjectLifecycle;
 use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
-it('rejects project completion while a non terminal task exists', function (): void {
+it('rejects project completion while any task is in an open project status', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $project = mvpProject($client);
 
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Open task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -25,19 +23,20 @@ it('rejects project completion while a non terminal task exists', function (): v
         ->toThrow(DomainException::class);
 });
 
-it('allows completion when every task is terminal and lets admin reopen', function (): void {
+it('allows completion only when every task is in the current Done status and lets admin reopen', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $project = mvpProject($client);
+    $done = mvpDoneStatus($project);
 
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-        'title' => 'Done',
-        'status' => TaskStatus::Completed,
+        'title' => 'Done one',
+        'project_status_id' => $done->id,
         'priority' => TaskPriority::Normal,
     ]);
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-        'title' => 'Cancelled',
-        'status' => TaskStatus::Cancelled,
+        'title' => 'Done two',
+        'project_status_id' => $done->id,
         'priority' => TaskPriority::Normal,
     ]);
 

@@ -25,6 +25,8 @@ class Show extends Component
     #[Locked]
     public int $projectId;
 
+    public string $taskSearch = '';
+
     public string $workGroupFilter = '';
 
     public string $newStatusTitle = '';
@@ -34,10 +36,15 @@ class Show extends Component
 
     public string $newWorkGroupTitle = '';
 
+    public string $newWorkGroupDescription = '';
+
     public string $newWorkGroupParentId = '';
 
     /** @var array<int, string> */
     public array $workGroupTitles = [];
+
+    /** @var array<int, string> */
+    public array $workGroupDescriptions = [];
 
     /** @var array<int, string> */
     public array $workGroupParents = [];
@@ -161,14 +168,16 @@ class Show extends Component
         $this->runDomainAction(function () use ($manager, $user): void {
             $manager->create($user, $this->project(), [
                 'title' => $this->newWorkGroupTitle,
+                'description' => $this->newWorkGroupDescription,
                 'parent_id' => $this->newWorkGroupParentId !== '' ? (int) $this->newWorkGroupParentId : null,
             ]);
             $this->newWorkGroupTitle = '';
+            $this->newWorkGroupDescription = '';
             $this->newWorkGroupParentId = '';
         });
     }
 
-    public function renameWorkGroup(int $workGroupId, WorkGroupManager $manager): void
+    public function saveWorkGroup(int $workGroupId, WorkGroupManager $manager): void
     {
         /** @var User $user */
         $user = auth()->user();
@@ -176,7 +185,10 @@ class Show extends Component
 
         $this->runDomainAction(function () use ($manager, $user, $workGroupId): void {
             $group = $this->workGroup($workGroupId);
-            $manager->update($user, $group, ['title' => $this->workGroupTitles[$workGroupId] ?? $group->title]);
+            $manager->update($user, $group, [
+                'title' => $this->workGroupTitles[$workGroupId] ?? $group->title,
+                'description' => $this->workGroupDescriptions[$workGroupId] ?? $group->description,
+            ]);
         });
     }
 
@@ -249,32 +261,44 @@ class Show extends Component
             $this->statusTitles[$status->id] ??= $status->title;
         }
 
-        $activeWorkGroups = WorkGroup::query()
+        $allWorkGroups = WorkGroup::query()
             ->where('project_id', $project->id)
-            ->active()
             ->with('parent')
             ->orderBy('position')
             ->orderBy('id')
             ->get();
-        $workGroups = $this->flattenWorkGroups($activeWorkGroups);
+        $workGroups = $this->flattenWorkGroups($allWorkGroups->where('status', 'active')->values());
+        $inactiveWorkGroups = $user->isAdmin()
+            ? $allWorkGroups->where('status', 'inactive')->values()
+            : collect();
+
         foreach ($workGroups as $group) {
             $this->workGroupTitles[$group->id] ??= $group->title;
+            $this->workGroupDescriptions[$group->id] ??= (string) $group->description;
             $this->workGroupParents[$group->id] ??= $group->parent_id ? (string) $group->parent_id : '';
         }
 
-        $tasks = $project->tasks()
+        $allTasks = $project->tasks()
             ->with([
                 'assignee:id,name,last_name',
                 'projectStatus:id,title,is_done,position',
                 'workGroup:id,title,parent_id',
             ])
-            ->when($this->workGroupFilter === 'root', fn ($query) => $query->whereNull('work_group_id'))
-            ->when(
-                $this->workGroupFilter !== '' && $this->workGroupFilter !== 'root',
-                fn ($query) => $query->where('work_group_id', (int) $this->workGroupFilter),
-            )
             ->orderByDesc('updated_at')
             ->get();
+
+        $searchedTasks = $this->filterTasksBySearch($allTasks);
+        $kanbanTasks = $searchedTasks
+            ->when($this->workGroupFilter === 'root', fn (Collection $tasks) => $tasks->whereNull('work_group_id'))
+            ->when(
+                $this->workGroupFilter !== '' && $this->workGroupFilter !== 'root',
+                fn (Collection $tasks) => $tasks->where('work_group_id', (int) $this->workGroupFilter),
+            )
+            ->values();
+
+        $rootTasks = $searchedTasks->whereNull('work_group_id')->values();
+        $tasksByWorkGroup = $searchedTasks->whereNotNull('work_group_id')->groupBy('work_group_id');
+        $workGroupProgress = $this->workGroupProgress($workGroups, $allWorkGroups, $allTasks);
 
         $members = $project->activeMembers()
             ->where('users.is_active', true)
@@ -294,11 +318,15 @@ class Show extends Component
         return view('projects::show', [
             'project' => $project,
             'members' => $members,
-            'tasks' => $tasks,
+            'tasks' => $kanbanTasks,
             'statuses' => $statuses,
             'workGroups' => $workGroups,
+            'inactiveWorkGroups' => $inactiveWorkGroups,
+            'rootTasks' => $rootTasks,
+            'tasksByWorkGroup' => $tasksByWorkGroup,
+            'workGroupProgress' => $workGroupProgress,
             'activities' => $activities,
-            'openTasksCount' => $project->tasks()->whereHas('projectStatus', fn ($query) => $query->where('is_done', false))->count(),
+            'openTasksCount' => $allTasks->filter(fn (Task $task): bool => ! $task->projectStatus->is_done)->count(),
             'isAdmin' => $user->isAdmin(),
         ])->title($project->name);
     }
@@ -330,6 +358,58 @@ class Show extends Component
         } catch (DomainException $e) {
             $this->addError('project', $e->getMessage());
         }
+    }
+
+    /** @param Collection<int, Task> $tasks */
+    private function filterTasksBySearch(Collection $tasks): Collection
+    {
+        $search = mb_strtolower(trim($this->taskSearch));
+        if ($search === '') {
+            return $tasks->values();
+        }
+
+        return $tasks->filter(function (Task $task) use ($search): bool {
+            return str_contains(mb_strtolower($task->reference), $search)
+                || str_contains(mb_strtolower($task->title), $search);
+        })->values();
+    }
+
+    /**
+     * @param Collection<int, WorkGroup> $activeGroups
+     * @param Collection<int, WorkGroup> $allGroups
+     * @param Collection<int, Task> $allTasks
+     * @return array<int, array{done: int, total: int, percentage: ?int}>
+     */
+    private function workGroupProgress(Collection $activeGroups, Collection $allGroups, Collection $allTasks): array
+    {
+        $progress = [];
+
+        foreach ($activeGroups as $group) {
+            $groupIds = $this->descendantGroupIds($allGroups, $group->id);
+            $tasks = $allTasks->whereIn('work_group_id', $groupIds);
+            $total = $tasks->count();
+            $done = $tasks->filter(fn (Task $task): bool => (bool) $task->projectStatus?->is_done)->count();
+
+            $progress[$group->id] = [
+                'done' => $done,
+                'total' => $total,
+                'percentage' => $total > 0 ? (int) round(($done / $total) * 100) : null,
+            ];
+        }
+
+        return $progress;
+    }
+
+    /** @param Collection<int, WorkGroup> $groups */
+    private function descendantGroupIds(Collection $groups, int $groupId): array
+    {
+        $ids = [$groupId];
+
+        foreach ($groups->where('parent_id', $groupId) as $child) {
+            $ids = [...$ids, ...$this->descendantGroupIds($groups, $child->id)];
+        }
+
+        return $ids;
     }
 
     /** @param Collection<int, WorkGroup> $groups */

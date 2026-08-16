@@ -3,12 +3,12 @@
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
+use Modules\Projects\Application\WorkGroupManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 
-it('creates customer requests in the admin queue', function (): void {
+it('creates customer requests in the first open project status as unassigned root tasks', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->customer($client)->create();
@@ -20,11 +20,26 @@ it('creates customer requests in the admin queue', function (): void {
         'description' => 'Please review this request.',
     ]);
 
-    expect($task->status)->toBe(TaskStatus::WaitingAdmin)
+    expect($task->project_status_id)->toBe(mvpOpenStatus($project)->id)
         ->and($task->priority)->toBe(TaskPriority::Normal)
         ->and($task->assigned_to)->toBeNull()
+        ->and($task->work_group_id)->toBeNull()
         ->and($task->created_by)->toBe($customer->id)
         ->and($task->reference)->toMatch('/^TSK-[A-Z0-9]{8}$/');
+});
+
+it('rejects attempts to place customer-created tasks directly in a Work Group', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client);
+    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+    $group = app(WorkGroupManager::class)->create($admin, $project, ['title' => 'Admin structure']);
+
+    expect(fn () => app(TaskWorkflow::class)->createForCustomer($customer, $project, [
+        'title' => 'Forged grouped request',
+        'work_group_id' => $group->id,
+    ]))->toThrow(DomainException::class);
 });
 
 it('uses membership rather than assignment for customer task visibility', function (): void {
@@ -39,7 +54,7 @@ it('uses membership rather than assignment for customer task visibility', functi
 
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Visible to all members',
-        'status' => TaskStatus::WaitingCustomer,
+        'project_status_id' => mvpOpenStatus($project, 1)->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $assignee->id,
     ]);
@@ -47,7 +62,7 @@ it('uses membership rather than assignment for customer task visibility', functi
     expect(Task::query()->visibleTo($viewer)->whereKey($task)->exists())->toBeTrue();
 });
 
-it('marks only past non-terminal tasks as overdue', function (): void {
+it('marks only past tasks outside Done as overdue', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $project = mvpProject($client);
@@ -55,31 +70,22 @@ it('marks only past non-terminal tasks as overdue', function (): void {
 
     $yesterday = $workflow->createForAdmin($admin, $project, [
         'title' => 'Yesterday',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
         'due_date' => today()->subDay(),
     ]);
     $today = $workflow->createForAdmin($admin, $project, [
         'title' => 'Today',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
         'due_date' => today(),
     ]);
     $tomorrow = $workflow->createForAdmin($admin, $project, [
         'title' => 'Tomorrow',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
         'due_date' => today()->addDay(),
     ]);
-    $completed = $workflow->createForAdmin($admin, $project, [
-        'title' => 'Completed',
-        'status' => TaskStatus::Completed,
-        'priority' => TaskPriority::Normal,
-        'due_date' => today()->subDay(),
-    ]);
-    $cancelled = $workflow->createForAdmin($admin, $project, [
-        'title' => 'Cancelled',
-        'status' => TaskStatus::Cancelled,
+    $done = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Done',
+        'project_status_id' => mvpDoneStatus($project)->id,
         'priority' => TaskPriority::Normal,
         'due_date' => today()->subDay(),
     ]);
@@ -88,11 +94,10 @@ it('marks only past non-terminal tasks as overdue', function (): void {
         ->toBe([$yesterday->id])
         ->and(Task::query()->overdue()->whereKey($today)->exists())->toBeFalse()
         ->and(Task::query()->overdue()->whereKey($tomorrow)->exists())->toBeFalse()
-        ->and(Task::query()->overdue()->whereKey($completed)->exists())->toBeFalse()
-        ->and(Task::query()->overdue()->whereKey($cancelled)->exists())->toBeFalse();
+        ->and(Task::query()->overdue()->whereKey($done)->exists())->toBeFalse();
 });
 
-it('requires a valid project member when waiting for customer', function (): void {
+it('requires every customer assignee to be an active member of the same project regardless of status', function (): void {
     $clientA = Client::factory()->create();
     $clientB = Client::factory()->create();
     $admin = User::factory()->admin()->create();
@@ -101,69 +106,67 @@ it('requires a valid project member when waiting for customer', function (): voi
 
     expect(fn () => app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Invalid assignment',
-        'status' => TaskStatus::WaitingCustomer,
+        'project_status_id' => mvpOpenStatus($project, 1)->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $outsider->id,
     ]))->toThrow(DomainException::class);
 });
 
-it('clears a customer assignee when task returns to waiting admin', function (): void {
+it('keeps assignment independent from project status changes and permits unassigned open tasks', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->customer($client)->create();
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+    $openA = mvpOpenStatus($project);
+    $openB = mvpOpenStatus($project, 1);
 
-    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-        'title' => 'Customer action',
-        'status' => TaskStatus::WaitingCustomer,
+    $unassigned = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Unassigned open work',
+        'project_status_id' => $openA->id,
+        'priority' => TaskPriority::Normal,
+        'assigned_to' => null,
+    ]);
+    $assigned = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Assigned work',
+        'project_status_id' => $openA->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $customer->id,
     ]);
 
-    $task = app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::WaitingAdmin,
-    ]);
+    $assigned = app(TaskWorkflow::class)->changeStatus($admin, $assigned, $openB);
 
-    expect($task->status)->toBe(TaskStatus::WaitingAdmin)
-        ->and($task->assigned_to)->toBeNull();
+    expect($unassigned->assigned_to)->toBeNull()
+        ->and($assigned->project_status_id)->toBe($openB->id)
+        ->and($assigned->assigned_to)->toBe($customer->id);
 });
 
-it('requires an active assignee for todo and in progress', function (TaskStatus $status): void {
+it('sets completed at on entry to Done and clears it only when reopened', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $project = mvpProject($client);
+    $workflow = app(TaskWorkflow::class);
+    $open = mvpOpenStatus($project);
+    $otherOpen = mvpOpenStatus($project, 1);
+    $done = mvpDoneStatus($project);
 
-    expect(fn () => app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-        'title' => 'Must be assigned',
-        'status' => $status,
-        'priority' => TaskPriority::Normal,
-        'assigned_to' => null,
-    ]))->toThrow(DomainException::class);
-})->with([TaskStatus::Todo, TaskStatus::InProgress]);
-
-it('sets completed at and clears it when reopened', function (): void {
-    $client = Client::factory()->create();
-    $admin = User::factory()->admin()->create();
-    $project = mvpProject($client);
-
-    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+    $task = $workflow->createForAdmin($admin, $project, [
         'title' => 'Lifecycle',
-        'status' => TaskStatus::Completed,
+        'project_status_id' => $open->id,
         'priority' => TaskPriority::Normal,
-        'assigned_to' => null,
     ]);
 
+    $task = $workflow->changeStatus($admin, $task, $otherOpen);
+    expect($task->completed_at)->toBeNull();
+
+    $task = $workflow->changeStatus($admin, $task, $done);
     expect($task->completed_at)->not->toBeNull();
 
-    $task = app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
-        'status' => TaskStatus::WaitingAdmin,
-    ]);
-
+    $task = $workflow->changeStatus($admin, $task, $open);
     expect($task->completed_at)->toBeNull();
 });
 
-it('only lets an assigned customer perform customer transitions', function (): void {
+it('lets any project member perform customer status transitions regardless of assignee', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->customer($client)->create();
@@ -172,21 +175,20 @@ it('only lets an assigned customer perform customer transitions', function (): v
     $memberships = app(ProjectMembershipManager::class);
     $memberships->add($project, $customer, $admin);
     $memberships->add($project, $other, $admin);
+    $openA = mvpOpenStatus($project);
+    $openB = mvpOpenStatus($project, 1);
 
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Assigned work',
-        'status' => TaskStatus::WaitingCustomer,
+        'project_status_id' => $openA->id,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $customer->id,
     ]);
 
-    expect(fn () => app(TaskWorkflow::class)->transitionByCustomer($other, $task, TaskStatus::InProgress))
-        ->toThrow(DomainException::class);
+    $task = app(TaskWorkflow::class)->transitionByCustomer($other, $task, $openB);
 
-    $task = app(TaskWorkflow::class)->transitionByCustomer($customer, $task, TaskStatus::WaitingAdmin);
-
-    expect($task->status)->toBe(TaskStatus::WaitingAdmin)
-        ->and($task->assigned_to)->toBeNull();
+    expect($task->project_status_id)->toBe($openB->id)
+        ->and($task->assigned_to)->toBe($customer->id);
 });
 
 it('keeps task reference and project immutable', function (): void {
@@ -196,9 +198,7 @@ it('keeps task reference and project immutable', function (): void {
     $projectB = mvpProject($client, 'B');
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $projectA, [
         'title' => 'Immutable boundaries',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
-        'assigned_to' => null,
     ]);
 
     expect(fn () => $task->update(['reference' => 'TSK-CHANGED']))
