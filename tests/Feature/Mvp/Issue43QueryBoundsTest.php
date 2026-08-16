@@ -27,17 +27,17 @@ it('bounds project detail membership and activity collections while keeping Kanb
     }
 
     foreach (range(1, 21) as $number) {
-        Activity::query()->create([
-            'project_id' => $project->id,
-            'action' => sprintf('Project activity %02d', $number),
-            'created_at' => now()->subMinutes($number),
+        app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+            'title' => "Project task {$number}",
+            'priority' => TaskPriority::Normal,
         ]);
     }
 
     foreach (range(1, 21) as $number) {
-        app(TaskWorkflow::class)->createForAdmin($admin, $project, [
-            'title' => "Project task {$number}",
-            'priority' => TaskPriority::Normal,
+        Activity::query()->create([
+            'project_id' => $project->id,
+            'action' => sprintf('Project activity %02d', $number),
+            'created_at' => now()->subMinutes($number),
         ]);
     }
 
