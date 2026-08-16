@@ -117,6 +117,12 @@
         -webkit-overflow-scrolling: touch;
     }
 
+    @media (min-width: 640px) {
+        .mobile-filter-details > :not(summary) {
+            display: flex !important;
+        }
+    }
+
     .ui-table {
         @apply min-w-full divide-y divide-slate-200 text-sm;
     }

@@ -13,7 +13,7 @@
 <div class="min-h-screen lg:flex">
     @auth
         <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-workspace-border bg-workspace-surface/95 px-4 backdrop-blur lg:hidden">
-            <button type="button" data-sidebar-open aria-controls="app-sidebar" aria-expanded="false" aria-label="باز کردن منو" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300">
+            <button type="button" data-sidebar-open aria-controls="app-sidebar" aria-expanded="false" aria-label="باز کردن منو" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300">
                 <i class="fa-light fa-bars text-lg" aria-hidden="true"></i>
             </button>
 
@@ -22,7 +22,7 @@
                 <span class="truncate">{{ $resolvedTitle }}</span>
             </a>
 
-            <a href="{{ route('notifications.index') }}" wire:navigate class="relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" aria-label="اعلان‌ها">
+            <a href="{{ route('notifications.index') }}" wire:navigate class="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100" aria-label="اعلان‌ها">
                 <i class="fa-light fa-bell" aria-hidden="true"></i>
                 @php($unreadNotificationCount = auth()->user()->unreadNotifications()->count())
                 @if($unreadNotificationCount > 0)
@@ -47,7 +47,7 @@
             </div>
 
             @auth
-                <button type="button" data-sidebar-close aria-label="بستن منو" class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-300 lg:hidden">
+                <button type="button" data-sidebar-close aria-label="بستن منو" class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-300 lg:hidden">
                     <i class="fa-light fa-xmark text-lg" aria-hidden="true"></i>
                 </button>
             @endauth
