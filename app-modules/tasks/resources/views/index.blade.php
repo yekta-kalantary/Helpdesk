@@ -11,20 +11,30 @@
 
     <div class="mb-4 flex flex-wrap items-center gap-2" aria-label="فیلترهای سریع">
         <span class="text-xs font-bold text-slate-500">فیلترهای سریع</span>
-        <button type="button" wire:click="$set('overdue', '1')" @class([
-            'rounded-full border px-3 py-1.5 text-xs font-bold transition',
+        <button type="button" wire:click="$set('overdue', '1')" aria-pressed="{{ $overdue === '1' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-xs font-bold transition',
             'border-amber-300 bg-amber-50 text-amber-800' => $overdue === '1',
             'border-workspace-border bg-workspace-surface text-slate-600 hover:border-teal-300 hover:text-teal-800' => $overdue !== '1',
         ])>فقط عقب‌افتاده</button>
+        <button type="button" wire:click="$set('assignee', '{{ auth()->id() }}')" aria-pressed="{{ $assignee === (string) auth()->id() ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-xs font-bold transition',
+            'border-teal-300 bg-teal-50 text-teal-800' => $assignee === (string) auth()->id(),
+            'border-workspace-border bg-workspace-surface text-slate-600 hover:border-teal-300 hover:text-teal-800' => $assignee !== (string) auth()->id(),
+        ])>مسئول من</button>
+        <button type="button" wire:click="$set('assignee', 'unassigned')" aria-pressed="{{ $assignee === 'unassigned' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-xs font-bold transition',
+            'border-teal-300 bg-teal-50 text-teal-800' => $assignee === 'unassigned',
+            'border-workspace-border bg-workspace-surface text-slate-600 hover:border-teal-300 hover:text-teal-800' => $assignee !== 'unassigned',
+        ])>بدون مسئول</button>
         @foreach($priorities as $priorityItem)
-            <button type="button" wire:click="$set('priority', '{{ $priorityItem->value }}')" @class([
-                'rounded-full border px-3 py-1.5 text-xs font-bold transition',
+            <button type="button" wire:click="$set('priority', '{{ $priorityItem->value }}')" aria-pressed="{{ $priority === $priorityItem->value ? 'true' : 'false' }}" @class([
+                'min-h-11 rounded-full border px-3 py-1.5 text-xs font-bold transition',
                 'border-teal-300 bg-teal-50 text-teal-800' => $priority === $priorityItem->value,
                 'border-workspace-border bg-workspace-surface text-slate-600 hover:border-teal-300 hover:text-teal-800' => $priority !== $priorityItem->value,
             ])>{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</button>
         @endforeach
-        <button type="button" wire:click="$set('sort', 'due_asc')" @class([
-            'rounded-full border px-3 py-1.5 text-xs font-bold transition',
+        <button type="button" wire:click="$set('sort', 'due_asc')" aria-pressed="{{ $sort === 'due_asc' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-xs font-bold transition',
             'border-teal-300 bg-teal-50 text-teal-800' => $sort === 'due_asc',
             'border-workspace-border bg-workspace-surface text-slate-600 hover:border-teal-300 hover:text-teal-800' => $sort !== 'due_asc',
         ])>موعد نزدیک‌تر</button>

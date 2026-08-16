@@ -45,3 +45,24 @@
 ## Concerns
 
 - The focused Pest suite still needs to be rerun in an environment with valid credentials or an available MariaDB test database. No test assertions executed in this environment.
+
+## Review Fixes
+
+- Added `مسئول من` and `بدون مسئول` quick chips. The first sets the existing `assignee` URL property to the authenticated user's ID; the second uses the smallest compatible `assignee=unassigned` representation and `whereNull('assigned_to')` branch because the original component had no unassigned value.
+- Added `aria-pressed` to every quick chip and `min-h-11` to keep each chip at the 44px interactive target.
+- Strengthened `TaskPanelUiTest` to assert chip labels and rendered click/selected-state markup, the filter `<details>` drawer, the loading opacity target, mobile card visibility/key markup, and the assigned/unassigned state transitions.
+
+## Review-Fix Verification
+
+- `php artisan test --compact --filter="task.*list|task.*create|task.*filter"`
+  - Blocked before assertions: all 15 selected tests errored on the same MariaDB credentials failure for `helpdesk_testing`.
+- `php artisan view:cache`
+  - PASS: Blade templates cached successfully.
+- `npm run build`
+  - PASS: Vite production build completed successfully.
+- `php -l tests/Feature/Mvp/TaskPanelUiTest.php`
+  - PASS: no syntax errors detected.
+- `vendor/bin/pint --dirty --format agent`
+  - PASS: no formatting changes required.
+- `git diff --check`
+  - PASS: no whitespace errors.
