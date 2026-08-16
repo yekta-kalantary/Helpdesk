@@ -375,9 +375,9 @@ class Show extends Component
     }
 
     /**
-     * @param Collection<int, WorkGroup> $activeGroups
-     * @param Collection<int, WorkGroup> $allGroups
-     * @param Collection<int, Task> $allTasks
+     * @param  Collection<int, WorkGroup>  $activeGroups
+     * @param  Collection<int, WorkGroup>  $allGroups
+     * @param  Collection<int, Task>  $allTasks
      * @return array<int, array{done: int, total: int, percentage: ?int}>
      */
     private function workGroupProgress(Collection $activeGroups, Collection $allGroups, Collection $allTasks): array

@@ -5,8 +5,8 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Application\ProjectLifecycle;
+use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Application\WorkGroupManager;
 use Modules\Tasks\Application\TaskChecklist;
 use Modules\Tasks\Application\TaskWorkflow;
@@ -90,7 +90,6 @@ it('logically removes checklist items and records parent task activity', functio
         ->and(TaskChecklistItem::query()->whereKey($item)->exists())->toBeTrue()
         ->and(Activity::query()->where('task_id', $task->id)->where('action', 'subtask.removed')->exists())->toBeTrue();
 });
-
 
 it('inherits task visibility and rejects checklist mutations from users without project access', function (): void {
     $client = Client::factory()->create();
