@@ -5,7 +5,7 @@ on:
     branches:
       - wip/project-work-management-batch-20260816
     paths:
-      - '.batch/**'
+      - '.patch/**'
       - '.github/workflows/apply-batch.yml'
 
 permissions:
@@ -20,15 +20,16 @@ jobs:
           ref: wip/project-work-management-batch-20260816
           fetch-depth: 0
 
-      - name: Apply verified batch
+      - name: Apply verified patch
         shell: bash
         run: |
           set -euo pipefail
-          cat .batch/chunk-1.b64 .batch/chunk-2.b64 .batch/chunk-3.b64 .batch/chunk-4.b64 .batch/chunk-5.b64 | base64 -d > /tmp/work-management-batch.zip
-          echo 'a974f10dbb6e289c63036ec5f17e680c8a92b1b93d8c9b865127275d334f43a5  /tmp/work-management-batch.zip' | sha256sum -c -
-          unzip -oq /tmp/work-management-batch.zip -d .
+          cat .patch/p-aa.b64 .patch/p-ab.b64 .patch/p-ac.b64 .patch/p-ad.b64 .patch/p-ae.b64 .patch/p-af.b64 .patch/p-ag.b64 | base64 -d > /tmp/work-management.patch.gz
+          echo '1ad6f59ff9ae90dab5ff0eb280171474f4c2ee313152cfa57dd4bf8cb3e7b891  /tmp/work-management.patch.gz' | sha256sum -c -
+          gzip -dc /tmp/work-management.patch.gz > /tmp/work-management.patch
+          patch -p1 --forward --batch < /tmp/work-management.patch
           rm -f app-modules/tasks/src/Domain/Enums/TaskStatus.php
-          rm -rf .batch
+          rm -rf .batch .patch
           rm -f .github/workflows/apply-batch.yml
 
       - name: Commit applied batch
