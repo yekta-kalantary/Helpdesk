@@ -34,7 +34,7 @@
         @forelse($projects as $project)
             <article wire:key="project-card-{{ $project->id }}" class="flex min-w-0 flex-col rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)]">
                 <div class="flex items-start justify-between gap-3">
-                    <a href="{{ route('projects.show', $project) }}" wire:navigate class="min-w-0 font-bold text-slate-950 hover:text-workspace-teal hover:underline">{{ $project->name }}</a>
+                    <a href="{{ route('projects.show', $project) }}" wire:navigate class="-mx-2 inline-flex min-h-11 min-w-0 flex-1 items-center rounded-lg px-2 font-bold text-slate-950 hover:text-workspace-teal hover:underline">{{ $project->name }}</a>
                     <x-ui.badge :tone="$project->status->value === 'active' ? 'success' : 'neutral'">{{ $project->status->value === 'active' ? 'فعال' : 'تکمیل‌شده' }}</x-ui.badge>
                 </div>
                 @if($isAdmin)<div class="mt-2 text-sm text-slate-500">{{ $project->client->name }}</div>@endif

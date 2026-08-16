@@ -35,3 +35,20 @@ Implemented and committed as `06e58a1` (`Redesign client and project entry views
 
 - The focused feature coverage cannot execute until the configured MariaDB test user can authenticate against `helpdesk_testing`.
 - No backend queries, dependencies, or Livewire state were changed.
+
+## Review Fixes
+
+Applied the three Task 4 review findings:
+
+- Added 44px mobile touch targets to the client and project primary detail links with `inline-flex min-h-11` alignment while preserving their named routes.
+- Added a direct Customer request assertion for `clients.index`, expecting the existing `403 Forbidden` authorization response.
+- Added a direct Customer request to the generated `projects.show` URL, asserting a successful response containing the project name.
+
+### Fix Verification
+
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan view:cache`: passed, `Blade templates cached successfully.`
+- `npm run build`: passed; Vite production build completed successfully.
+- `php artisan test --compact --filter='NavigationTest'`: blocked before assertions by `SQLSTATE[HY000] [1045]`, MariaDB rejected `helpdesk` for `helpdesk_testing`; 2 tests errored.
+- `php artisan test --compact --filter='client|project'`: blocked during database bootstrap by the same MariaDB authentication error; test output was truncated by the runner after the failure payload.
+- `php artisan test --compact --filter='client|project' && php artisan view:cache`: test command failed with the same database error (`87 tests: 1 passed, 86 errors`), so the chained view-cache command was not reached.

@@ -24,7 +24,7 @@
         @forelse($clients as $client)
             <article wire:key="client-mobile-{{ $client->id }}" class="rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)]">
                 <div class="flex items-start justify-between gap-3">
-                    <a class="min-w-0 font-bold text-slate-950 hover:text-workspace-teal hover:underline" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a>
+                    <a class="-mx-2 inline-flex min-h-11 min-w-0 items-center rounded-lg px-2 font-bold text-slate-950 hover:text-workspace-teal hover:underline" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a>
                     <x-ui.badge :tone="$client->status->value === 'active' ? 'success' : 'neutral'">{{ $client->status->value === 'active' ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
                 </div>
                 <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">

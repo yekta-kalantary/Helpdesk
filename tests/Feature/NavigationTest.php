@@ -49,6 +49,11 @@ it('keeps client and project entry actions role-aware and links visible projects
     $adminProjectIndex = $this->actingAs($admin)->get(route('projects.index'))->assertOk()->getContent();
     $customerProjectIndex = $this->actingAs($customer)->get(route('projects.index'))->assertOk()->getContent();
     $customerDashboard = $this->actingAs($customer)->get(route('dashboard'))->assertOk()->getContent();
+    $customerProjectDetail = $this->actingAs($customer)
+        ->get(route('projects.show', $project))
+        ->assertSuccessful();
+
+    $this->actingAs($customer)->get(route('clients.index'))->assertForbidden();
 
     expect($adminClientIndex)
         ->toContain(route('clients.create'))
@@ -59,6 +64,8 @@ it('keeps client and project entry actions role-aware and links visible projects
         ->and($customerProjectIndex)
         ->toContain(route('projects.show', $project))
         ->not->toContain(route('projects.create'))
+        ->and($customerProjectDetail->getContent())
+        ->toContain($project->name)
         ->and($customerDashboard)
         ->not->toContain(route('clients.index'))
         ->not->toContain(route('clients.create'));
