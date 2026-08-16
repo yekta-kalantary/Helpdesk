@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 class ProjectLifecycle
 {
@@ -26,11 +25,11 @@ class ProjectLifecycle
             }
 
             $hasOpenTasks = $project->tasks()
-                ->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::Cancelled->value])
+                ->whereHas('projectStatus', fn ($statuses) => $statuses->where('is_done', false))
                 ->exists();
 
             if ($hasOpenTasks) {
-                throw new DomainException('A project with non-terminal tasks cannot be completed.');
+                throw new DomainException('A Project with Tasks outside Done cannot be completed.');
             }
 
             $project->update(['status' => ProjectStatus::Completed]);
@@ -52,6 +51,7 @@ class ProjectLifecycle
         }
 
         return DB::transaction(function () use ($project, $actor): Project {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $project->update(['status' => ProjectStatus::Active]);
             $this->activities->record($actor, 'project.status_changed', $project, null, [
                 'old' => ProjectStatus::Completed->value,
@@ -65,7 +65,7 @@ class ProjectLifecycle
     private function assertAdmin(User $actor): void
     {
         if (! $actor->isAdmin() || ! $actor->is_active) {
-            throw new DomainException('Only an active admin may change project status.');
+            throw new DomainException('Only an active Admin may change Project lifecycle status.');
         }
     }
 }

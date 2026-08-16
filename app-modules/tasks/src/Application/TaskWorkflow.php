@@ -10,8 +10,9 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
+use Modules\Projects\Infrastructure\Models\WorkGroup;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 class TaskWorkflow
@@ -24,146 +25,95 @@ class TaskWorkflow
 
     public function createForCustomer(User $actor, Project $project, array $data): Task
     {
-        $this->assertCustomerProjectAccess($actor, $project);
+        if (! $actor->isCustomer()) {
+            throw new DomainException('Only a Customer may use the Customer task creation flow.');
+        }
 
-        $task = DB::transaction(function () use ($actor, $project, $data): Task {
-            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
-            $this->assertProjectOpen($project);
+        $this->assertProjectAccess($actor, $project);
 
-            $task = Task::query()->create([
-                'project_id' => $project->id,
-                'created_by' => $actor->id,
-                'assigned_to' => null,
-                'title' => trim((string) $data['title']),
-                'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
-                'status' => TaskStatus::WaitingAdmin,
-                'priority' => TaskPriority::Normal,
-                'due_date' => null,
-                'completed_at' => null,
-            ]);
-
-            $this->activities->record($actor, 'task.created', $project, $task, [
-                'reference' => $task->reference,
-                'status' => $task->status->value,
-                'priority' => $task->priority->value,
-            ]);
-
-            $this->notifications->send(
-                $this->notificationRouter->created($task),
-                $this->notification($task, 'درخواست جدید مشتری', "تسک {$task->reference} وارد صف ادمین شد."),
-                $actor,
-            );
-
-            return $task;
-        });
-
-        return $task;
+        return $this->createTask($actor, $project, [
+            'title' => $data['title'] ?? '',
+            'description' => $data['description'] ?? null,
+            'project_status_id' => $data['project_status_id'] ?? null,
+            'work_group_id' => $data['work_group_id'] ?? null,
+            'priority' => TaskPriority::Normal,
+            'assigned_to' => null,
+            'due_date' => null,
+        ]);
     }
 
     public function createForAdmin(User $actor, Project $project, array $data): Task
     {
         $this->assertAdmin($actor);
-        $this->assertProjectOpen($project);
 
-        $status = $this->status($data['status'] ?? TaskStatus::WaitingAdmin);
-        $assignedTo = isset($data['assigned_to']) ? (int) $data['assigned_to'] : null;
-        $assignedTo = $this->normalizeWaitingAdminAssignee($status, $assignedTo);
-
-        $task = DB::transaction(function () use ($actor, $project, $data, $status, $assignedTo): Task {
-            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
-            $this->assertProjectOpen($project);
-
-            $task = Task::query()->create([
-                'project_id' => $project->id,
-                'created_by' => $actor->id,
-                'assigned_to' => $assignedTo,
-                'title' => trim((string) $data['title']),
-                'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
-                'status' => $status,
-                'priority' => $this->priority($data['priority'] ?? TaskPriority::Normal),
-                'due_date' => $data['due_date'] ?? null,
-                'completed_at' => $status === TaskStatus::Completed ? now() : null,
-            ]);
-
-            $this->activities->record($actor, 'task.created', $project, $task, [
-                'reference' => $task->reference,
-                'status' => $task->status->value,
-                'priority' => $task->priority->value,
-                'assigned_to' => $task->assigned_to,
-            ]);
-
-            $this->notifications->send(
-                $this->notificationRouter->created($task),
-                $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
-                $actor,
-            );
-
-            return $task;
-        });
-
-        return $task;
+        return $this->createTask($actor, $project, $data);
     }
 
     public function updateByAdmin(User $actor, Task $task, array $data): Task
     {
         $this->assertAdmin($actor);
-        $task->loadMissing('project');
+        $task->loadMissing(['project.client', 'projectStatus']);
         $this->assertProjectOpen($task->project);
 
-        $original = [];
+        if ($task->isDone()) {
+            throw new DomainException('Done Tasks must be reopened through a status transition before editing.');
+        }
 
-        $task = DB::transaction(function () use ($actor, $task, $data, &$original): Task {
+        $statusChanged = false;
+        $assigneeChanged = false;
+
+        $task = DB::transaction(function () use ($actor, $task, $data, &$statusChanged, &$assigneeChanged): Task {
             $project = Project::query()->lockForUpdate()->findOrFail($task->project_id);
-            $task = Task::query()->lockForUpdate()->findOrFail($task->id);
+            $task = Task::query()->with('projectStatus')->lockForUpdate()->findOrFail($task->id);
             $task->setRelation('project', $project);
             $this->assertProjectOpen($project);
 
             $original = [
-                'status' => $task->status,
+                'project_status_id' => $task->project_status_id,
+                'status_title' => $task->projectStatus->title,
+                'status_is_done' => $task->projectStatus->is_done,
+                'work_group_id' => $task->work_group_id,
                 'priority' => $task->priority,
                 'assigned_to' => $task->assigned_to,
                 'due_date' => $task->due_date?->toDateString(),
-                'completed_at' => $task->completed_at,
             ];
 
-            $status = array_key_exists('status', $data)
-                ? $this->status($data['status'])
-                : $task->status;
-
-            $assignedTo = array_key_exists('assigned_to', $data)
-                ? ($data['assigned_to'] === null || $data['assigned_to'] === '' ? null : (int) $data['assigned_to'])
-                : $task->assigned_to;
-
-            $assignedTo = $this->normalizeWaitingAdminAssignee($status, $assignedTo);
-
             $attributes = Arr::only($data, ['title', 'description', 'due_date']);
-            $attributes['status'] = $status;
-            $attributes['assigned_to'] = $assignedTo;
-
             if (array_key_exists('priority', $data)) {
                 $attributes['priority'] = $this->priority($data['priority']);
             }
+            if (array_key_exists('assigned_to', $data)) {
+                $attributes['assigned_to'] = $data['assigned_to'] === null || $data['assigned_to'] === ''
+                    ? null
+                    : (int) $data['assigned_to'];
+            }
+            if (array_key_exists('work_group_id', $data)) {
+                $attributes['work_group_id'] = $this->resolveWorkGroup($project, $data['work_group_id'])?->id;
+            }
 
-            if ($status === TaskStatus::Completed) {
-                $attributes['completed_at'] = $task->completed_at ?? now();
-            } elseif ($task->status === TaskStatus::Completed || $task->completed_at !== null) {
-                $attributes['completed_at'] = null;
+            $newStatus = null;
+            if (array_key_exists('project_status_id', $data)) {
+                $newStatus = $this->resolveStatus($project, $data['project_status_id']);
+                $attributes['project_status_id'] = $newStatus->id;
+                $this->applyCompletionTimestamp($task, $task->projectStatus, $newStatus, $attributes);
             }
 
             $task->fill($attributes)->save();
-            $task->refresh();
+            $task->refresh()->load('projectStatus');
+            $statusChanged = $original['project_status_id'] !== $task->project_status_id;
+            $assigneeChanged = $original['assigned_to'] !== $task->assigned_to;
             $this->recordTaskChanges($actor, $task, $original);
 
             return $task;
         });
 
-        if ($original['status'] !== $task->status) {
+        if ($statusChanged) {
             $this->notifications->send(
                 $this->notificationRouter->statusChanged($task),
                 $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
                 $actor,
             );
-        } elseif ($original['assigned_to'] !== $task->assigned_to) {
+        } elseif ($assigneeChanged) {
             $this->notifications->send(
                 $this->notificationRouter->assigneeChanged($task),
                 $this->notification($task, 'تغییر مسئول تسک', "مسئول تسک {$task->reference} تغییر کرد."),
@@ -174,68 +124,32 @@ class TaskWorkflow
         return $task;
     }
 
-    public function transitionByCustomer(User $actor, Task $task, TaskStatus $status): Task
+    public function changeStatus(User $actor, Task $task, ProjectTaskStatus $status): Task
     {
         $task->loadMissing('project');
-        $this->assertCustomerProjectAccess($actor, $task->project);
+        $this->assertProjectAccess($actor, $task->project);
 
-        if ($task->isTerminal()) {
-            throw new DomainException('Terminal tasks are read-only for customers.');
-        }
-
-        if ($task->assigned_to !== $actor->id) {
-            throw new DomainException('Only the assigned customer may change this task status.');
-        }
-
-        if (! in_array($status, [
-            TaskStatus::Todo,
-            TaskStatus::InProgress,
-            TaskStatus::WaitingAdmin,
-            TaskStatus::Completed,
-        ], true)) {
-            throw new DomainException('Customer transition is not allowed.');
-        }
-
-        $oldStatus = null;
-        $oldAssignee = null;
-
-        $task = DB::transaction(function () use ($actor, $task, $status, &$oldStatus, &$oldAssignee): Task {
+        $task = DB::transaction(function () use ($actor, $task, $status): Task {
             $project = Project::query()->lockForUpdate()->findOrFail($task->project_id);
-            $task = Task::query()->lockForUpdate()->findOrFail($task->id);
-            $task->setRelation('project', $project);
             $this->assertProjectOpen($project);
+            $task = Task::query()->with('projectStatus')->lockForUpdate()->findOrFail($task->id);
+            $target = ProjectTaskStatus::query()->lockForUpdate()->findOrFail($status->id);
 
-            $oldStatus = $task->status;
-            $oldAssignee = $task->assigned_to;
-
-            $task->status = $status;
-
-            if ($status === TaskStatus::WaitingAdmin) {
-                $task->assigned_to = null;
+            if (! $target->is_active || $target->project_id !== $project->id) {
+                throw new DomainException('Target Project Status must be active and belong to the Task Project.');
             }
 
-            if ($status === TaskStatus::Completed) {
-                $task->completed_at = now();
+            $old = $task->projectStatus;
+            if ($old->id === $target->id) {
+                return $task;
             }
 
-            $task->save();
-            $task->refresh();
+            $attributes = ['project_status_id' => $target->id];
+            $this->applyCompletionTimestamp($task, $old, $target, $attributes);
+            $task->fill($attributes)->save();
+            $task->refresh()->load('projectStatus');
 
-            $this->activities->record($actor, 'task.status_changed', $task->project, $task, [
-                'old' => $oldStatus->value,
-                'new' => $task->status->value,
-            ]);
-
-            if ($oldAssignee !== $task->assigned_to) {
-                $this->activities->record($actor, 'task.assignee_changed', $task->project, $task, [
-                    'old' => $oldAssignee,
-                    'new' => $task->assigned_to,
-                ]);
-            }
-
-            if ($task->status === TaskStatus::Completed) {
-                $this->activities->record($actor, 'task.completed', $task->project, $task);
-            }
+            $this->recordStatusActivity($actor, $task, $old, $target);
 
             return $task;
         });
@@ -249,6 +163,99 @@ class TaskWorkflow
         return $task;
     }
 
+    public function transitionByCustomer(User $actor, Task $task, ProjectTaskStatus $status): Task
+    {
+        if (! $actor->isCustomer()) {
+            throw new DomainException('Only a Customer may use the Customer transition flow.');
+        }
+
+        return $this->changeStatus($actor, $task, $status);
+    }
+
+    private function createTask(User $actor, Project $project, array $data): Task
+    {
+        $task = DB::transaction(function () use ($actor, $project, $data): Task {
+            $project = Project::query()->lockForUpdate()->findOrFail($project->id);
+            $this->assertProjectOpen($project);
+            $status = $this->resolveStatus($project, $data['project_status_id'] ?? null);
+            $workGroup = $this->resolveWorkGroup($project, $data['work_group_id'] ?? null);
+            $priority = $this->priority($data['priority'] ?? TaskPriority::Normal);
+            $title = trim((string) ($data['title'] ?? ''));
+
+            if ($title === '') {
+                throw new DomainException('Task title is required.');
+            }
+
+            $task = Task::query()->create([
+                'project_id' => $project->id,
+                'project_status_id' => $status->id,
+                'work_group_id' => $workGroup?->id,
+                'created_by' => $actor->id,
+                'assigned_to' => isset($data['assigned_to']) && $data['assigned_to'] !== '' ? (int) $data['assigned_to'] : null,
+                'title' => $title,
+                'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
+                'priority' => $priority,
+                'due_date' => $data['due_date'] ?? null,
+                'completed_at' => $status->is_done ? now() : null,
+            ]);
+
+            $this->activities->record($actor, 'task.created', $project, $task, [
+                'reference' => $task->reference,
+                'project_status_id' => $status->id,
+                'project_status_title_snapshot' => $status->title,
+                'priority' => $task->priority->value,
+                'assigned_to' => $task->assigned_to,
+                'work_group_id' => $task->work_group_id,
+            ]);
+
+            return $task->load('projectStatus');
+        });
+
+        $this->notifications->send(
+            $this->notificationRouter->created($task),
+            $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
+            $actor,
+        );
+
+        return $task;
+    }
+
+    private function resolveStatus(Project $project, mixed $statusId): ProjectTaskStatus
+    {
+        $status = $statusId
+            ? ProjectTaskStatus::query()->find((int) $statusId)
+            : $project->defaultOpenTaskStatus();
+
+        if (! $status || ! $status->is_active || $status->project_id !== $project->id) {
+            throw new DomainException('Task Project Status must be active and belong to the same Project.');
+        }
+
+        return $status;
+    }
+
+    private function resolveWorkGroup(Project $project, mixed $workGroupId): ?WorkGroup
+    {
+        if (! $workGroupId) {
+            return null;
+        }
+
+        $group = WorkGroup::query()->find((int) $workGroupId);
+        if (! $group || ! $group->isActive() || $group->project_id !== $project->id) {
+            throw new DomainException('Task Work Group must be active and belong to the same Project.');
+        }
+
+        return $group;
+    }
+
+    private function applyCompletionTimestamp(Task $task, ProjectTaskStatus $old, ProjectTaskStatus $new, array &$attributes): void
+    {
+        if (! $old->is_done && $new->is_done) {
+            $attributes['completed_at'] = now();
+        } elseif ($old->is_done && ! $new->is_done) {
+            $attributes['completed_at'] = null;
+        }
+    }
+
     private function recordTaskChanges(User $actor, Task $task, array $original): void
     {
         if ($original['assigned_to'] !== $task->assigned_to) {
@@ -258,23 +265,16 @@ class TaskWorkflow
             ]);
         }
 
-        if ($original['status'] !== $task->status) {
-            $this->activities->record($actor, 'task.status_changed', $task->project, $task, [
-                'old' => $original['status']->value,
-                'new' => $task->status->value,
+        if ($original['project_status_id'] !== $task->project_status_id) {
+            $old = ProjectTaskStatus::query()->findOrFail($original['project_status_id']);
+            $this->recordStatusActivity($actor, $task, $old, $task->projectStatus);
+        }
+
+        if ($original['work_group_id'] !== $task->work_group_id) {
+            $this->activities->record($actor, 'task.work_group_changed', $task->project, $task, [
+                'old_work_group_id' => $original['work_group_id'],
+                'new_work_group_id' => $task->work_group_id,
             ]);
-
-            if ($task->status === TaskStatus::Completed) {
-                $this->activities->record($actor, 'task.completed', $task->project, $task);
-            }
-
-            if ($task->status === TaskStatus::Cancelled) {
-                $this->activities->record($actor, 'task.cancelled', $task->project, $task);
-            }
-
-            if ($original['status']->isTerminal() && ! $task->status->isTerminal()) {
-                $this->activities->record($actor, 'task.reopened', $task->project, $task);
-            }
         }
 
         if ($original['priority'] !== $task->priority) {
@@ -293,6 +293,22 @@ class TaskWorkflow
         }
     }
 
+    private function recordStatusActivity(User $actor, Task $task, ProjectTaskStatus $old, ProjectTaskStatus $new): void
+    {
+        $this->activities->record($actor, 'task.status_changed', $task->project, $task, [
+            'previous_status_id' => $old->id,
+            'previous_status_title_snapshot' => $old->title,
+            'new_status_id' => $new->id,
+            'new_status_title_snapshot' => $new->title,
+        ]);
+
+        if (! $old->is_done && $new->is_done) {
+            $this->activities->record($actor, 'task.completed', $task->project, $task);
+        } elseif ($old->is_done && ! $new->is_done) {
+            $this->activities->record($actor, 'task.reopened', $task->project, $task);
+        }
+    }
+
     private function notification(Task $task, string $title, string $body): ResourceChangedNotification
     {
         return new ResourceChangedNotification(
@@ -307,32 +323,23 @@ class TaskWorkflow
         );
     }
 
-    private function normalizeWaitingAdminAssignee(TaskStatus $status, ?int $assignedTo): ?int
-    {
-        if ($status !== TaskStatus::WaitingAdmin || ! $assignedTo) {
-            return $assignedTo;
-        }
-
-        $user = User::query()->find($assignedTo);
-
-        return $user?->isCustomer() ? null : $assignedTo;
-    }
-
     private function assertAdmin(User $user): void
     {
         if (! $user->isAdmin() || ! $user->is_active) {
-            throw new DomainException('Only an active admin may perform this action.');
+            throw new DomainException('Only an active Admin may perform this action.');
         }
     }
 
-    private function assertCustomerProjectAccess(User $user, Project $project): void
+    private function assertProjectAccess(User $user, Project $project): void
     {
-        if (! $user->isCustomer() || ! $user->canAuthenticate()) {
-            throw new DomainException('An active customer account is required.');
+        if (! $user->is_active || ! $user->canAuthenticate()) {
+            throw new DomainException('An active account is required.');
         }
 
-        if ($user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
-            throw new DomainException('Active project membership is required.');
+        if (! $user->isAdmin()) {
+            if (! $user->isCustomer() || $user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
+                throw new DomainException('Active Project membership is required.');
+            }
         }
 
         $this->assertProjectOpen($project);
@@ -340,14 +347,10 @@ class TaskWorkflow
 
     private function assertProjectOpen(Project $project): void
     {
-        if (! $project->isActive() || ! $project->client()->active()->exists()) {
-            throw new DomainException('The project is read-only.');
+        $project->loadMissing('client');
+        if (! $project->isActive() || ! $project->client->isActive()) {
+            throw new DomainException('The Project is read-only.');
         }
-    }
-
-    private function status(TaskStatus|string $status): TaskStatus
-    {
-        return $status instanceof TaskStatus ? $status : TaskStatus::from($status);
     }
 
     private function priority(TaskPriority|string $priority): TaskPriority
