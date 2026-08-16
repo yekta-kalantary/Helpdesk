@@ -43,7 +43,7 @@
         <x-ui.card>
             <div class="mb-5 flex items-center justify-between gap-3">
                 <h2 class="font-black text-slate-950">پروژه‌های اخیر</h2>
-                <a href="{{ route('projects.index') }}" wire:navigate class="text-sm font-semibold text-slate-500 hover:text-slate-950">مشاهده همه</a>
+                <a href="{{ route('projects.index') }}" wire:navigate class="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-sm font-semibold text-slate-500 transition hover:bg-teal-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-workspace-focus">مشاهده همه</a>
             </div>
             <div class="space-y-2">
                 @forelse($recentProjects as $project)
@@ -63,7 +63,7 @@
         <x-ui.card>
             <div class="mb-5 flex items-center justify-between gap-3">
                 <h2 class="font-black text-slate-950">تسک‌های اخیر</h2>
-                <a href="{{ route('tasks.index') }}" wire:navigate class="text-sm font-semibold text-slate-500 hover:text-slate-950">مشاهده همه</a>
+                <a href="{{ route('tasks.index') }}" wire:navigate class="inline-flex min-h-11 shrink-0 items-center rounded-lg px-2 text-sm font-semibold text-slate-500 transition hover:bg-teal-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-workspace-focus">مشاهده همه</a>
             </div>
             <div class="space-y-2">
                 @forelse($recentTasks as $task)

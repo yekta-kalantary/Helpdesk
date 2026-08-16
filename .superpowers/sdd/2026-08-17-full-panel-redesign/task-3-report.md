@@ -47,3 +47,16 @@ Implemented the role-aware dashboard redesign using the existing Dashboard data 
 
 - The focused dashboard assertions remain unverified until the local test database credentials are corrected or MariaDB is made available with the configured `helpdesk_testing` credentials.
 - Browser-level visual verification was not run because the requested checks were the focused dashboard tests and view cache, and the test environment is blocked before request rendering.
+
+## Review Fix
+
+- Finding: the recent projects and recent tasks `مشاهده همه` links were text-only inline anchors below the required 44px interactive target.
+- Fix: updated both links in `resources/views/livewire/dashboard.blade.php` with `inline-flex min-h-11 shrink-0 items-center`, preserved RTL header alignment, route names, and `wire:navigate`, and retained the subdued visual hierarchy with padding and focus/hover states.
+- `php artisan view:cache`
+  - Passed: Blade templates cached successfully.
+- `vendor/bin/pint --dirty --format agent`
+  - Passed.
+- `git diff --check`
+  - Passed with no whitespace errors.
+- `php artisan test --compact --filter="dashboard"`
+  - Blocked before assertions: all 7 filtered tests failed during database setup with `SQLSTATE[HY000] [1045] Access denied for user 'helpdesk'@'localhost'` against `helpdesk_testing` on MariaDB `127.0.0.1:3306`.
