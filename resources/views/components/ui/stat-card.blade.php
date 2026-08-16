@@ -12,7 +12,7 @@
             <div class="mt-2 text-3xl font-black tracking-tight text-slate-950">{{ $value }}</div>
         </div>
         @if($icon)
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500" aria-hidden="true">
+            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-workspace-teal" aria-hidden="true">
                 <i class="fa-light {{ $icon }} text-lg"></i>
             </span>
         @endif

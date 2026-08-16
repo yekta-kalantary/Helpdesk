@@ -19,6 +19,23 @@
     --font-sans: 'IRANYekanXVF';
     --font-serif: 'IRANYekanXVF';
     --font-mono: 'IRANYekanXVF';
+    --color-workspace-page: var(--workspace-page);
+    --color-workspace-surface: var(--workspace-surface);
+    --color-workspace-border: var(--workspace-border);
+    --color-workspace-teal: var(--workspace-teal);
+    --color-workspace-coral: var(--workspace-coral);
+    --color-workspace-success: var(--workspace-success);
+    --color-workspace-focus: var(--workspace-focus);
+}
+
+:root {
+    --workspace-page: #f4f8f7;
+    --workspace-surface: #ffffff;
+    --workspace-border: #d9e6e3;
+    --workspace-teal: #0f5c5a;
+    --workspace-coral: #d96b55;
+    --workspace-success: #278166;
+    --workspace-focus: #e4a11b;
 }
 
 @layer base {
@@ -42,7 +59,7 @@
 
     body {
         min-width: 0;
-        @apply bg-slate-50 text-slate-900 antialiased;
+        @apply bg-workspace-page text-slate-900 antialiased;
     }
 
     main,
@@ -61,6 +78,31 @@
     table th,
     table td {
         vertical-align: baseline;
+    }
+
+    :where(a, button, input, select, textarea, summary):focus-visible {
+        outline: 3px solid var(--workspace-focus);
+        outline-offset: 2px;
+    }
+
+    :where(button, [role='button']) {
+        min-height: 2.75rem;
+        touch-action: manipulation;
+    }
+
+    [wire\:loading].ui-loading-stable {
+        opacity: 0.65;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+        }
     }
 }
 

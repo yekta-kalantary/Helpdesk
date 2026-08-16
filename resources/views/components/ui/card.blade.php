@@ -5,7 +5,7 @@
 ])
 
 <section {{ $attributes->class([
-    'min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm',
+    'min-w-0 rounded-2xl border border-workspace-border bg-workspace-surface shadow-[0_8px_24px_rgba(15,92,90,0.06)]',
     'p-4 sm:p-6' => $padding,
 ]) }}>
     @if($title || $subtitle || isset($actions))
