@@ -3,8 +3,14 @@
 
     <form class="max-w-4xl" wire:submit="save">
         <x-ui.card>
-            <div class="space-y-5">
-                <div class="grid gap-4 sm:grid-cols-2">
+            <div class="space-y-7">
+                <section aria-labelledby="task-context-heading" class="space-y-4">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">۱</p>
+                        <h2 id="task-context-heading" class="mt-1 text-lg font-bold text-slate-950">زمینه پروژه</h2>
+                        <p class="mt-1 text-sm text-slate-500">پروژه، وضعیت و ساختار کاری تسک را مشخص کنید.</p>
+                    </div>
+                    <div class="grid gap-4 sm:grid-cols-2">
                     <x-ui.input name="title" :label="__('app.title')" :value="$title" wire:model="title" required />
 
                     @if($taskId)
@@ -19,12 +25,25 @@
                             @foreach($projects as $project)<option value="{{ $project->id }}">{{ $project->name }}</option>@endforeach
                         </x-ui.select>
                     @endif
-                </div>
+                    </div>
 
-                <x-ui.textarea name="description" :label="__('app.description')" :value="$description" wire:model="description" />
+                </section>
+
+                <section aria-labelledby="task-content-heading" class="space-y-4 border-t border-slate-100 pt-6">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">۲</p>
+                        <h2 id="task-content-heading" class="mt-1 text-lg font-bold text-slate-950">محتوا</h2>
+                    </div>
+                    <x-ui.textarea name="description" :label="__('app.description')" :value="$description" wire:model="description" />
+                </section>
 
                 @if($project_id)
-                    <div class="grid gap-4 sm:grid-cols-2">
+                    <section aria-labelledby="task-ownership-heading" class="space-y-4 border-t border-slate-100 pt-6">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">۳</p>
+                            <h2 id="task-ownership-heading" class="mt-1 text-lg font-bold text-slate-950">مالکیت</h2>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2">
                         <x-ui.select name="project_status_id" label="وضعیت پروژه‌ای تسک" wire:model="project_status_id">
                             <option value="">اولین وضعیت باز پروژه (پیش‌فرض)</option>
                             @foreach($statuses as $statusItem)
@@ -40,11 +59,17 @@
                                 @endforeach
                             </x-ui.select>
                         @endif
-                    </div>
+                        </div>
+                    </section>
                 @endif
 
                 @if($isAdmin)
-                    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <section aria-labelledby="task-scheduling-heading" class="space-y-4 border-t border-slate-100 pt-6">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">۴</p>
+                            <h2 id="task-scheduling-heading" class="mt-1 text-lg font-bold text-slate-950">زمان‌بندی و تخصیص</h2>
+                        </div>
+                        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         <x-ui.select name="priority" label="اولویت" wire:model="priority" required>
                             @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</option>@endforeach
                         </x-ui.select>
@@ -53,7 +78,8 @@
                             @foreach($assignees as $assignee)<option value="{{ $assignee->id }}">{{ $assignee->full_name }}</option>@endforeach
                         </x-ui.select>
                         <x-ui.input name="due_date" type="date" label="موعد" :value="$due_date" wire:model="due_date" />
-                    </div>
+                        </div>
+                    </section>
                 @else
                     <x-ui.alert tone="neutral">می‌توانید وضعیت اولیه را از Workflow همین پروژه انتخاب کنید. تسک مشتری در ریشه پروژه ایجاد می‌شود و انتقال آن به Work Group، تعیین مسئول و موعد در اختیار ادمین است.</x-ui.alert>
                 @endif
@@ -69,7 +95,7 @@
 
                 @error('project_status_id')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
-                <x-ui.form-actions>
+                <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-workspace-surface/95 px-4 pb-1 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-none">
                     <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save,attachment">
                         <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
                         <span wire:loading wire:target="save">{{ __('app.loading') }}</span>
