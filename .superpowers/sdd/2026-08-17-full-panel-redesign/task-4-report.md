@@ -38,6 +38,8 @@ Implemented and committed as `06e58a1` (`Redesign client and project entry views
 
 ## Review Fixes
 
+Review fixes committed as `d65c707` (`Fix Task 4 review findings`).
+
 Applied the three Task 4 review findings:
 
 - Added 44px mobile touch targets to the client and project primary detail links with `inline-flex min-h-11` alignment while preserving their named routes.
