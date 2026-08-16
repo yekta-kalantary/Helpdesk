@@ -31,12 +31,15 @@
                                 <option value="{{ $statusItem->id }}">{{ $statusItem->title }}{{ $statusItem->is_done ? ' · Done' : '' }}</option>
                             @endforeach
                         </x-ui.select>
-                        <x-ui.select name="work_group_id" label="گروه کاری" wire:model="work_group_id">
-                            <option value="">ریشه پروژه</option>
-                            @foreach($workGroups as $group)
-                                <option value="{{ $group->id }}">{{ $group->title }}</option>
-                            @endforeach
-                        </x-ui.select>
+
+                        @if($isAdmin)
+                            <x-ui.select name="work_group_id" label="Work Group" wire:model="work_group_id">
+                                <option value="">ریشه پروژه</option>
+                                @foreach($workGroups as $group)
+                                    <option value="{{ $group->id }}">{{ $group->title }}</option>
+                                @endforeach
+                            </x-ui.select>
+                        @endif
                     </div>
                 @endif
 
@@ -52,7 +55,7 @@
                         <x-ui.input name="due_date" type="date" label="موعد" :value="$due_date" wire:model="due_date" />
                     </div>
                 @else
-                    <x-ui.alert tone="neutral">می‌توانید وضعیت اولیه و گروه کاری را انتخاب کنید. اولویت درخواست مشتری عادی است و تعیین مسئول/موعد فقط در اختیار ادمین می‌ماند.</x-ui.alert>
+                    <x-ui.alert tone="neutral">می‌توانید وضعیت اولیه را از Workflow همین پروژه انتخاب کنید. تسک مشتری در ریشه پروژه ایجاد می‌شود و انتقال آن به Work Group، تعیین مسئول و موعد در اختیار ادمین است.</x-ui.alert>
                 @endif
 
                 @if(!$taskId)
