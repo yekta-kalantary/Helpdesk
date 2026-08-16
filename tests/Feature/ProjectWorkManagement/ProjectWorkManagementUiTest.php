@@ -5,6 +5,7 @@ use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Application\WorkGroupManager;
+use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Projects\Infrastructure\Models\WorkGroup;
 use Modules\Projects\Presentation\Livewire\Show as ProjectShow;
 use Modules\Tasks\Application\TaskWorkflow;
@@ -59,6 +60,7 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertSee('Activity')
         ->assertSee('Members')
         ->assertSee('Project Management')
+        ->assertSee($client->name)
         ->assertSee('Workflow پروژه')
         ->assertSee('مدیریت Work Group');
 
@@ -69,6 +71,7 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertSee('Tasks')
         ->assertSee('Activity')
         ->assertSee('Members')
+        ->assertDontSee($client->name)
         ->assertDontSee('Project Management')
         ->assertDontSee('Workflow پروژه')
         ->assertDontSee('مدیریت Work Group');
@@ -126,4 +129,21 @@ it('exposes workflow and Work Group management only to admins and persists Work 
         ->assertDontSee('مدیریت Work Group')
         ->call('createStatus')
         ->assertForbidden();
+});
+
+it('explains that completed project boards are read-only to customers', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client, 'Completed workspace');
+    $project->forceFill(['status' => ProjectStatus::Completed])->save();
+    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+
+    $this->actingAs($customer);
+
+    Livewire::test(ProjectShow::class, ['project' => $project->id])
+        ->assertSee('این پروژه تکمیل شده و برد فقط خواندنی است.')
+        ->assertSee('برای تغییر وضعیت تسک یا ایجاد تسک جدید، ابتدا پروژه را بازگشایی کنید.')
+        ->assertDontSeeHtml('wire:change="moveTask')
+        ->assertDontSeeHtml('draggable="true"');
 });

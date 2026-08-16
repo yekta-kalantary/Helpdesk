@@ -50,3 +50,23 @@ Converted the project detail view into a Kanban-first workspace without changing
 
 - The focused Pest suite could not execute because the local test database credentials are unavailable or invalid. Re-run it after correcting the MariaDB user/password/database setup.
 - Browser-level drag/drop and mobile viewport behavior were not executable in this environment; the existing event handlers and mobile select remain unchanged.
+
+## Review Fixes
+
+- Added a completed-project read-only notice beside the Kanban controls explaining that task movement and new task creation require reopening the project.
+- Removed client identity from Customer breadcrumbs. Admins retain the client name and link; Customers retain generic project context only.
+- Added `min-h-11` to workspace search/filter/status inputs and selects, and `min-h-11`/`min-w-11` plus padding to management and arrow buttons.
+- Strengthened `ProjectWorkManagementUiTest` with Admin/customer client visibility assertions and completed-project read-only/interaction-markup assertions.
+
+## Review Fix Verification
+
+- `vendor/bin/pint --dirty --format agent`
+  - Passed; ordered the new test imports.
+- `php artisan test --compact --filter="project.*detail|project.*workflow|kanban"`
+  - Blocked before assertions: all 22 selected tests failed during database initialization because MariaDB rejected `helpdesk` for `helpdesk_testing` at `127.0.0.1:3306`.
+- `php artisan view:cache`
+  - Passed: Blade templates cached successfully.
+- `npm run build`
+  - Passed: Vite production build completed successfully.
+- `git diff --check`
+  - Passed.

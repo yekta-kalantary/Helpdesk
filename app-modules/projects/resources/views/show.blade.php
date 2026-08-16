@@ -3,14 +3,22 @@
         <x-ui.alert tone="success">{{ session('success') }}</x-ui.alert>
     @endif
 
+    @php($breadcrumbs = $isAdmin
+        ? [
+            ['label' => 'پروژه‌ها', 'href' => route('projects.index')],
+            ['label' => $project->client->name, 'href' => route('clients.show', $project->client)],
+            ['label' => $project->name, 'href' => null],
+        ]
+        : [
+            ['label' => 'پروژه‌ها', 'href' => route('projects.index')],
+            ['label' => 'پروژه', 'href' => null],
+            ['label' => $project->name, 'href' => null],
+        ])
+
     <x-ui.page-header
         :title="$project->name"
         :subtitle="$project->description ? \Illuminate\Support\Str::limit($project->description, 140) : 'فضای کاری پروژه برای هماهنگی، پیگیری و تحویل کار.'"
-        :breadcrumbs="[
-            ['label' => 'پروژه‌ها', 'href' => route('projects.index')],
-            ['label' => $project->client->name, 'href' => $isAdmin ? route('clients.show', $project->client) : null],
-            ['label' => $project->name, 'href' => null],
-        ]"
+        :breadcrumbs="$breadcrumbs"
     >
         <x-slot:actions>
             <x-ui.button variant="secondary" :href="route('tasks.index', ['project' => $project->id])" icon="fa-list-check" wire:navigate>فهرست تسک‌ها</x-ui.button>
@@ -75,15 +83,21 @@
                 <h2 class="font-black">کانبان پروژه</h2>
                 <p class="mt-1 text-xs text-slate-500">ستون‌ها مستقیماً از Workflow همین پروژه ساخته می‌شوند.</p>
             </div>
+            @if($project->status->value !== 'active')
+                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900" role="status">
+                    <strong>این پروژه تکمیل شده و برد فقط خواندنی است.</strong>
+                    برای تغییر وضعیت تسک یا ایجاد تسک جدید، ابتدا پروژه را بازگشایی کنید.
+                </div>
+            @endif
             <div class="grid gap-2 sm:grid-cols-2">
                 <label class="block text-sm">
                     <span class="mb-1 block text-xs font-semibold text-slate-500">جستجوی تسک</span>
-                    <input wire:model.live.debounce.300ms="taskSearch" type="search" placeholder="عنوان یا Reference" class="w-full rounded-xl border-slate-300 text-sm">
+                    <input wire:model.live.debounce.300ms="taskSearch" type="search" placeholder="عنوان یا Reference" class="min-h-11 w-full rounded-xl border-slate-300 text-sm">
                 </label>
                 @if($workGroups->isNotEmpty())
                     <label class="block text-sm">
                         <span class="mb-1 block text-xs font-semibold text-slate-500">Work Group</span>
-                        <select wire:model.live="workGroupFilter" class="w-full rounded-xl border-slate-300 text-sm">
+                        <select wire:model.live="workGroupFilter" class="min-h-11 w-full rounded-xl border-slate-300 text-sm">
                             <option value="">همه</option>
                             <option value="root">بدون Work Group</option>
                             @foreach($workGroups as $group)
@@ -136,7 +150,7 @@
                                     @if($project->status->value === 'active')
                                         <label class="mt-3 block text-xs text-slate-500">
                                             <span class="mb-1 block">انتقال وضعیت</span>
-                                            <select wire:change="moveTask({{ $task->id }}, $event.target.value)" class="w-full rounded-lg border-slate-300 text-xs">
+                                            <select wire:change="moveTask({{ $task->id }}, $event.target.value)" class="min-h-11 w-full rounded-lg border-slate-300 text-xs">
                                                 @foreach($statuses as $targetStatus)
                                                     <option value="{{ $targetStatus->id }}" @selected($targetStatus->id === $task->project_status_id)>{{ $targetStatus->title }}</option>
                                                 @endforeach
@@ -231,7 +245,7 @@
 
                 @if($project->status->value === 'active')
                     <form wire:submit="createStatus" class="mb-4 flex gap-2">
-                        <input wire:model="newStatusTitle" maxlength="120" required placeholder="نام Status جدید" class="min-w-0 flex-1 rounded-xl border-slate-300 text-sm">
+                        <input wire:model="newStatusTitle" maxlength="120" required placeholder="نام Status جدید" class="min-h-11 min-w-0 flex-1 rounded-xl border-slate-300 text-sm">
                         <x-ui.button type="submit">افزودن</x-ui.button>
                     </form>
                 @endif
@@ -240,14 +254,14 @@
                     @foreach($statuses as $status)
                         <div wire:key="workflow-status-{{ $status->id }}" class="rounded-xl border border-slate-200 p-3">
                             <div class="flex flex-wrap items-center gap-2">
-                                <input wire:model="statusTitles.{{ $status->id }}" class="min-w-44 flex-1 rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
+                                <input wire:model="statusTitles.{{ $status->id }}" class="min-h-11 min-w-44 flex-1 rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
                                 @if($status->is_done)<x-ui.badge tone="success">Done</x-ui.badge>@endif
                                 @if($project->status->value === 'active')
-                                    <button type="button" wire:click="renameStatus({{ $status->id }})" class="rounded-lg border px-2 py-1 text-xs font-bold">ذخیره نام</button>
-                                    @unless($status->is_done)<button type="button" wire:click="setDoneStatus({{ $status->id }})" class="rounded-lg border px-2 py-1 text-xs font-bold">انتخاب Done</button>@endunless
-                                    <button type="button" wire:click="moveStatus({{ $status->id }}, 'up')" aria-label="بالا" class="rounded-lg border px-2 py-1 text-xs">↑</button>
-                                    <button type="button" wire:click="moveStatus({{ $status->id }}, 'down')" aria-label="پایین" class="rounded-lg border px-2 py-1 text-xs">↓</button>
-                                    @unless($status->is_done)<button type="button" wire:click="inactivateStatus({{ $status->id }})" class="rounded-lg border border-rose-200 px-2 py-1 text-xs font-bold text-rose-700">غیرفعال</button>@endunless
+                                    <button type="button" wire:click="renameStatus({{ $status->id }})" class="min-h-11 rounded-lg border px-3 py-2 text-xs font-bold">ذخیره نام</button>
+                                    @unless($status->is_done)<button type="button" wire:click="setDoneStatus({{ $status->id }})" class="min-h-11 rounded-lg border px-3 py-2 text-xs font-bold">انتخاب Done</button>@endunless
+                                    <button type="button" wire:click="moveStatus({{ $status->id }}, 'up')" aria-label="بالا" class="min-h-11 min-w-11 rounded-lg border px-3 py-2 text-xs">↑</button>
+                                    <button type="button" wire:click="moveStatus({{ $status->id }}, 'down')" aria-label="پایین" class="min-h-11 min-w-11 rounded-lg border px-3 py-2 text-xs">↓</button>
+                                    @unless($status->is_done)<button type="button" wire:click="inactivateStatus({{ $status->id }})" class="min-h-11 rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700">غیرفعال</button>@endunless
                                 @endif
                             </div>
                         </div>
@@ -264,8 +278,8 @@
                 @if($project->status->value === 'active')
                     <form wire:submit="createWorkGroup" class="mb-4 space-y-2 rounded-xl border border-slate-200 p-3">
                         <div class="grid gap-2 sm:grid-cols-2">
-                            <input wire:model="newWorkGroupTitle" maxlength="255" required placeholder="نام Work Group" class="rounded-xl border-slate-300 text-sm">
-                            <select wire:model="newWorkGroupParentId" class="rounded-xl border-slate-300 text-sm">
+                            <input wire:model="newWorkGroupTitle" maxlength="255" required placeholder="نام Work Group" class="min-h-11 rounded-xl border-slate-300 text-sm">
+                            <select wire:model="newWorkGroupParentId" class="min-h-11 rounded-xl border-slate-300 text-sm">
                                 <option value="">ریشه پروژه</option>
                                 @foreach($workGroups as $candidate)
                                     @if($candidate->display_depth < 5)
@@ -274,7 +288,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <textarea wire:model="newWorkGroupDescription" rows="2" maxlength="2000" placeholder="توضیحات اختیاری" class="w-full rounded-xl border-slate-300 text-sm"></textarea>
+                        <textarea wire:model="newWorkGroupDescription" rows="2" maxlength="2000" placeholder="توضیحات اختیاری" class="min-h-11 w-full rounded-xl border-slate-300 text-sm"></textarea>
                         <x-ui.button type="submit">افزودن Work Group</x-ui.button>
                     </form>
                 @endif
@@ -284,9 +298,9 @@
                         <div wire:key="work-group-{{ $group->id }}" class="rounded-xl border border-slate-200 p-3" style="margin-right: {{ min(4, max(0, $group->display_depth - 1)) * 1.25 }}rem">
                             <div class="mb-2 flex items-center gap-2 text-xs text-slate-400"><span>Level {{ $group->display_depth }}</span><span>•</span><span>#{{ $group->id }}</span></div>
                             <div class="space-y-2">
-                                <input wire:model="workGroupTitles.{{ $group->id }}" class="w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
-                                <textarea wire:model="workGroupDescriptions.{{ $group->id }}" rows="2" maxlength="2000" class="w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')></textarea>
-                                <select wire:model="workGroupParents.{{ $group->id }}" class="w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
+                                <input wire:model="workGroupTitles.{{ $group->id }}" class="min-h-11 w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
+                                <textarea wire:model="workGroupDescriptions.{{ $group->id }}" rows="2" maxlength="2000" class="min-h-11 w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')></textarea>
+                                <select wire:model="workGroupParents.{{ $group->id }}" class="min-h-11 w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
                                     <option value="">ریشه پروژه</option>
                                     @foreach($workGroups as $candidate)
                                         @if($candidate->id !== $group->id)
@@ -296,11 +310,11 @@
                                 </select>
                                 @if($project->status->value === 'active')
                                     <div class="flex flex-wrap gap-1">
-                                        <button type="button" wire:click="saveWorkGroup({{ $group->id }})" class="rounded-lg border px-2 py-1 text-xs">ذخیره</button>
-                                        <button type="button" wire:click="moveWorkGroup({{ $group->id }})" class="rounded-lg border px-2 py-1 text-xs">انتقال</button>
-                                        <button type="button" wire:click="moveWorkGroupPosition({{ $group->id }}, 'up')" class="rounded-lg border px-2 py-1 text-xs">↑</button>
-                                        <button type="button" wire:click="moveWorkGroupPosition({{ $group->id }}, 'down')" class="rounded-lg border px-2 py-1 text-xs">↓</button>
-                                        <button type="button" wire:click="inactivateWorkGroup({{ $group->id }})" class="rounded-lg border border-rose-200 px-2 py-1 text-xs text-rose-700">غیرفعال</button>
+                                        <button type="button" wire:click="saveWorkGroup({{ $group->id }})" class="min-h-11 rounded-lg border px-3 py-2 text-xs">ذخیره</button>
+                                        <button type="button" wire:click="moveWorkGroup({{ $group->id }})" class="min-h-11 rounded-lg border px-3 py-2 text-xs">انتقال</button>
+                                        <button type="button" wire:click="moveWorkGroupPosition({{ $group->id }}, 'up')" aria-label="بالا" class="min-h-11 min-w-11 rounded-lg border px-3 py-2 text-xs">↑</button>
+                                        <button type="button" wire:click="moveWorkGroupPosition({{ $group->id }}, 'down')" aria-label="پایین" class="min-h-11 min-w-11 rounded-lg border px-3 py-2 text-xs">↓</button>
+                                        <button type="button" wire:click="inactivateWorkGroup({{ $group->id }})" class="min-h-11 rounded-lg border border-rose-200 px-3 py-2 text-xs text-rose-700">غیرفعال</button>
                                     </div>
                                 @endif
                             </div>
