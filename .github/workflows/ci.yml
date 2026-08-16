@@ -95,6 +95,19 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      - name: Build source snapshot
+        if: always()
+        run: git archive --format=zip --output=source-snapshot.zip HEAD
+
+      - name: Upload source snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-snapshot
+          path: source-snapshot.zip
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Check PHP style
         run: ./vendor/bin/pint --test
 
