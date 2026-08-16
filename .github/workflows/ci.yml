@@ -84,29 +84,7 @@ jobs:
         run: php artisan view:cache
 
       - name: Run tests
-        run: php artisan test --log-junit storage/logs/junit.xml
-
-      - name: Upload test diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-diagnostics
-          path: storage/logs/junit.xml
-          if-no-files-found: warn
-          retention-days: 7
-
-      - name: Build source snapshot
-        if: always()
-        run: git archive --format=zip --output=source-snapshot.zip HEAD
-
-      - name: Upload source snapshot
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: source-snapshot
-          path: source-snapshot.zip
-          if-no-files-found: error
-          retention-days: 1
+        run: php artisan test
 
       - name: Check PHP style
         run: ./vendor/bin/pint --test
