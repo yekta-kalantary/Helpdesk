@@ -9,11 +9,13 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
+use Modules\Tasks\Application\TaskChecklist;
 use Modules\Tasks\Application\TaskCollaboration;
 use Modules\Tasks\Application\TaskWorkflow;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Attachment;
 use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Tasks\Infrastructure\Models\TaskChecklistItem;
 use Modules\Tasks\Infrastructure\Models\TaskComment;
 
 class Show extends Component
@@ -28,6 +30,10 @@ class Show extends Component
 
     public array $uploads = [];
 
+    public string $checklistTitle = '';
+
+    public array $checklistEdits = [];
+
     public function mount(string $task): mixed
     {
         /** @var User $user */
@@ -41,24 +47,93 @@ class Show extends Component
         }
 
         $this->taskId = $item->id;
+        $this->checklistEdits = $item->checklistItems()->pluck('title', 'id')->mapWithKeys(fn ($title, $id): array => [(string) $id => $title])->all();
 
         return null;
     }
 
-    public function changeStatus(string $status, TaskWorkflow $workflow): void
+    public function changeStatus(int $status, TaskWorkflow $workflow): void
     {
         /** @var User $user */
         $user = auth()->user();
-        abort_if($user->isAdmin(), 403);
+        $task = Task::query()->visibleTo($user)->findOrFail($this->taskId);
+        $target = ProjectTaskStatus::query()->where('project_id', $task->project_id)->active()->findOrFail($status);
 
+        try {
+            $workflow->changeStatus($user, $task, $target);
+            session()->flash('success', 'وضعیت تسک تغییر کرد.');
+        } catch (DomainException $e) {
+            $this->addError('status', $e->getMessage());
+        }
+    }
+
+    public function addSubtask(TaskChecklist $checklist): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $this->validate(['checklistTitle' => ['required', 'string', 'max:255']]);
         $task = Task::query()->visibleTo($user)->findOrFail($this->taskId);
 
         try {
-            $workflow->transitionByCustomer($user, $task, TaskStatus::from($status));
-            session()->flash('success', 'وضعیت تسک تغییر کرد.');
-        } catch (DomainException) {
-            abort(403);
+            $item = $checklist->add($user, $task, $this->checklistTitle);
+            $this->checklistEdits[(string) $item->id] = $item->title;
+            $this->checklistTitle = '';
+        } catch (DomainException $e) {
+            $this->addError('checklistTitle', $e->getMessage());
         }
+    }
+
+    public function toggleSubtask(int $item, bool $completed, TaskChecklist $checklist): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $record = TaskChecklistItem::query()->where('task_id', $this->taskId)->whereNull('removed_at')->findOrFail($item);
+        $checklist->toggle($user, $record, $completed);
+    }
+
+    public function renameSubtask(int $item, TaskChecklist $checklist): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $record = TaskChecklistItem::query()->where('task_id', $this->taskId)->whereNull('removed_at')->findOrFail($item);
+        $title = (string) ($this->checklistEdits[(string) $item] ?? '');
+
+        try {
+            $record = $checklist->rename($user, $record, $title);
+            $this->checklistEdits[(string) $item] = $record->title;
+        } catch (DomainException $e) {
+            $this->addError('checklistEdits.'.$item, $e->getMessage());
+        }
+    }
+
+    public function removeSubtask(int $item, TaskChecklist $checklist): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $record = TaskChecklistItem::query()->where('task_id', $this->taskId)->whereNull('removed_at')->findOrFail($item);
+        $checklist->remove($user, $record);
+        unset($this->checklistEdits[(string) $item]);
+    }
+
+    public function moveSubtask(int $item, string $direction, TaskChecklist $checklist): void
+    {
+        /** @var User $user */
+        $user = auth()->user();
+        $task = Task::query()->visibleTo($user)->findOrFail($this->taskId);
+        $ids = $task->checklistItems()->pluck('id')->all();
+        $index = array_search($item, $ids, true);
+
+        if ($index === false) {
+            return;
+        }
+
+        $target = $direction === 'up' ? $index - 1 : $index + 1;
+        if (! isset($ids[$target])) {
+            return;
+        }
+
+        [$ids[$index], $ids[$target]] = [$ids[$target], $ids[$index]];
+        $checklist->reorder($user, $task, $ids);
     }
 
     public function addComment(TaskCollaboration $collaboration): void
@@ -84,7 +159,6 @@ class Show extends Component
         /** @var User $user */
         $user = auth()->user();
         abort_unless($user->isAdmin(), 403);
-
         $item = TaskComment::query()->where('task_id', $this->taskId)->findOrFail($comment);
         $collaboration->hideComment($user, $item);
     }
@@ -94,7 +168,6 @@ class Show extends Component
         /** @var User $user */
         $user = auth()->user();
         abort_unless($user->isAdmin(), 403);
-
         $item = Attachment::query()->where('task_id', $this->taskId)->findOrFail($attachment);
         $collaboration->hideAttachment($user, $item);
     }
@@ -108,10 +181,17 @@ class Show extends Component
             ->visibleTo($user)
             ->with([
                 'project.client:id,name,status',
+                'projectStatus:id,project_id,title,is_done,is_active,position',
+                'workGroup:id,title',
                 'creator:id,name,last_name',
                 'assignee:id,name,last_name',
+                'checklistItems:id,task_id,title,is_completed,position,created_by,removed_at',
             ])
             ->findOrFail($this->taskId);
+
+        foreach ($task->checklistItems as $item) {
+            $this->checklistEdits[(string) $item->id] ??= $item->title;
+        }
 
         $comments = TaskComment::query()
             ->where('task_id', $task->id)
@@ -139,19 +219,9 @@ class Show extends Component
             ->latest('id')
             ->paginate(50, ['*'], 'taskActivitiesPage');
 
-        $canCollaborate = $task->project->isActive()
-            && $task->project->client->isActive()
-            && ! $task->isTerminal();
-
-        $customerTransitions = [];
-        if (! $user->isAdmin() && $canCollaborate && $task->assigned_to === $user->id) {
-            $customerTransitions = [
-                TaskStatus::Todo,
-                TaskStatus::InProgress,
-                TaskStatus::WaitingAdmin,
-                TaskStatus::Completed,
-            ];
-        }
+        $canChangeStatus = $task->project->isActive() && $task->project->client->isActive();
+        $canCollaborate = $canChangeStatus && ! $task->isDone();
+        $activeStatuses = $task->project->taskStatuses()->active()->orderBy('position')->get(['id', 'title', 'is_done', 'position']);
 
         return view('tasks::show', [
             'task' => $task,
@@ -159,7 +229,10 @@ class Show extends Component
             'taskAttachments' => $taskAttachments,
             'activities' => $activities,
             'canCollaborate' => $canCollaborate,
-            'customerTransitions' => $customerTransitions,
+            'canChangeStatus' => $canChangeStatus,
+            'canEditTask' => $user->isAdmin() && $canCollaborate,
+            'activeStatuses' => $activeStatuses,
+            'checklistCompleted' => $task->checklistItems->where('is_completed', true)->count(),
             'isAdmin' => $user->isAdmin(),
         ])->title($task->reference.' · '.$task->title);
     }
