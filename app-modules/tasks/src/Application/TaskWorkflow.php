@@ -35,7 +35,7 @@ class TaskWorkflow
             'title' => $data['title'] ?? '',
             'description' => $data['description'] ?? null,
             'project_status_id' => $data['project_status_id'] ?? null,
-            'work_group_id' => $data['work_group_id'] ?? null,
+            'work_group_id' => null,
             'priority' => TaskPriority::Normal,
             'assigned_to' => null,
             'due_date' => null,
@@ -129,7 +129,8 @@ class TaskWorkflow
         $task->loadMissing('project');
         $this->assertProjectAccess($actor, $task->project);
 
-        $task = DB::transaction(function () use ($actor, $task, $status): Task {
+        $changed = false;
+        $task = DB::transaction(function () use ($actor, $task, $status, &$changed): Task {
             $project = Project::query()->lockForUpdate()->findOrFail($task->project_id);
             $this->assertProjectOpen($project);
             $task = Task::query()->with('projectStatus')->lockForUpdate()->findOrFail($task->id);
@@ -148,17 +149,20 @@ class TaskWorkflow
             $this->applyCompletionTimestamp($task, $old, $target, $attributes);
             $task->fill($attributes)->save();
             $task->refresh()->load('projectStatus');
+            $changed = true;
 
             $this->recordStatusActivity($actor, $task, $old, $target);
 
             return $task;
         });
 
-        $this->notifications->send(
-            $this->notificationRouter->statusChanged($task),
-            $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
-            $actor,
-        );
+        if ($changed) {
+            $this->notifications->send(
+                $this->notificationRouter->statusChanged($task),
+                $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
+                $actor,
+            );
+        }
 
         return $task;
     }
