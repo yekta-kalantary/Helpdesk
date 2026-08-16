@@ -12,7 +12,6 @@ use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Tasks\Application\TaskCollaboration;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 use Modules\Tasks\Infrastructure\Models\Attachment;
 
 it('stores approved files privately and serves them only to project members', function (): void {
@@ -26,7 +25,6 @@ it('stores approved files privately and serves them only to project members', fu
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Private file',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -56,7 +54,6 @@ it('previews browser-supported attachments with protected inline headers', funct
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Preview file',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $attachment = app(TaskCollaboration::class)->attach(
@@ -85,7 +82,6 @@ it('keeps non-previewable attachments download-only', function (): void {
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Download-only file',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $attachment = app(TaskCollaboration::class)->attach(
@@ -114,7 +110,6 @@ it('applies attachment authorization to previews including hidden parents', func
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Protected preview',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $comment = app(TaskCollaboration::class)->comment(
@@ -149,7 +144,6 @@ it('enforces hidden collaboration content on direct attachment downloads', funct
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Hidden collaboration attachment',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -206,7 +200,6 @@ it('rejects executable or disallowed attachment types', function (): void {
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Unsafe file',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -225,7 +218,6 @@ it('requires comment text or at least one attachment', function (): void {
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Comment',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -241,7 +233,7 @@ it('blocks new collaboration on terminal tasks and completed projects', function
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Closed task',
-        'status' => TaskStatus::Completed,
+        'project_status_id' => mvpDoneStatus($project)->id,
         'priority' => TaskPriority::Normal,
     ]);
 
@@ -250,7 +242,6 @@ it('blocks new collaboration on terminal tasks and completed projects', function
 
     $open = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Open before project close',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $project->forceFill(['status' => ProjectStatus::Completed])->save();
@@ -268,7 +259,6 @@ it('does not keep a standalone attachment when its activity cannot be recorded',
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Atomic standalone attachment',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $file = UploadedFile::fake()->create('atomic.pdf', 50, 'application/pdf');
@@ -293,7 +283,6 @@ it('does not hide a comment when its activity cannot be recorded', function (): 
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Atomic comment hiding',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $comment = app(TaskCollaboration::class)->comment($member, $task, 'Visible comment', []);
@@ -318,7 +307,6 @@ it('does not hide an attachment when its activity cannot be recorded', function 
     app(ProjectMembershipManager::class)->add($project, $member, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Atomic attachment hiding',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
     $attachment = app(TaskCollaboration::class)->attach(

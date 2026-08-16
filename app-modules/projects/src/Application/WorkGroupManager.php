@@ -40,7 +40,7 @@ class WorkGroupManager
                 'project_id' => $project->id,
                 'parent_id' => $parent?->id,
                 'title' => $title,
-                'description' => filled($data['description'] ?? null) ? trim((string) $data['description']) : null,
+                'description' => $this->description($data['description'] ?? null),
                 'position' => $position,
                 'status' => 'active',
                 'created_by' => $actor->id,
@@ -50,6 +50,7 @@ class WorkGroupManager
                 'work_group_id' => $group->id,
                 'title' => $group->title,
                 'parent_id' => $group->parent_id,
+                'description_snapshot' => $group->description,
             ]);
 
             return $group;
@@ -76,13 +77,14 @@ class WorkGroupManager
                 $attributes['title'] = $this->title((string) $data['title']);
             }
             if (array_key_exists('description', $data)) {
-                $attributes['description'] = filled($data['description']) ? trim((string) $data['description']) : null;
+                $attributes['description'] = $this->description($data['description']);
             }
             if (array_key_exists('position', $data)) {
                 $attributes['position'] = max(0, (int) $data['position']);
             }
 
             $oldTitle = $group->title;
+            $oldDescription = $group->description;
             if ($attributes !== []) {
                 $group->update($attributes);
             }
@@ -92,6 +94,14 @@ class WorkGroupManager
                     'work_group_id' => $group->id,
                     'old_title' => $oldTitle,
                     'new_title' => $group->title,
+                ]);
+            }
+
+            if (array_key_exists('description', $attributes) && $oldDescription !== $group->description) {
+                $this->activities->record($actor, 'work_group.updated', $project, null, [
+                    'work_group_id' => $group->id,
+                    'old_description_snapshot' => $oldDescription,
+                    'new_description_snapshot' => $group->description,
                 ]);
             }
 
@@ -281,5 +291,19 @@ class WorkGroupManager
         }
 
         return $title;
+    }
+
+    private function description(mixed $description): ?string
+    {
+        if (! filled($description)) {
+            return null;
+        }
+
+        $description = trim((string) $description);
+        if (mb_strlen($description) > 2000) {
+            throw new DomainException('Work Group description may not exceed 2000 characters.');
+        }
+
+        return $description;
     }
 }

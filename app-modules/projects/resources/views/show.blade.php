@@ -36,21 +36,29 @@
     @endif
 
     <x-ui.card>
-        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="mb-4 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
             <div>
                 <h2 class="font-black">کانبان پروژه</h2>
                 <p class="mt-1 text-xs text-slate-500">ستون‌ها مستقیماً از Workflow همین پروژه ساخته می‌شوند.</p>
             </div>
-            <label class="flex items-center gap-2 text-sm">
-                <span class="whitespace-nowrap text-slate-500">Work Group</span>
-                <select wire:model.live="workGroupFilter" class="rounded-xl border-slate-300 text-sm">
-                    <option value="">همه</option>
-                    <option value="root">بدون Work Group</option>
-                    @foreach($workGroups as $group)
-                        <option value="{{ $group->id }}">{{ str_repeat('— ', max(0, $group->display_depth - 1)) }}{{ $group->title }}</option>
-                    @endforeach
-                </select>
-            </label>
+            <div class="grid gap-2 sm:grid-cols-2">
+                <label class="block text-sm">
+                    <span class="mb-1 block text-xs font-semibold text-slate-500">جستجوی تسک</span>
+                    <input wire:model.live.debounce.300ms="taskSearch" type="search" placeholder="عنوان یا Reference" class="w-full rounded-xl border-slate-300 text-sm">
+                </label>
+                @if($workGroups->isNotEmpty())
+                    <label class="block text-sm">
+                        <span class="mb-1 block text-xs font-semibold text-slate-500">Work Group</span>
+                        <select wire:model.live="workGroupFilter" class="w-full rounded-xl border-slate-300 text-sm">
+                            <option value="">همه</option>
+                            <option value="root">بدون Work Group</option>
+                            @foreach($workGroups as $group)
+                                <option value="{{ $group->id }}">{{ str_repeat('— ', max(0, $group->display_depth - 1)) }}{{ $group->title }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                @endif
+            </div>
         </div>
 
         <div class="-mx-2 overflow-x-auto px-2 pb-3">
@@ -77,7 +85,7 @@
                                     wire:key="kanban-task-{{ $task->id }}"
                                     draggable="{{ $project->status->value === 'active' ? 'true' : 'false' }}"
                                     @dragstart="$event.dataTransfer.setData('text/plain', '{{ $task->id }}')"
-                                    class="cursor-grab rounded-xl border border-slate-200 bg-white p-3 shadow-sm active:cursor-grabbing"
+                                    class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
                                 >
                                     <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block">
                                         <div class="text-xs font-bold text-slate-400">{{ $task->reference }}</div>
@@ -89,6 +97,16 @@
                                             @if($task->workGroup)<div>Work Group: {{ $task->workGroup->title }}</div>@endif
                                         </div>
                                     </a>
+                                    @if($project->status->value === 'active')
+                                        <label class="mt-3 block text-xs text-slate-500">
+                                            <span class="mb-1 block">انتقال وضعیت</span>
+                                            <select wire:change="moveTask({{ $task->id }}, $event.target.value)" class="w-full rounded-lg border-slate-300 text-xs">
+                                                @foreach($statuses as $targetStatus)
+                                                    <option value="{{ $targetStatus->id }}" @selected($targetStatus->id === $task->project_status_id)>{{ $targetStatus->title }}</option>
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                    @endif
                                 </article>
                             @empty
                                 <div class="rounded-xl border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400">تسکی در این ستون نیست.</div>
@@ -99,6 +117,67 @@
             </div>
         </div>
     </x-ui.card>
+
+    @if($workGroups->isNotEmpty())
+        <x-ui.card>
+            <div class="mb-4">
+                <h2 class="font-black">ساختار پروژه</h2>
+                <p class="mt-1 text-xs text-slate-500">نمای Hierarchy بر اساس Work Group است؛ جستجو مستقل از ساختار روی همه تسک‌ها اعمال می‌شود.</p>
+            </div>
+
+            <div class="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <h3 class="font-bold">Root Tasks</h3>
+                    <span class="text-xs text-slate-400">مستقیم زیر پروژه</span>
+                </div>
+                <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                    @forelse($rootTasks as $task)
+                        <a href="{{ route('tasks.show', $task) }}" wire:navigate class="rounded-lg border border-slate-200 bg-white p-3 hover:bg-slate-50">
+                            <div class="text-xs font-bold text-slate-400">{{ $task->reference }}</div>
+                            <div class="mt-1 font-bold">{{ $task->title }}</div>
+                            <div class="mt-1 text-xs text-slate-500">{{ $task->projectStatus->title }}</div>
+                        </a>
+                    @empty
+                        <p class="text-sm text-slate-500">تسک Root مطابق جستجوی فعلی وجود ندارد.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                @foreach($workGroups as $group)
+                    @php($directTasks = $tasksByWorkGroup->get($group->id, collect()))
+                    @php($progress = $workGroupProgress[$group->id])
+                    <section class="rounded-xl border border-slate-200 p-3" style="margin-right: {{ min(4, max(0, $group->display_depth - 1)) * 1.25 }}rem">
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <div class="text-xs text-slate-400">Level {{ $group->display_depth }}</div>
+                                <h3 class="mt-1 font-black">{{ $group->title }}</h3>
+                                @if($group->description)<p class="mt-1 text-sm leading-6 text-slate-500">{{ $group->description }}</p>@endif
+                            </div>
+                            <div class="text-xs font-semibold text-slate-500">
+                                @if($progress['percentage'] === null)
+                                    Progress: N/A
+                                @else
+                                    Progress: {{ $progress['done'] }}/{{ $progress['total'] }} · {{ $progress['percentage'] }}%
+                                @endif
+                            </div>
+                        </div>
+                        <div class="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                            @forelse($directTasks as $task)
+                                <a href="{{ route('tasks.show', $task) }}" wire:navigate class="rounded-lg border border-slate-200 bg-slate-50 p-3 hover:bg-white">
+                                    <div class="text-xs font-bold text-slate-400">{{ $task->reference }}</div>
+                                    <div class="mt-1 font-bold">{{ $task->title }}</div>
+                                    <div class="mt-1 text-xs text-slate-500">{{ $task->projectStatus->title }}</div>
+                                </a>
+                            @empty
+                                <p class="text-xs text-slate-400">تسک مستقیم مطابق جستجوی فعلی ندارد.</p>
+                            @endforelse
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+        </x-ui.card>
+    @endif
 
     @if($isAdmin)
         <div class="grid gap-5 xl:grid-cols-2">
@@ -136,20 +215,25 @@
 
             <x-ui.card>
                 <div class="mb-4">
-                    <h2 class="font-black">ساختار Work Group</h2>
+                    <h2 class="font-black">مدیریت Work Group</h2>
                     <p class="mt-1 text-xs text-slate-500">اختیاری، Generic و حداکثر ۵ سطح.</p>
                 </div>
 
                 @if($project->status->value === 'active')
-                    <form wire:submit="createWorkGroup" class="mb-4 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                        <input wire:model="newWorkGroupTitle" maxlength="255" required placeholder="نام Work Group" class="rounded-xl border-slate-300 text-sm">
-                        <select wire:model="newWorkGroupParentId" class="rounded-xl border-slate-300 text-sm">
-                            <option value="">ریشه پروژه</option>
-                            @foreach($workGroups as $candidate)
-                                <option value="{{ $candidate->id }}">{{ str_repeat('— ', max(0, $candidate->display_depth - 1)) }}{{ $candidate->title }}</option>
-                            @endforeach
-                        </select>
-                        <x-ui.button type="submit">افزودن</x-ui.button>
+                    <form wire:submit="createWorkGroup" class="mb-4 space-y-2 rounded-xl border border-slate-200 p-3">
+                        <div class="grid gap-2 sm:grid-cols-2">
+                            <input wire:model="newWorkGroupTitle" maxlength="255" required placeholder="نام Work Group" class="rounded-xl border-slate-300 text-sm">
+                            <select wire:model="newWorkGroupParentId" class="rounded-xl border-slate-300 text-sm">
+                                <option value="">ریشه پروژه</option>
+                                @foreach($workGroups as $candidate)
+                                    @if($candidate->display_depth < 5)
+                                        <option value="{{ $candidate->id }}">{{ str_repeat('— ', max(0, $candidate->display_depth - 1)) }}{{ $candidate->title }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                        <textarea wire:model="newWorkGroupDescription" rows="2" maxlength="2000" placeholder="توضیحات اختیاری" class="w-full rounded-xl border-slate-300 text-sm"></textarea>
+                        <x-ui.button type="submit">افزودن Work Group</x-ui.button>
                     </form>
                 @endif
 
@@ -157,9 +241,10 @@
                     @forelse($workGroups as $group)
                         <div wire:key="work-group-{{ $group->id }}" class="rounded-xl border border-slate-200 p-3" style="margin-right: {{ min(4, max(0, $group->display_depth - 1)) * 1.25 }}rem">
                             <div class="mb-2 flex items-center gap-2 text-xs text-slate-400"><span>Level {{ $group->display_depth }}</span><span>•</span><span>#{{ $group->id }}</span></div>
-                            <div class="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                                <input wire:model="workGroupTitles.{{ $group->id }}" class="rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
-                                <select wire:model="workGroupParents.{{ $group->id }}" class="rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
+                            <div class="space-y-2">
+                                <input wire:model="workGroupTitles.{{ $group->id }}" class="w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
+                                <textarea wire:model="workGroupDescriptions.{{ $group->id }}" rows="2" maxlength="2000" class="w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')></textarea>
+                                <select wire:model="workGroupParents.{{ $group->id }}" class="w-full rounded-lg border-slate-300 text-sm" @disabled($project->status->value !== 'active')>
                                     <option value="">ریشه پروژه</option>
                                     @foreach($workGroups as $candidate)
                                         @if($candidate->id !== $group->id)
@@ -169,7 +254,7 @@
                                 </select>
                                 @if($project->status->value === 'active')
                                     <div class="flex flex-wrap gap-1">
-                                        <button type="button" wire:click="renameWorkGroup({{ $group->id }})" class="rounded-lg border px-2 py-1 text-xs">ذخیره</button>
+                                        <button type="button" wire:click="saveWorkGroup({{ $group->id }})" class="rounded-lg border px-2 py-1 text-xs">ذخیره</button>
                                         <button type="button" wire:click="moveWorkGroup({{ $group->id }})" class="rounded-lg border px-2 py-1 text-xs">انتقال</button>
                                         <button type="button" wire:click="moveWorkGroupPosition({{ $group->id }}, 'up')" class="rounded-lg border px-2 py-1 text-xs">↑</button>
                                         <button type="button" wire:click="moveWorkGroupPosition({{ $group->id }}, 'down')" class="rounded-lg border px-2 py-1 text-xs">↓</button>
@@ -182,22 +267,22 @@
                         <p class="text-sm text-slate-500">این پروژه Work Group ندارد؛ مدل Project → Task همچنان کاملاً معتبر است.</p>
                     @endforelse
                 </div>
+
+                @if($inactiveWorkGroups->isNotEmpty())
+                    <div class="mt-5 border-t border-slate-200 pt-4">
+                        <h3 class="mb-2 text-sm font-black">Work Groupهای غیرفعال</h3>
+                        <div class="space-y-2">
+                            @foreach($inactiveWorkGroups as $inactiveGroup)
+                                <div class="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+                                    <div class="font-bold">{{ $inactiveGroup->title }}</div>
+                                    @if($inactiveGroup->description)<div class="mt-1 text-xs leading-5">{{ $inactiveGroup->description }}</div>@endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </x-ui.card>
         </div>
-    @else
-        <x-ui.card>
-            <h2 class="mb-4 font-black">ساختار Work Group</h2>
-            <div class="space-y-2">
-                @forelse($workGroups as $group)
-                    <div class="rounded-xl border border-slate-200 p-3" style="margin-right: {{ min(4, max(0, $group->display_depth - 1)) * 1.25 }}rem">
-                        <span class="text-xs text-slate-400">Level {{ $group->display_depth }}</span>
-                        <div class="mt-1 font-bold">{{ $group->title }}</div>
-                    </div>
-                @empty
-                    <p class="text-sm text-slate-500">این پروژه Work Group ندارد.</p>
-                @endforelse
-            </div>
-        </x-ui.card>
     @endif
 
     <x-ui.card>

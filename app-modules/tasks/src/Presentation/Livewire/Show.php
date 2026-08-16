@@ -88,7 +88,12 @@ class Show extends Component
         /** @var User $user */
         $user = auth()->user();
         $record = TaskChecklistItem::query()->where('task_id', $this->taskId)->whereNull('removed_at')->findOrFail($item);
-        $checklist->toggle($user, $record, $completed);
+
+        try {
+            $checklist->toggle($user, $record, $completed);
+        } catch (DomainException $e) {
+            $this->addError('checklist', $e->getMessage());
+        }
     }
 
     public function renameSubtask(int $item, TaskChecklist $checklist): void
@@ -111,8 +116,13 @@ class Show extends Component
         /** @var User $user */
         $user = auth()->user();
         $record = TaskChecklistItem::query()->where('task_id', $this->taskId)->whereNull('removed_at')->findOrFail($item);
-        $checklist->remove($user, $record);
-        unset($this->checklistEdits[(string) $item]);
+
+        try {
+            $checklist->remove($user, $record);
+            unset($this->checklistEdits[(string) $item]);
+        } catch (DomainException $e) {
+            $this->addError('checklist', $e->getMessage());
+        }
     }
 
     public function moveSubtask(int $item, string $direction, TaskChecklist $checklist): void
@@ -133,7 +143,12 @@ class Show extends Component
         }
 
         [$ids[$index], $ids[$target]] = [$ids[$target], $ids[$index]];
-        $checklist->reorder($user, $task, $ids);
+
+        try {
+            $checklist->reorder($user, $task, $ids);
+        } catch (DomainException $e) {
+            $this->addError('checklist', $e->getMessage());
+        }
     }
 
     public function addComment(TaskCollaboration $collaboration): void

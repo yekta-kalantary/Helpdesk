@@ -7,6 +7,7 @@ use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Application\ProjectLifecycle;
+use Modules\Projects\Application\WorkGroupManager;
 use Modules\Tasks\Application\TaskChecklist;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
@@ -88,4 +89,67 @@ it('logically removes checklist items and records parent task activity', functio
     expect($item->refresh()->removed_at)->not->toBeNull()
         ->and(TaskChecklistItem::query()->whereKey($item)->exists())->toBeTrue()
         ->and(Activity::query()->where('task_id', $task->id)->where('action', 'subtask.removed')->exists())->toBeTrue();
+});
+
+
+it('inherits task visibility and rejects checklist mutations from users without project access', function (): void {
+    $client = Client::factory()->create();
+    $otherClient = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->customer($client)->create();
+    $outsider = User::factory()->customer($otherClient)->create();
+    $project = mvpProject($client);
+    app(ProjectMembershipManager::class)->add($project, $member, $admin);
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Protected checklist', 'priority' => TaskPriority::Normal]);
+
+    expect(fn () => app(TaskChecklist::class)->add($outsider, $task, 'Forbidden'))->toThrow(DomainException::class);
+});
+
+it('reorders every active checklist item stably and rejects incomplete order payloads', function (): void {
+    $project = mvpProject(Client::factory()->create());
+    $admin = User::factory()->admin()->create();
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Order parent', 'priority' => TaskPriority::Normal]);
+    $checklist = app(TaskChecklist::class);
+    $one = $checklist->add($admin, $task, 'One');
+    $two = $checklist->add($admin, $task, 'Two');
+    $three = $checklist->add($admin, $task, 'Three');
+
+    expect(fn () => $checklist->reorder($admin, $task, [$one->id, $two->id]))->toThrow(DomainException::class);
+
+    $checklist->reorder($admin, $task, [$three->id, $one->id, $two->id]);
+
+    expect($task->checklistItems()->pluck('id')->all())->toBe([$three->id, $one->id, $two->id]);
+});
+
+it('preserves checklist state across task status and Work Group moves and emits only parent-task audit events', function (): void {
+    Notification::fake();
+    $project = mvpProject(Client::factory()->create());
+    $admin = User::factory()->admin()->create();
+    $group = app(WorkGroupManager::class)->create($admin, $project, ['title' => 'Delivery']);
+    $workflow = app(TaskWorkflow::class);
+    $task = $workflow->createForAdmin($admin, $project, [
+        'title' => 'Movable parent',
+        'work_group_id' => $group->id,
+        'priority' => TaskPriority::Normal,
+    ]);
+    $checklist = app(TaskChecklist::class);
+    $item = $checklist->add($admin, $task, 'Persistent step');
+    Notification::fake();
+
+    $item = $checklist->toggle($admin, $item, true);
+    $item = $checklist->toggle($admin, $item, false);
+    $item = $checklist->rename($admin, $item, 'Persistent renamed step');
+    $task = $workflow->changeStatus($admin, $task, mvpOpenStatus($project, 1));
+    $task = $workflow->updateByAdmin($admin, $task, ['work_group_id' => null]);
+
+    expect($item->refresh()->title)->toBe('Persistent renamed step')
+        ->and($item->is_completed)->toBeFalse()
+        ->and($task->checklistItems()->whereKey($item)->exists())->toBeTrue()
+        ->and($task->work_group_id)->toBeNull()
+        ->and(Activity::query()->where('task_id', $task->id)->where('action', 'subtask.added')->exists())->toBeTrue()
+        ->and(Activity::query()->where('task_id', $task->id)->where('action', 'subtask.completed')->exists())->toBeTrue()
+        ->and(Activity::query()->where('task_id', $task->id)->where('action', 'subtask.uncompleted')->exists())->toBeTrue()
+        ->and(Activity::query()->where('task_id', $task->id)->where('action', 'subtask.renamed')->exists())->toBeTrue();
+
+    Notification::assertNothingSent();
 });

@@ -31,6 +31,10 @@ class TaskWorkflow
 
         $this->assertProjectAccess($actor, $project);
 
+        if (filled($data['work_group_id'] ?? null)) {
+            throw new DomainException('Customer-created Tasks must be created at the Project root.');
+        }
+
         return $this->createTask($actor, $project, [
             'title' => $data['title'] ?? '',
             'description' => $data['description'] ?? null,
@@ -210,6 +214,7 @@ class TaskWorkflow
                 'priority' => $task->priority->value,
                 'assigned_to' => $task->assigned_to,
                 'work_group_id' => $task->work_group_id,
+                'work_group_title_snapshot' => $workGroup?->title,
             ]);
 
             return $task->load('projectStatus');
@@ -275,9 +280,18 @@ class TaskWorkflow
         }
 
         if ($original['work_group_id'] !== $task->work_group_id) {
+            $oldWorkGroup = $original['work_group_id']
+                ? WorkGroup::query()->find($original['work_group_id'])
+                : null;
+            $newWorkGroup = $task->work_group_id
+                ? WorkGroup::query()->find($task->work_group_id)
+                : null;
+
             $this->activities->record($actor, 'task.work_group_changed', $task->project, $task, [
                 'old_work_group_id' => $original['work_group_id'],
+                'old_work_group_title_snapshot' => $oldWorkGroup?->title,
                 'new_work_group_id' => $task->work_group_id,
+                'new_work_group_title_snapshot' => $newWorkGroup?->title,
             ]);
         }
 

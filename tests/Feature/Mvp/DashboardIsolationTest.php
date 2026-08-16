@@ -5,7 +5,6 @@ use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 it('shows customers only dashboard data from active project memberships', function (): void {
     $clientA = Client::factory()->create();
@@ -21,14 +20,12 @@ it('shows customers only dashboard data from active project memberships', functi
 
     app(TaskWorkflow::class)->createForAdmin($admin, $projectA, [
         'title' => 'Visible Task A',
-        'status' => TaskStatus::WaitingCustomer,
         'priority' => TaskPriority::Normal,
         'assigned_to' => $customerA->id,
         'due_date' => today()->subDay()->toDateString(),
     ]);
     app(TaskWorkflow::class)->createForAdmin($admin, $projectB, [
         'title' => 'Hidden Task B',
-        'status' => TaskStatus::WaitingCustomer,
         'priority' => TaskPriority::High,
         'assigned_to' => $customerB->id,
     ]);
@@ -52,7 +49,6 @@ it('drops project and task data from the customer dashboard immediately after me
 
     app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Membership Task',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 

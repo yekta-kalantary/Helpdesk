@@ -167,8 +167,8 @@ class Task extends Model
 
         if ($this->work_group_id) {
             $group = WorkGroup::query()->find($this->work_group_id);
-            if (! $group || $group->project_id !== (int) $this->project_id) {
-                throw new DomainException('Task Work Group must belong to the same Project.');
+            if (! $group || ! $group->isActive() || $group->project_id !== (int) $this->project_id) {
+                throw new DomainException('Task Work Group must be active and belong to the same Project.');
             }
         }
 

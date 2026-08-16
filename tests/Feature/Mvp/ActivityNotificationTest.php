@@ -8,7 +8,6 @@ use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Domain\Enums\TaskPriority;
-use Modules\Tasks\Domain\Enums\TaskStatus;
 
 it('records task creation and state changes without sensitive metadata', function (): void {
     $client = Client::factory()->create();
@@ -17,13 +16,11 @@ it('records task creation and state changes without sensitive metadata', functio
 
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Audit me',
-        'status' => TaskStatus::WaitingAdmin,
         'priority' => TaskPriority::Normal,
     ]);
 
     app(TaskWorkflow::class)->updateByAdmin($admin, $task, [
         'priority' => TaskPriority::High,
-        'status' => TaskStatus::WaitingAdmin,
     ]);
 
     expect(Activity::query()->where('task_id', $task->id)->where('action', 'task.created')->exists())->toBeTrue()
@@ -34,7 +31,7 @@ it('records task creation and state changes without sensitive metadata', functio
     expect(strtolower($serialized))->not->toContain('password', 'token', 'secret');
 });
 
-it('notifies every active admin when a customer creates an admin queue task', function (): void {
+it('does not recreate fixed admin queue notification semantics for customer-created tasks', function (): void {
     Notification::fake();
     $client = Client::factory()->create();
     $adminOne = User::factory()->admin()->create();
@@ -44,12 +41,16 @@ it('notifies every active admin when a customer creates an admin queue task', fu
     $project = mvpProject($client);
     app(ProjectMembershipManager::class)->add($project, $customer, $adminOne);
 
-    app(TaskWorkflow::class)->createForCustomer($customer, $project, [
-        'title' => 'Queue task',
+    $task = app(TaskWorkflow::class)->createForCustomer($customer, $project, [
+        'title' => 'Project workflow task',
     ]);
 
-    Notification::assertSentTo([$adminOne, $adminTwo], ResourceChangedNotification::class);
+    Notification::assertNotSentTo($adminOne, ResourceChangedNotification::class);
+    Notification::assertNotSentTo($adminTwo, ResourceChangedNotification::class);
     Notification::assertNotSentTo($inactiveAdmin, ResourceChangedNotification::class);
+
+    expect($task->project_status_id)->toBe(mvpOpenStatus($project)->id)
+        ->and(Activity::query()->where('task_id', $task->id)->where('action', 'task.created')->exists())->toBeTrue();
 });
 
 it('records membership add and remove events and notifies the affected customer', function (): void {
