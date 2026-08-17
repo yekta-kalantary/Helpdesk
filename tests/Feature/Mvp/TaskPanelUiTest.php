@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Projects\Application\ProjectLifecycle;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskChecklist;
 use Modules\Tasks\Application\TaskCollaboration;
@@ -56,6 +57,39 @@ it('keeps task list filters and responsive task fields represented', function ()
         ->set('assignee', 'unassigned')
         ->assertSee('Panel task')
         ->assertSeeHtml('wire:click="$set(\'assignee\', \'unassigned\')" aria-pressed="true"');
+});
+
+it('does not expose task detail to an unauthorized user', function (): void {
+    $client = Client::factory()->create();
+    $otherClient = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $outsider = User::factory()->customer($otherClient)->create();
+    $project = mvpProject($client, 'Unauthorized detail project');
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Protected detail task']);
+
+    $this->actingAs($outsider)
+        ->get(route('tasks.show', $task))
+        ->assertNotFound();
+});
+
+it('keeps task detail read only when its project is completed', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client, 'Completed detail project');
+    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Completed project task']);
+    app(TaskWorkflow::class)->changeStatus($admin, $task, mvpDoneStatus($project));
+    app(ProjectLifecycle::class)->complete($project, $admin);
+
+    Livewire::actingAs($customer)
+        ->test(Show::class, ['task' => $task->reference])
+        ->assertSee('Completed project task')
+        ->assertSee('چک‌لیست در تسک Done یا پروژه تکمیل‌شده فقط خواندنی است.')
+        ->assertSee('این تسک یا پروژه بسته است و همکاری جدید پذیرفته نمی‌شود.')
+        ->assertDontSeeHtml('wire:submit="addComment"')
+        ->assertDontSeeHtml('wire:submit="addSubtask"')
+        ->assertDontSeeHtml('wire:click="toggleSubtask(');
 });
 
 it('loads project task statuses in the task create form', function (): void {
@@ -135,10 +169,12 @@ it('keeps task detail collaboration available to members without admin moderatio
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Member detail task']);
     app(TaskCollaboration::class)->comment($admin, $task, 'Visible conversation.', []);
+    app(TaskCollaboration::class)->attach($admin, $task, UploadedFile::fake()->create('member-detail.pdf', 10, 'application/pdf'));
 
     Livewire::actingAs($customer)
         ->test(Show::class, ['task' => $task->reference])
         ->assertSee('Visible conversation.')
+        ->assertSee('member-detail.pdf')
         ->assertSeeHtml('wire:submit="addComment"')
         ->assertSeeHtml('wire:submit="addSubtask"')
         ->assertDontSeeHtml('wire:click="hideComment(')

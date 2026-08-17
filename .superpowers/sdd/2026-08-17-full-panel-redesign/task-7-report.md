@@ -50,3 +50,24 @@ Implemented the task detail redesign as a conversation-first, responsive Calm Wo
 
 - Focused tests cannot execute until the configured `helpdesk_testing` MariaDB credentials/service are available.
 - Browser viewport, dark-mode, reduced-motion, and keyboard interaction checks were not executable in this environment; the markup uses native disclosure controls and existing shared focus styles.
+
+## Review Fixes
+
+- Made the editable checklist toggle an explicit `h-11 w-11` control with a compact 24px inner marker.
+- Changed checklist save, move, and remove actions to the shared default button size so each meets the 44px target while retaining flex wrapping.
+- Bound the operational card prop as `:padding="false"` so the boolean value reaches the shared card component.
+- Added a real standalone attachment fixture to member permission coverage and asserted that members can see it without receiving the Admin-only hide action.
+- Added focused route coverage for an unauthorized outsider and Livewire coverage for a task in a completed project.
+
+### Review Fix Verification
+
+- `vendor/bin/pint --dirty --format agent`
+  - Passed.
+- `php artisan view:cache`
+  - Passed: Blade templates cached successfully.
+- `npm run build`
+  - Passed: Vite production build completed successfully.
+- `git diff --check`
+  - Passed.
+- `php artisan test --compact --filter="task.*detail|checklist|comment|attachment"`
+  - Blocked before assertions: 28 tests attempted, all failed during database bootstrap with MariaDB error `SQLSTATE[HY000] [1045] Access denied for user 'helpdesk'@'localhost'` for `helpdesk_testing`.

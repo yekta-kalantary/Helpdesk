@@ -102,13 +102,13 @@
                     @forelse($task->checklistItems as $item)
                         <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center" wire:key="subtask-{{ $item->id }}">
                             @if($canCollaborate)
-                                <button type="button" class="min-h-11 h-6 w-6 shrink-0 rounded border text-xs" wire:click="toggleSubtask({{ $item->id }}, {{ $item->is_completed ? 'false' : 'true' }})" aria-label="تغییر وضعیت زیرتسک">{{ $item->is_completed ? '✓' : '' }}</button>
+                                <button type="button" class="h-11 w-11 shrink-0 rounded border p-0 text-xs" wire:click="toggleSubtask({{ $item->id }}, {{ $item->is_completed ? 'false' : 'true' }})" aria-label="تغییر وضعیت زیرتسک"><span class="flex h-6 w-6 items-center justify-center rounded border text-xs">{{ $item->is_completed ? '✓' : '' }}</span></button>
                                 <input type="text" wire:model="checklistEdits.{{ $item->id }}" class="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm {{ $item->is_completed ? 'line-through text-slate-400' : '' }}" aria-label="عنوان زیرتسک" />
                                 <div class="flex flex-wrap gap-1">
-                                    <x-ui.button size="sm" variant="secondary" wire:click="renameSubtask({{ $item->id }})">ذخیره</x-ui.button>
-                                    <x-ui.button size="sm" variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'up')" aria-label="انتقال زیرتسک به بالا">↑</x-ui.button>
-                                    <x-ui.button size="sm" variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'down')" aria-label="انتقال زیرتسک به پایین">↓</x-ui.button>
-                                    <x-ui.button size="sm" variant="secondary" wire:click="removeSubtask({{ $item->id }})" wire:confirm="این زیرتسک به‌صورت منطقی حذف شود؟">حذف</x-ui.button>
+                                    <x-ui.button variant="secondary" wire:click="renameSubtask({{ $item->id }})">ذخیره</x-ui.button>
+                                    <x-ui.button variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'up')" aria-label="انتقال زیرتسک به بالا">↑</x-ui.button>
+                                    <x-ui.button variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'down')" aria-label="انتقال زیرتسک به پایین">↓</x-ui.button>
+                                    <x-ui.button variant="secondary" wire:click="removeSubtask({{ $item->id }})" wire:confirm="این زیرتسک به‌صورت منطقی حذف شود؟">حذف</x-ui.button>
                                 </div>
                             @else
                                 <span class="flex min-h-11 h-6 w-6 shrink-0 items-center justify-center rounded border text-xs" role="img" aria-label="{{ $item->is_completed ? 'زیرتسک انجام شده است' : 'زیرتسک انجام نشده است' }}">{{ $item->is_completed ? '✓' : '' }}</span>
@@ -185,7 +185,7 @@
                 </div>
             </x-ui.card>
 
-            <x-ui.card padding="false">
+            <x-ui.card :padding="false">
                 <details open class="group">
                     <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-slate-900 sm:px-6 [&::-webkit-details-marker]:hidden">
                         <span>عملیات تسک</span><span class="text-xs font-medium text-slate-500 group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-slate-500 group-open:inline">مخفی‌کردن</span>
