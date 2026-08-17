@@ -48,7 +48,7 @@ it('renders notification rows as readable links with unread emphasis', function 
         ->assertSee('notification-'.$notification->id.'-title', false)
         ->assertSee('notification-'.$notification->id.'-details', false)
         ->assertSee('notification-'.$notification->id.'-status', false)
-        ->assertSee('bg-workspace-info-surface', false)
+        ->assertSee('bg-info-surface', false)
         ->assertSee("wire:click=\"open('{$notification->id}')\"", false);
 });
 

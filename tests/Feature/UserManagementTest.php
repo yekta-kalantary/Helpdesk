@@ -37,7 +37,7 @@ it('keeps user management controls and identity form labels admin-only', functio
         ->assertSee('آخرین ورود')
         ->assertSee('wire:navigate', false)
         ->assertSee('min-h-11', false)
-        ->assertSee('text-workspace-text', false);
+        ->assertSee('text-text', false);
 
     $this->actingAs($customer)
         ->get(route('profile'))

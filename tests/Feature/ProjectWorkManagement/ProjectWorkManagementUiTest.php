@@ -40,7 +40,7 @@ it('renders Kanban and hierarchy from project-owned workflow and searches indepe
         ->assertSeeHtml('aria-current="location"')
         ->assertSeeHtml('aria-label="برد کانبان با پیمایش افقی"')
         ->assertSeeHtml('wire:change="moveTask(')
-        ->assertSeeHtml('class="min-h-11 w-full rounded-lg border-workspace-border text-xs"')
+        ->assertSeeHtml('class="min-h-11 w-full rounded-control border-border text-body-sm"')
         ->assertSee('Root Tasks')
         ->assertSee('Delivery group')
         ->assertSee('Root searchable task')
@@ -77,7 +77,7 @@ it('renders project workspace sections for admins and keeps management controls 
         ])
         ->assertSeeHtml('<details data-project-management-disclosure')
         ->assertDontSeeHtml('data-project-management-disclosure open')
-        ->assertSee('<details class="group rounded-workspace border border-workspace-divider bg-workspace-surface">', false)
+        ->assertSee('<details class="group rounded-surface border border-border bg-surface">', false)
         ->assertSee('جزئیات پروژه')
         ->assertSee('تعداد اعضا: 1')
         ->assertSee('شروع:')
@@ -85,7 +85,7 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertSee('موعد:')
         ->assertSee('2026/08/31')
         ->assertSee('</details>', false)
-        ->assertDontSeeHtml('<details class="group rounded-workspace border border-workspace-divider bg-workspace-surface" open')
+        ->assertDontSeeHtml('<details class="group rounded-surface border border-border bg-surface" open')
         ->assertSeeInOrder([
             'data-project-management-disclosure',
             'wire:click="complete"',
