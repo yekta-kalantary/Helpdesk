@@ -25,17 +25,30 @@
     --color-workspace-teal: var(--workspace-teal);
     --color-workspace-coral: var(--workspace-coral);
     --color-workspace-success: var(--workspace-success);
+    --color-workspace-danger: var(--workspace-danger);
+    --color-workspace-text: var(--workspace-text);
+    --color-workspace-muted: var(--workspace-muted);
+    --color-workspace-divider: var(--workspace-divider);
+    --color-workspace-accent: var(--workspace-accent);
     --color-workspace-focus: var(--workspace-focus);
 }
 
 :root {
-    --workspace-page: #f4f8f7;
+    --workspace-page: #fbfbfa;
     --workspace-surface: #ffffff;
-    --workspace-border: #d9e6e3;
-    --workspace-teal: #0f5c5a;
-    --workspace-coral: #d96b55;
-    --workspace-success: #278166;
-    --workspace-focus: #0f5c5a;
+    --workspace-text: #37352f;
+    --workspace-muted: #787774;
+    --workspace-divider: #e8e7e2;
+    --workspace-border: var(--workspace-divider);
+    --workspace-accent: #c85f45;
+    --workspace-coral: var(--workspace-accent);
+    --workspace-teal: #4f7166;
+    --workspace-success: #3f6f5c;
+    --workspace-danger: #b54736;
+    --workspace-focus: #c85f45;
+    --workspace-radius: 0.5rem;
+    --workspace-space: 1.5rem;
+    --workspace-motion: 180ms;
 }
 
 @layer base {
@@ -59,7 +72,15 @@
 
     body {
         min-width: 0;
-        @apply bg-workspace-page text-slate-900 antialiased;
+        @apply bg-workspace-page text-workspace-text antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        color: var(--workspace-text);
+        line-height: 1.35;
     }
 
     main,
@@ -85,7 +106,7 @@
         outline-offset: 2px;
     }
 
-    :where(button, [role='button']) {
+    :where(button, [role='button'], summary) {
         min-height: 2.75rem;
         touch-action: manipulation;
     }
@@ -100,6 +121,7 @@
         *::after {
             scroll-behavior: auto !important;
             transition-duration: 0.01ms !important;
+            transition-delay: 0ms !important;
             animation-duration: 0.01ms !important;
             animation-iteration-count: 1 !important;
         }

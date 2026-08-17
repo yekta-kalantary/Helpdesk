@@ -3,8 +3,8 @@
     'description' => null,
 ])
 
-<div {{ $attributes->class(['rounded-2xl border border-dashed border-workspace-border bg-teal-50/50 px-5 py-8 text-center']) }}>
-    @if($title)<div class="font-bold text-slate-800">{{ $title }}</div>@endif
-    @if($description)<p class="mt-1 text-sm leading-6 text-slate-500">{{ $description }}</p>@endif
-    @if(! $slot->isEmpty())<div class="mt-4">{{ $slot }}</div>@endif
+<div {{ $attributes->class(['rounded-lg border border-dashed border-workspace-divider bg-workspace-page px-5 py-10 text-center']) }}>
+    @if($title)<div class="font-bold text-workspace-text">{{ $title }}</div>@endif
+    @if($description)<p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-workspace-muted">{{ $description }}</p>@endif
+    @if(! $slot->isEmpty())<div class="mt-5 flex flex-wrap items-center justify-center gap-2">{{ $slot }}</div>@endif
 </div>
