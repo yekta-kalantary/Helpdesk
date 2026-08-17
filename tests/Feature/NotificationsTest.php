@@ -44,6 +44,7 @@ it('renders notification rows as readable links with unread emphasis', function 
         ->assertSee('Review task')
         ->assertSee('A task needs your attention.')
         ->assertSee('خوانده‌نشده')
+        ->assertSee('border-y', false)
         ->assertSee("wire:click=\"open('{$notification->id}')\"", false);
 });
 

@@ -2,8 +2,9 @@
     <x-ui.page-header :title="__('identity::messages.new_user')" subtitle="یک کاربر مشتری بسازید و سطح دسترسی او را از طریق مشتری تعیین کنید." />
 
     <form class="max-w-3xl" wire:submit="save">
-        <div class="space-y-4">
-            <x-ui.card title="اطلاعات کاربر" subtitle="نام و راه‌های تماس کاربر را وارد کنید.">
+        <div class="divide-y divide-workspace-divider rounded-workspace border border-workspace-divider bg-workspace-surface px-4 sm:px-6">
+            <section class="py-5 sm:py-6" aria-labelledby="new-user-identity-heading">
+                <div class="mb-5"><h2 id="new-user-identity-heading" class="font-bold text-workspace-text">اطلاعات کاربر</h2><p class="mt-1 text-sm leading-6 text-workspace-muted">نام و راه‌های تماس کاربر را وارد کنید.</p></div>
                 <div class="space-y-5">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <x-ui.input name="name" :label="__('app.name_label')" :value="$name" wire:model="name" required />
@@ -14,9 +15,10 @@
                         <x-ui.input name="mobile" label="موبایل" :value="$mobile" wire:model="mobile" dir="ltr" />
                     </div>
                 </div>
-            </x-ui.card>
+            </section>
 
-            <x-ui.card title="مشتری و وضعیت" subtitle="نقش این حساب به‌صورت خودکار Customer است.">
+            <section class="py-5 sm:py-6" aria-labelledby="new-user-access-heading">
+                <div class="mb-5"><h2 id="new-user-access-heading" class="font-bold text-workspace-text">مشتری و وضعیت</h2><p class="mt-1 text-sm leading-6 text-workspace-muted">نقش این حساب به‌صورت خودکار Customer است.</p></div>
                 <div class="space-y-5">
                     <x-ui.select name="client_id" label="مشتری" wire:model.number="client_id" required>
                         <option value="">—</option>
@@ -27,9 +29,9 @@
                     <x-ui.checkbox name="is_active" label="کاربر فعال باشد" model="is_active" />
                     <p class="text-sm leading-6 text-slate-500">پس از ایجاد کاربر فعال، لینک تنظیم رمز عبور به ایمیل او ارسال می‌شود.</p>
                 </div>
-            </x-ui.card>
+            </section>
 
-            <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-workspace-page/95 px-4 pb-1 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-none">
+            <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-workspace-page/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-5 sm:backdrop-blur-none">
                 <x-ui.button type="submit" icon="fa-user-plus" wire:loading.attr="disabled" wire:target="save">
                     <span wire:loading.remove wire:target="save">{{ __('identity::messages.create_user') }}</span>
                     <span wire:loading wire:target="save">{{ __('app.loading') }}</span>

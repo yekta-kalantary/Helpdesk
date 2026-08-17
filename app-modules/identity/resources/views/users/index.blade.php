@@ -26,49 +26,20 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="hidden overflow-x-auto md:block">
-        <x-ui.table wire:loading.class="opacity-60" wire:target="q,client,status">
-            <thead>
-                <tr>
-                    <th>نام</th>
-                    <th>ایمیل / موبایل</th>
-                    <th>مشتری</th>
-                    <th>آخرین ورود</th>
-                    <th>{{ __('app.status') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($users as $user)
-                    <tr wire:key="user-{{ $user->id }}">
-                        <td><a href="{{ route('users.show', $user) }}" wire:navigate class="font-bold text-slate-950 hover:underline">{{ $user->full_name }}</a></td>
-                        <td>
-                            <div dir="ltr" class="text-right">{{ $user->email }}</div>
-                            @if($user->mobile)<div dir="ltr" class="mt-1 text-right text-xs text-slate-500">{{ $user->mobile }}</div>@endif
-                        </td>
-                        <td>{{ $user->client?->name ?? '—' }}</td>
-                        <td><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</td>
-                        <td><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></td>
-                    </tr>
-                @empty
-                    <x-ui.empty-row colspan="5" />
-                @endforelse
-            </tbody>
-        </x-ui.table>
-    </div>
-
-    <div class="space-y-3 md:hidden" wire:loading.class="opacity-60" wire:target="q,client,status">
+    <div class="divide-y divide-workspace-divider border-y border-workspace-divider ui-loading-stable" wire:loading.class="opacity-60" wire:target="q,client,status">
         @forelse($users as $user)
-            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="mobile-user-{{ $user->id }}" class="block rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)] transition hover:border-workspace-teal hover:bg-teal-50/30">
-                <div class="flex items-start justify-between gap-3">
+            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="user-{{ $user->id }}" class="block min-h-11 bg-workspace-surface px-1 py-4 transition hover:bg-workspace-neutral-surface focus-visible:bg-workspace-neutral-surface sm:px-3">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
-                        <div class="truncate font-black text-slate-950">{{ $user->full_name }}</div>
-                        <div dir="ltr" class="mt-1 truncate text-right text-sm text-slate-600">{{ $user->email }}</div>
+                        <div class="break-words font-bold text-workspace-text">{{ $user->full_name }}</div>
+                        <div dir="ltr" class="mt-1 truncate text-right text-sm text-workspace-muted">{{ $user->email }}</div>
                     </div>
                     <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
                 </div>
-                <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-sm">
-                    <div><dt class="text-xs text-slate-500">مشتری</dt><dd class="mt-1 truncate font-semibold text-slate-800">{{ $user->client?->name ?? '—' }}</dd></div>
-                    <div><dt class="text-xs text-slate-500">آخرین ورود</dt><dd class="mt-1 font-semibold text-slate-800"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
+                <dl class="mt-3 grid gap-2 text-sm text-workspace-muted sm:grid-cols-3">
+                    <div><dt class="text-xs">مشتری</dt><dd class="mt-1 truncate font-semibold text-workspace-text">{{ $user->client?->name ?? '—' }}</dd></div>
+                    <div><dt class="text-xs">موبایل</dt><dd dir="ltr" class="mt-1 truncate text-right font-semibold text-workspace-text">{{ $user->mobile ?: '—' }}</dd></div>
+                    <div><dt class="text-xs">آخرین ورود</dt><dd class="mt-1 font-semibold text-workspace-text"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
                 </dl>
             </a>
         @empty

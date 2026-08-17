@@ -1,5 +1,6 @@
 <div>
-    <x-ui.card title="بازیابی رمز عبور" subtitle="ایمیل حساب خود را وارد کنید.">
+    <section aria-labelledby="forgot-password-heading">
+        <div class="mb-5"><h1 id="forgot-password-heading" class="text-xl font-black text-workspace-text">بازیابی رمز عبور</h1><p class="mt-1 text-sm leading-6 text-workspace-muted">ایمیل حساب خود را وارد کنید.</p></div>
 
         @if($sent)
             <x-ui.alert class="mb-4" tone="success">
@@ -16,5 +17,5 @@
         </form>
 
         <a href="{{ route('login') }}" wire:navigate class="mt-5 block text-center text-sm font-semibold text-slate-600 hover:text-slate-950">بازگشت به ورود</a>
-    </x-ui.card>
+    </section>
 </div>

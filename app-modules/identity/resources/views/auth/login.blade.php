@@ -1,5 +1,6 @@
 <div>
-    <x-ui.card title="{{ __('identity::messages.login_title') }}" subtitle="برای ادامه وارد حساب خود شوید.">
+    <section aria-labelledby="login-heading">
+        <div class="mb-5"><h1 id="login-heading" class="text-xl font-black text-workspace-text">{{ __('identity::messages.login_title') }}</h1><p class="mt-1 text-sm leading-6 text-workspace-muted">برای ادامه وارد حساب خود شوید.</p></div>
 
         @if(session('success'))
             <x-ui.alert class="mb-4" tone="success">{{ session('success') }}</x-ui.alert>
@@ -21,5 +22,5 @@
                 <span wire:loading wire:target="login">{{ __('app.loading') }}</span>
             </x-ui.button>
         </form>
-    </x-ui.card>
+    </section>
 </div>

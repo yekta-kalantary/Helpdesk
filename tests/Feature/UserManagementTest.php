@@ -33,7 +33,9 @@ it('keeps user management controls and identity form labels admin-only', functio
     $this->actingAs($admin)
         ->get(route('users.index'))
         ->assertSee(route('users.create'))
-        ->assertSee('همه وضعیت‌ها');
+        ->assertSee('همه وضعیت‌ها')
+        ->assertSee('آخرین ورود')
+        ->assertSee('wire:navigate', false);
 
     $this->actingAs($customer)
         ->get(route('profile'))

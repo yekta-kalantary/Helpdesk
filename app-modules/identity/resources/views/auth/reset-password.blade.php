@@ -1,5 +1,6 @@
 <div>
-    <x-ui.card title="تنظیم رمز عبور" subtitle="یک رمز عبور جدید برای حساب خود تعیین کنید.">
+    <section aria-labelledby="reset-password-heading">
+        <div class="mb-5"><h1 id="reset-password-heading" class="text-xl font-black text-workspace-text">تنظیم رمز عبور</h1><p class="mt-1 text-sm leading-6 text-workspace-muted">یک رمز عبور جدید برای حساب خود تعیین کنید.</p></div>
 
         <form wire:submit="resetPassword" class="space-y-5">
             <x-ui.input name="email" label="ایمیل" type="email" dir="ltr" :value="$email" wire:model="email" required autocomplete="email" />
@@ -10,5 +11,5 @@
                 <span wire:loading wire:target="resetPassword">{{ __('app.loading') }}</span>
             </x-ui.button>
         </form>
-    </x-ui.card>
+    </section>
 </div>
