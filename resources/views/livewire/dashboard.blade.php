@@ -25,7 +25,7 @@
         </a>
 
         @if($isAdmin)
-            <a href="{{ route('tasks.index', ['unassigned' => 1]) }}" wire:navigate class="group sm:col-span-2 xl:col-span-1">
+            <a href="{{ route('tasks.index', ['assignee' => 'unassigned']) }}" wire:navigate class="group sm:col-span-2 xl:col-span-1">
                 <x-ui.stat-card label="صف بدون مسئول" :value="number_format($unassignedOpenTaskCount)" hint="اولویت بعدی برای واگذاری" icon="fa-inbox" accent="primary" class="h-full transition group-hover:-translate-y-0.5 group-hover:shadow-md" />
             </a>
         @else

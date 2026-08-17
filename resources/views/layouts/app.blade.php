@@ -34,7 +34,7 @@
         <button type="button" data-sidebar-backdrop data-open="false" aria-label="بستن منو" class="pointer-events-none fixed inset-0 z-40 bg-slate-950/40 opacity-0 transition-opacity duration-200 data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 lg:hidden"></button>
     @endauth
 
-    <aside id="app-sidebar" data-sidebar data-open="false" class="sidebar-shell fixed inset-y-0 right-0 z-50 flex w-72 max-w-[86vw] translate-x-full flex-col border-l border-workspace-border bg-workspace-surface shadow-2xl transition-transform duration-200 ease-out data-[open=true]:translate-x-0 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0 lg:translate-x-0 lg:shadow-none">
+    <aside id="app-sidebar" data-sidebar data-open="false" inert class="sidebar-shell fixed inset-y-0 right-0 z-50 flex w-72 max-w-[86vw] translate-x-full flex-col border-l border-workspace-border bg-workspace-surface shadow-2xl transition-transform duration-200 ease-out data-[open=true]:translate-x-0 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0 lg:translate-x-0 lg:shadow-none">
         <div class="flex min-h-16 items-center justify-between gap-3 border-b border-workspace-border p-4 sm:p-5">
             <div class="min-w-0">
                 <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2 truncate text-lg font-black tracking-tight text-slate-950">

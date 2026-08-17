@@ -26,7 +26,7 @@
     @error('status')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
     <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <main class="min-w-0 space-y-5 sm:space-y-6">
+        <div class="min-w-0 space-y-5 sm:space-y-6">
             <x-ui.card title="شرح تسک" subtitle="زمینه و جزئیات مورد نیاز برای ادامه کار">
                 @if($task->description)
                     <div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $task->description }}</div>
@@ -145,7 +145,7 @@
                                     @endif
                                     <div class="mt-1 text-xs text-slate-500">{{ number_format($attachment->size / 1024, 1) }} KB · {{ $attachment->mime_type }}</div>
                                 </div>
-                                @if($isAdmin && !$attachment->hidden_at)<x-ui.button size="sm" variant="secondary" wire:click="hideAttachment({{ $attachment->id }})" wire:confirm="این فایل از دید مشتری مخفی شود؟">مخفی‌کردن</x-ui.button>@endif
+                                @if($isAdmin && !$attachment->hidden_at)<x-ui.button variant="secondary" wire:click="hideAttachment({{ $attachment->id }})" wire:confirm="این فایل از دید مشتری مخفی شود؟">مخفی‌کردن</x-ui.button>@endif
                             </div>
                         @endforeach
                     </div>
@@ -171,7 +171,7 @@
                     <div class="mt-4">{{ $activities->links() }}</div>
                 </div>
             </details>
-        </main>
+        </div>
 
         <aside class="min-w-0 space-y-5 lg:sticky lg:top-5">
             <x-ui.card title="مشخصات تسک" subtitle="اطلاعات عملیاتی و مالکیت">

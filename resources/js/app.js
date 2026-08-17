@@ -10,6 +10,24 @@ function focusSidebar() {
     target?.focus({ preventScroll: true });
 }
 
+function syncSidebarAccessibility(open) {
+    const element = sidebar();
+
+    if (! element) {
+        return;
+    }
+
+    const mobileClosed = ! open && window.innerWidth < 1024;
+
+    element.toggleAttribute('inert', mobileClosed);
+
+    if (mobileClosed) {
+        element.setAttribute('aria-hidden', 'true');
+    } else {
+        element.removeAttribute('aria-hidden');
+    }
+}
+
 function setSidebarOpen(open) {
     const element = sidebar();
 
@@ -17,6 +35,7 @@ function setSidebarOpen(open) {
         return;
     }
 
+    syncSidebarAccessibility(open);
     element.dataset.open = open ? 'true' : 'false';
 
     const backdrop = sidebarBackdrop();
@@ -37,6 +56,8 @@ function setSidebarOpen(open) {
         lastSidebarOpener = null;
     }
 }
+
+syncSidebarAccessibility(false);
 
 function closeSidebar() {
     setSidebarOpen(false);
