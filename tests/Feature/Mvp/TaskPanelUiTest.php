@@ -51,7 +51,8 @@ it('keeps task list filters and responsive task fields represented', function ()
         ->assertSeeHtml('wire:key="task-card-'.$task->id.'"')
         ->assertSeeHtml('aria-pressed="false"')
         ->assertSeeHtml('min-h-11')
-        ->assertSeeHtml('<details class="mobile-filter-details group">')
+        ->assertSeeHtml('<div class="hidden sm:block" data-filter-desktop>')
+        ->assertSeeHtml('<details class="mobile-filter-details group sm:hidden" data-filter-mobile>')
         ->assertSeeHtml('data-active-filter-count')
         ->assertSeeHtml('wire:model.live.debounce.300ms="q"')
         ->assertSeeHtml('wire:model.live="project"')
@@ -60,6 +61,7 @@ it('keeps task list filters and responsive task fields represented', function ()
         ->assertSeeHtml('wire:model.live="assignee"')
         ->assertSeeHtml('wire:model.live="overdue"')
         ->assertSeeHtml('wire:model.live="sort"')
+        ->assertSeeHtml('aria-label="Pagination Navigation"')
         ->assertSee($task->reference)
         ->assertSee('Panel project')
         ->set('assignee', (string) $admin->id)
@@ -68,6 +70,39 @@ it('keeps task list filters and responsive task fields represented', function ()
         ->set('assignee', 'unassigned')
         ->assertSee('Panel task')
         ->assertSeeHtml('wire:click="$set(\'assignee\', \'unassigned\')" aria-pressed="true"');
+});
+
+it('preserves task filter state and project-scoped statuses', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $project = mvpProject($client, 'Scoped filter project');
+    $status = mvpOpenStatus($project, 1);
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Scoped filter task',
+        'project_status_id' => $status->id,
+        'priority' => TaskPriority::High,
+        'due_date' => now()->subDay()->toDateString(),
+    ]);
+
+    Livewire::actingAs($admin)
+        ->test(Index::class)
+        ->set('project', (string) $project->id)
+        ->assertSee($status->title)
+        ->assertSet('status', '')
+        ->set('status', (string) $status->id)
+        ->set('priority', TaskPriority::High->value)
+        ->set('overdue', '1')
+        ->set('sort', 'due_asc')
+        ->set('q', $task->reference)
+        ->assertSet('project', (string) $project->id)
+        ->assertSet('status', (string) $status->id)
+        ->assertSet('priority', TaskPriority::High->value)
+        ->assertSet('overdue', '1')
+        ->assertSet('sort', 'due_asc')
+        ->assertSet('q', $task->reference)
+        ->assertSee($task->title)
+        ->assertSeeHtml('wire:model.live.debounce.300ms="q"')
+        ->assertSeeHtml('wire:model.live="status"');
 });
 
 it('does not expose task detail to an unauthorized user', function (): void {
@@ -138,6 +173,18 @@ it('hides admin-only task create controls from customers', function (): void {
         ->assertDontSeeHtml('name="assigned_to"')
         ->assertDontSeeHtml('name="due_date"')
         ->assertSee('تسک مشتری در ریشه پروژه ایجاد می‌شود');
+});
+
+it('keeps task form validation and save loading bindings visible', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+
+    Livewire::actingAs($admin)
+        ->test(Form::class)
+        ->call('save')
+        ->assertHasErrors(['project_id', 'title'])
+        ->assertSeeHtml('wire:loading.attr="disabled" wire:target="save,attachment"')
+        ->assertSeeHtml('wire:loading.remove wire:target="save"')
+        ->assertSeeHtml('wire:loading wire:target="save"');
 });
 
 it('presents task detail as a conversation-first workspace with actionable properties', function (): void {
