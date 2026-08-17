@@ -1,7 +1,18 @@
 @import "tailwindcss";
+@import "./fontawesome.css";
+@import "./fontawesome-light.css";
+@import "./fontawesome-brands.css";
+
+@font-face {
+    font-family: "IRANYekanXVF";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url("../fonts/IRANYekanXVF/IRANYekanXVF.woff2") format("woff2");
+}
 
 @theme {
-    --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "IRANYekanXVF", ui-sans-serif, system-ui, sans-serif;
     --color-brand-50: #eef2ff;
     --color-brand-600: #4f46e5;
     --color-brand-700: #4338ca;
@@ -9,7 +20,7 @@
 
 @layer base {
     :root {
-        font-family: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+        font-family: "IRANYekanXVF", ui-sans-serif, system-ui, sans-serif;
         color: #172033;
         background: #f8fafc;
         font-synthesis: none;
