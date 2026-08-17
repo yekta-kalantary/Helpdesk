@@ -43,28 +43,28 @@
     <x-ui.filter-bar :livewire="true" mobile-label="فیلترهای تسک" :active-count="collect([$q, $project, $status, $priority, $assignee, $overdue, $sort !== 'updated_desc' ? $sort : ''])->filter(fn ($value) => filled($value))->count()">
         <x-slot:desktop>
             <div class="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" placeholder="جستجو با عنوان یا Reference" />
-                <x-ui.select name="project" wire:model.live="project">
+                <x-ui.input id="task-q-desktop" name="q" label="جستجو" :value="$q" wire:model.live.debounce.300ms="q" placeholder="عنوان یا Reference" />
+                <x-ui.select id="task-project-desktop" name="project" label="پروژه" wire:model.live="project">
                     <option value="">همه پروژه‌ها</option>
                     @foreach($projects as $projectItem)<option value="{{ $projectItem->id }}">{{ $projectItem->name }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="status" wire:model.live="status" :disabled="$project === ''">
+                <x-ui.select id="task-status-desktop" name="status" label="وضعیت" wire:model.live="status" :disabled="$project === ''">
                     <option value="">{{ $project === '' ? 'برای فیلتر وضعیت، پروژه را انتخاب کنید' : 'همه وضعیت‌های پروژه' }}</option>
                     @foreach($statuses as $statusItem)<option value="{{ $statusItem->id }}">{{ $statusItem->title }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="priority" wire:model.live="priority">
+                <x-ui.select id="task-priority-desktop" name="priority" label="اولویت" wire:model.live="priority">
                     <option value="">همه اولویت‌ها</option>
                     @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="assignee" wire:model.live="assignee">
+                <x-ui.select id="task-assignee-desktop" name="assignee" label="مسئول" wire:model.live="assignee">
                     <option value="">همه مسئول‌ها</option>
                     @foreach($assignees as $assigneeItem)<option value="{{ $assigneeItem->id }}">{{ $assigneeItem->full_name }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="overdue" wire:model.live="overdue">
+                <x-ui.select id="task-overdue-desktop" name="overdue" label="سررسید" wire:model.live="overdue">
                     <option value="">همه سررسیدها</option>
                     <option value="1">فقط عقب‌افتاده</option>
                 </x-ui.select>
-                <x-ui.select name="sort" wire:model.live="sort">
+                <x-ui.select id="task-sort-desktop" name="sort" label="مرتب‌سازی" wire:model.live="sort">
                     <option value="updated_desc">آخرین بروزرسانی</option>
                     <option value="due_asc">موعد نزدیک‌تر</option>
                     <option value="due_desc">موعد دورتر</option>
@@ -73,28 +73,28 @@
         </x-slot:desktop>
         <x-slot:mobile>
             <div class="grid w-full gap-3 border-t border-workspace-divider pt-3">
-                <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" placeholder="جستجو با عنوان یا Reference" />
-                <x-ui.select name="project" wire:model.live="project">
+                <x-ui.input id="task-q-mobile" name="q" label="جستجو" :value="$q" wire:model.live.debounce.300ms="q" placeholder="عنوان یا Reference" />
+                <x-ui.select id="task-project-mobile" name="project" label="پروژه" wire:model.live="project">
                     <option value="">همه پروژه‌ها</option>
                     @foreach($projects as $projectItem)<option value="{{ $projectItem->id }}">{{ $projectItem->name }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="status" wire:model.live="status" :disabled="$project === ''">
+                <x-ui.select id="task-status-mobile" name="status" label="وضعیت" wire:model.live="status" :disabled="$project === ''">
                     <option value="">{{ $project === '' ? 'برای فیلتر وضعیت، پروژه را انتخاب کنید' : 'همه وضعیت‌های پروژه' }}</option>
                     @foreach($statuses as $statusItem)<option value="{{ $statusItem->id }}">{{ $statusItem->title }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="priority" wire:model.live="priority">
+                <x-ui.select id="task-priority-mobile" name="priority" label="اولویت" wire:model.live="priority">
                     <option value="">همه اولویت‌ها</option>
                     @foreach($priorities as $priorityItem)<option value="{{ $priorityItem->value }}">{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="assignee" wire:model.live="assignee">
+                <x-ui.select id="task-assignee-mobile" name="assignee" label="مسئول" wire:model.live="assignee">
                     <option value="">همه مسئول‌ها</option>
                     @foreach($assignees as $assigneeItem)<option value="{{ $assigneeItem->id }}">{{ $assigneeItem->full_name }}</option>@endforeach
                 </x-ui.select>
-                <x-ui.select name="overdue" wire:model.live="overdue">
+                <x-ui.select id="task-overdue-mobile" name="overdue" label="سررسید" wire:model.live="overdue">
                     <option value="">همه سررسیدها</option>
                     <option value="1">فقط عقب‌افتاده</option>
                 </x-ui.select>
-                <x-ui.select name="sort" wire:model.live="sort">
+                <x-ui.select id="task-sort-mobile" name="sort" label="مرتب‌سازی" wire:model.live="sort">
                     <option value="updated_desc">آخرین بروزرسانی</option>
                     <option value="due_asc">موعد نزدیک‌تر</option>
                     <option value="due_desc">موعد دورتر</option>

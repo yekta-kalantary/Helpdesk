@@ -4,6 +4,12 @@
     $filterSummary = $activeCount > 0
         ? "{$activeCount} فیلتر فعال"
         : 'فیلترهای تکمیلی';
+    $hasMobileSlot = isset($mobile) && trim((string) $mobile) !== '';
+    $desktopSlot = $desktop ?? $slot;
+    $mobileSlot = $mobile ?? $slot;
+    $mobileSlotHtml = $hasMobileSlot
+        ? null
+        : preg_replace('/\b(id|for)="([^"]+)"/', '$1="$2-mobile"', (string) $mobileSlot);
 @endphp
 
 @if($livewire)
@@ -14,7 +20,7 @@
                 <span class="rounded-full bg-workspace-neutral-surface px-2 py-0.5 text-xs font-semibold text-workspace-muted" data-active-filter-count>{{ $filterSummary }}</span>
             </div>
             <div class="flex w-full flex-col gap-3 sm:items-end [&>*]:min-w-0 [&>a]:w-full [&>button]:w-full sm:[&>a]:w-auto sm:[&>button]:w-auto">
-                {{ $desktop ?? $slot }}
+                {{ $desktopSlot }}
             </div>
         </div>
         <details class="mobile-filter-details group sm:hidden" data-filter-mobile>
@@ -26,7 +32,11 @@
                 <i class="fa-light fa-chevron-down text-xs transition-transform group-open:rotate-180" aria-hidden="true"></i>
             </summary>
             <div class="mt-3 flex w-full flex-col gap-3 sm:mt-0 sm:flex-row sm:items-end [&>*]:min-w-0 [&>a]:w-full [&>button]:w-full sm:[&>a]:w-auto sm:[&>button]:w-auto">
-                {{ $mobile ?? $slot }}
+                @if($hasMobileSlot)
+                    {{ $mobileSlot }}
+                @else
+                    {!! $mobileSlotHtml !!}
+                @endif
             </div>
         </details>
     </div>
@@ -38,7 +48,7 @@
                 <span class="rounded-full bg-workspace-neutral-surface px-2 py-0.5 text-xs font-semibold text-workspace-muted" data-active-filter-count>{{ $filterSummary }}</span>
             </div>
             <div class="flex w-full flex-col gap-3 sm:items-end [&>*]:min-w-0 [&>a]:w-full [&>button]:w-full sm:[&>a]:w-auto sm:[&>button]:w-auto">
-                {{ $desktop ?? $slot }}
+                {{ $desktopSlot }}
             </div>
         </div>
         <details class="mobile-filter-details group sm:hidden" data-filter-mobile>
@@ -50,7 +60,11 @@
                 <i class="fa-light fa-chevron-down text-xs transition-transform group-open:rotate-180" aria-hidden="true"></i>
             </summary>
             <div class="mt-3 flex w-full flex-col gap-3 sm:mt-0 sm:flex-row sm:items-end [&>*]:min-w-0 [&>a]:w-full [&>button]:w-full sm:[&>a]:w-auto sm:[&>button]:w-auto">
-                {{ $mobile ?? $slot }}
+                @if($hasMobileSlot)
+                    {{ $mobileSlot }}
+                @else
+                    {!! $mobileSlotHtml !!}
+                @endif
             </div>
         </details>
     </form>

@@ -28,6 +28,9 @@ it('keeps task list filters and responsive task fields represented', function ()
         'assigned_to' => $admin->id,
         'due_date' => now()->subDay()->toDateString(),
     ]);
+    foreach (range(1, 20) as $index) {
+        app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Pagination task '.$index]);
+    }
 
     $this->actingAs($admin);
 
@@ -53,6 +56,12 @@ it('keeps task list filters and responsive task fields represented', function ()
         ->assertSeeHtml('min-h-11')
         ->assertSeeHtml('<div class="hidden sm:block" data-filter-desktop>')
         ->assertSeeHtml('<details class="mobile-filter-details group sm:hidden" data-filter-mobile>')
+        ->assertSeeHtml('id="task-q-desktop"')
+        ->assertSeeHtml('id="task-q-mobile"')
+        ->assertSeeHtml('for="task-q-desktop"')
+        ->assertSeeHtml('for="task-q-mobile"')
+        ->assertSeeHtml('id="task-status-desktop"')
+        ->assertSeeHtml('id="task-status-mobile"')
         ->assertSeeHtml('data-active-filter-count')
         ->assertSeeHtml('wire:model.live.debounce.300ms="q"')
         ->assertSeeHtml('wire:model.live="project"')
@@ -76,7 +85,9 @@ it('preserves task filter state and project-scoped statuses', function (): void 
     $client = Client::factory()->create();
     $admin = User::query()->admins()->firstOrFail();
     $project = mvpProject($client, 'Scoped filter project');
+    $otherProject = mvpProject($client, 'Other scoped project');
     $status = mvpOpenStatus($project, 1);
+    $otherStatus = mvpOpenStatus($otherProject, 1);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Scoped filter task',
         'project_status_id' => $status->id,
@@ -88,6 +99,8 @@ it('preserves task filter state and project-scoped statuses', function (): void 
         ->test(Index::class)
         ->set('project', (string) $project->id)
         ->assertSee($status->title)
+        ->assertSeeHtml('value="'.$status->id.'"')
+        ->assertDontSeeHtml('value="'.$otherStatus->id.'"')
         ->assertSet('status', '')
         ->set('status', (string) $status->id)
         ->set('priority', TaskPriority::High->value)
