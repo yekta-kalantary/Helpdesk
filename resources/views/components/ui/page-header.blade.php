@@ -4,14 +4,14 @@
     'breadcrumbs' => [],
 ])
 
-<header {{ $attributes->class(['mb-6 flex flex-col gap-workspace sm:mb-8 sm:flex-row sm:items-start sm:justify-between']) }}>
+<header {{ $attributes->class(['shell-page-header mb-6 flex flex-col gap-workspace sm:mb-8 sm:flex-row sm:items-start sm:justify-between']) }}>
     <div class="min-w-0">
         @if($breadcrumbs)
             <x-ui.breadcrumbs :items="$breadcrumbs" class="mb-2" />
         @endif
-        <h1 class="break-words text-2xl font-black tracking-tight text-workspace-text sm:text-3xl">{{ $title }}</h1>
+        <h1 class="break-words text-heading-xl font-semibold tracking-tight text-text sm:text-display">{{ $title }}</h1>
         @if($subtitle)
-            <p class="mt-2 max-w-3xl break-words text-sm leading-6 text-workspace-muted">{{ $subtitle }}</p>
+            <p class="mt-2 max-w-3xl break-words text-body-sm leading-6 text-text-muted">{{ $subtitle }}</p>
         @endif
     </div>
 

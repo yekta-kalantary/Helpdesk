@@ -5,9 +5,9 @@
 ])
 
 <a href="{{ $href }}" wire:navigate @if($active) aria-current="page" @endif {{ $attributes->class([
-    'ui-loading-stable flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition',
-    'bg-workspace-neutral-surface text-workspace-text' => $active,
-    'text-workspace-muted hover:bg-workspace-neutral-surface hover:text-workspace-text' => ! $active,
+    'ui-loading-stable shell-nav-link flex min-h-11 items-center justify-between gap-3 rounded-control px-3 py-2.5 text-body-sm font-semibold transition',
+    'bg-primary-surface text-primary-text' => $active,
+    'text-text-muted hover:bg-surface-muted hover:text-text' => ! $active,
 ]) }}>
     <span class="flex min-w-0 items-center gap-3">
         @if($icon)
