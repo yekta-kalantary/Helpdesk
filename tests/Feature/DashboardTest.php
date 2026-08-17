@@ -33,9 +33,12 @@ it('shows the generic project workflow overview to admin', function (): void {
         ->assertSee('تسک‌های باز')
         ->assertSee('صف بدون مسئول')
         ->assertSee('عقب‌افتاده')
-        ->assertSee('پروژه‌های اخیر')
-        ->assertSee('تسک‌های اخیر')
+        ->assertSee('تمرکز امروز')
+        ->assertSee('تسک‌های اولویت‌دار')
+        ->assertSee('پروژه‌های فعال')
         ->assertSee('فعالیت‌های اخیر')
+        ->assertSee(route('tasks.index', ['assignee' => 'unassigned']), false)
+        ->assertSee(route('tasks.index', ['overdue' => 1]), false)
         ->assertDontSee('صف ادمین')
         ->assertDontSee('منتظر مشتری')
         ->assertSee('Admin dashboard project')
@@ -69,11 +72,26 @@ it('limits customer dashboard projects and tasks to active memberships', functio
         ->assertSee('تسک‌های باز')
         ->assertSee('واگذار شده به من')
         ->assertSee('عقب‌افتاده')
-        ->assertSee('پروژه‌های اخیر')
-        ->assertSee('تسک‌های اخیر')
+        ->assertSee('تمرکز امروز')
+        ->assertSee('تسک‌های اولویت‌دار')
+        ->assertSee('پروژه‌های فعال')
         ->assertSee('فعالیت‌های اخیر')
+        ->assertSee(route('tasks.index', ['assignee' => $customer->id]), false)
+        ->assertSee(route('tasks.index', ['overdue' => 1]), false)
         ->assertSee('Visible dashboard project')
         ->assertSee('Visible dashboard task')
         ->assertDontSee('Hidden dashboard project')
         ->assertDontSee('Hidden dashboard task');
+});
+
+it('shows actionable empty states for a customer without dashboard work', function (): void {
+    $customer = User::factory()->customer(Client::factory()->create())->create();
+
+    $this->actingAs($customer)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('تسکی برای نمایش نیست')
+        ->assertSee('رفتن به تسک‌ها')
+        ->assertSee('پروژه‌ای برای نمایش نیست')
+        ->assertSee('رفتن به پروژه‌ها');
 });

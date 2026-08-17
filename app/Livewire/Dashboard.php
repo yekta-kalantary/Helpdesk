@@ -41,7 +41,7 @@ class Dashboard extends Component
             'overdueCount' => (clone $tasks)->overdue()->count(),
             'recentProjects' => (clone $projects)->latest('updated_at')->limit(5)->get(['id', 'client_id', 'name', 'description', 'status', 'updated_at']),
             'recentTasks' => (clone $tasks)
-                ->with(['project:id,name', 'projectStatus:id,title,is_done'])
+                ->with(['project:id,name', 'projectStatus:id,title,is_done', 'assignee:id,name,last_name'])
                 ->latest('updated_at')
                 ->limit(8)
                 ->get(),
