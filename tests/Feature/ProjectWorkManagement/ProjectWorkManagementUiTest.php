@@ -36,6 +36,11 @@ it('renders Kanban and hierarchy from project-owned workflow and searches indepe
 
     Livewire::test(ProjectShow::class, ['project' => $project->id])
         ->assertSee('کانبان پروژه')
+        ->assertSeeHtml('aria-label="Section navigation"')
+        ->assertSeeHtml('aria-current="location"')
+        ->assertSeeHtml('aria-label="برد کانبان با پیمایش افقی"')
+        ->assertSeeHtml('wire:change="moveTask(')
+        ->assertSeeHtml('min-h-11')
         ->assertSee('Root Tasks')
         ->assertSee('Delivery group')
         ->assertSee('Root searchable task')
@@ -60,6 +65,8 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertSee('Activity')
         ->assertSee('Members')
         ->assertSee('Project Management')
+        ->assertSeeHtml('<details')
+        ->assertSeeHtml('wire:click="complete"')
         ->assertSee($client->name)
         ->assertSee('Workflow پروژه')
         ->assertSee('مدیریت Work Group');
@@ -74,7 +81,8 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertDontSee($client->name)
         ->assertDontSee('Project Management')
         ->assertDontSee('Workflow پروژه')
-        ->assertDontSee('مدیریت Work Group');
+        ->assertDontSee('مدیریت Work Group')
+        ->assertDontSeeHtml('wire:click="complete"');
 });
 
 it('lets a project member move any visible task through Kanban regardless of assignment', function (): void {
@@ -144,6 +152,7 @@ it('explains that completed project boards are read-only to customers', function
     Livewire::test(ProjectShow::class, ['project' => $project->id])
         ->assertSee('این پروژه تکمیل شده و برد فقط خواندنی است.')
         ->assertSee('برای تغییر وضعیت تسک یا ایجاد تسک جدید، ابتدا پروژه را بازگشایی کنید.')
+        ->assertSeeHtml('aria-label="برد کانبان با پیمایش افقی"')
         ->assertDontSeeHtml('wire:change="moveTask')
         ->assertDontSeeHtml('draggable="true"');
 });
