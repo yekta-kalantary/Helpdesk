@@ -40,8 +40,8 @@
         ])>موعد نزدیک‌تر</button>
     </div>
 
-    <x-ui.filter-bar :livewire="true" mobile-label="فیلترهای تسک">
-        <div class="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <x-ui.filter-bar :livewire="true" mobile-label="فیلترهای تسک" :active-count="collect([$q, $project, $status, $priority, $assignee, $overdue, $sort !== 'updated_desc' ? $sort : ''])->filter(fn ($value) => filled($value))->count()">
+        <div class="grid w-full gap-3 border-t border-slate-100 pt-3 sm:grid-cols-2 xl:grid-cols-4">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" placeholder="جستجو با عنوان یا Reference" />
             <x-ui.select name="project" wire:model.live="project">
                 <option value="">همه پروژه‌ها</option>
@@ -71,16 +71,23 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="space-y-3 lg:hidden" wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort">
+    <div class="space-y-3 lg:hidden" wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort" data-task-list>
         @forelse($tasks as $task)
             <x-ui.card wire:key="task-card-{{ $task->id }}" padding="false" class="overflow-hidden">
                 <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block p-4 transition hover:bg-teal-50/40">
-                    <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3" data-task-row>
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-teal-700">{{ $task->reference }}</p>
                             <h2 class="mt-1 break-words font-bold leading-6 text-slate-950">{{ $task->title }}</h2>
                         </div>
                         <x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2" aria-label="متادیتای تسک">
+                        <x-ui.badge :tone="$task->priority === \Modules\Tasks\Domain\Enums\TaskPriority::High ? 'warning' : 'neutral'">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</x-ui.badge>
+                        <x-ui.badge :tone="$task->assignee ? 'info' : 'neutral'">{{ $task->assignee ? 'مسئول دارد' : 'بدون مسئول' }}</x-ui.badge>
+                        @if($task->due_date && $task->due_date->isBefore(today()) && !$task->isDone())
+                            <x-ui.badge tone="danger">عقب‌افتاده</x-ui.badge>
+                        @endif
                     </div>
                     <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                         <div><p class="text-xs text-slate-500">پروژه</p><p class="mt-1 font-semibold text-slate-800">{{ $task->project->name }}</p></div>
@@ -97,40 +104,38 @@
         @endforelse
     </div>
 
-    <div class="hidden lg:block">
-        <x-ui.table wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort">
-            <thead>
-                <tr>
-                    <th>Reference / عنوان</th>
-                    <th>پروژه</th>
-                    <th>وضعیت</th>
-                    <th>گروه کاری</th>
-                    <th>اولویت</th>
-                    <th>مسئول</th>
-                    <th>موعد</th>
-                    <th>بروزرسانی</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($tasks as $task)
-                    <tr wire:key="task-{{ $task->id }}">
-                        <td>
-                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="font-bold text-slate-950 hover:underline">{{ $task->reference }} · {{ $task->title }}</a>
-                            @if($task->description)<div class="mt-1 max-w-xl truncate text-xs text-slate-500">{{ $task->description }}</div>@endif
-                        </td>
-                        <td>{{ $task->project->name }}</td>
-                        <td><x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge></td>
-                        <td>{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</td>
-                        <td>{{ __('tasks::messages.priorities.'.$task->priority->value) }}</td>
-                        <td>{{ $task->assignee?->full_name ?? __('tasks::messages.assignee.none') }}</td>
-                        <td @class(['font-bold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isDone()])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</td>
-                        <td><x-ui.date :value="$task->updated_at" datetime /></td>
-                    </tr>
-                @empty
-                    <x-ui.empty-row colspan="8" />
-                @endforelse
-            </tbody>
-        </x-ui.table>
+    <div class="hidden lg:block" wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort" data-task-list>
+        <div class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+            @forelse($tasks as $task)
+                <article class="group p-5 transition hover:bg-teal-50/30" wire:key="task-{{ $task->id }}" data-task-row>
+                    <div class="flex items-start justify-between gap-6">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-xs font-bold text-teal-700">{{ $task->reference }}</span>
+                                <x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge>
+                                <x-ui.badge :tone="$task->priority === \Modules\Tasks\Domain\Enums\TaskPriority::High ? 'warning' : 'neutral'">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</x-ui.badge>
+                                <x-ui.badge :tone="$task->assignee ? 'info' : 'neutral'">{{ $task->assignee ? 'مسئول دارد' : 'بدون مسئول' }}</x-ui.badge>
+                                @if($task->due_date && $task->due_date->isBefore(today()) && !$task->isDone())<x-ui.badge tone="danger">عقب‌افتاده</x-ui.badge>@endif
+                            </div>
+                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="mt-2 block break-words text-base font-bold leading-7 text-slate-950 hover:text-teal-800 hover:underline">{{ $task->title }}</a>
+                            @if($task->description)<p class="mt-1 max-w-3xl truncate text-sm text-slate-500">{{ $task->description }}</p>@endif
+                        </div>
+                        <div class="shrink-0 text-left text-xs text-slate-500">
+                            <p>بروزرسانی</p>
+                            <p class="mt-1 font-semibold text-slate-700"><x-ui.date :value="$task->updated_at" datetime /></p>
+                        </div>
+                    </div>
+                    <dl class="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-600" aria-label="متادیتای تسک">
+                        <div><dt class="inline text-xs text-slate-500">پروژه: </dt><dd class="inline font-semibold text-slate-800">{{ $task->project->name }}</dd></div>
+                        <div><dt class="inline text-xs text-slate-500">گروه کاری: </dt><dd class="inline font-semibold text-slate-800">{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</dd></div>
+                        <div><dt class="inline text-xs text-slate-500">مسئول: </dt><dd class="inline font-semibold text-slate-800">{{ $task->assignee?->full_name ?? __('tasks::messages.assignee.none') }}</dd></div>
+                        <div><dt class="inline text-xs text-slate-500">موعد: </dt><dd @class(['inline font-semibold text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isDone(), 'inline font-semibold text-slate-800' => !($task->due_date && $task->due_date->isBefore(today()) && !$task->isDone())])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</dd></div>
+                    </dl>
+                </article>
+            @empty
+                <x-ui.empty-state title="تسکی پیدا نشد" />
+            @endforelse
+        </div>
     </div>
 
     <div class="mt-5">{{ $tasks->links() }}</div>

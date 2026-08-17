@@ -1,11 +1,11 @@
 <div>
     <x-ui.page-header :title="$taskId ? __('tasks::messages.edit_task') : __('tasks::messages.new_task')" />
 
-    <form class="max-w-4xl" wire:submit="save">
+    <form class="max-w-4xl" wire:submit="save" wire:loading.class="opacity-60" wire:target="save" data-task-form>
         <x-ui.card>
             <div class="space-y-7">
                 <section aria-labelledby="task-context-heading" class="space-y-4">
-                    <div>
+                    <div class="border-b border-slate-100 pb-4">
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">۱</p>
                         <h2 id="task-context-heading" class="mt-1 text-lg font-bold text-slate-950">زمینه پروژه</h2>
                         <p class="mt-1 text-sm text-slate-500">پروژه، وضعیت و ساختار کاری تسک را مشخص کنید.</p>
@@ -33,8 +33,9 @@
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-700">۲</p>
                         <h2 id="task-content-heading" class="mt-1 text-lg font-bold text-slate-950">محتوا</h2>
+                        <p class="mt-1 text-sm text-slate-500">عنوان و توضیحی بنویسید که انجام کار را برای تیم روشن کند.</p>
                     </div>
-                    <x-ui.textarea name="description" :label="__('app.description')" :value="$description" wire:model="description" />
+                    <x-ui.textarea name="description" :label="__('app.description')" hint="جزئیات، نتیجه مورد انتظار یا زمینه لازم را اضافه کنید." :value="$description" wire:model="description" />
                 </section>
 
                 @if($project_id)
@@ -77,7 +78,7 @@
                             <option value="">{{ __('tasks::messages.assignee.none') }}</option>
                             @foreach($assignees as $assignee)<option value="{{ $assignee->id }}">{{ $assignee->full_name }}</option>@endforeach
                         </x-ui.select>
-                        <x-ui.input name="due_date" type="date" label="موعد" :value="$due_date" wire:model="due_date" />
+                        <x-ui.input name="due_date" type="date" label="موعد" hint="در صورت نیاز، آخرین مهلت انجام کار را تعیین کنید." :value="$due_date" wire:model="due_date" />
                         </div>
                     </section>
                 @else
@@ -87,7 +88,7 @@
                 @if(!$taskId)
                     <div>
                         <label class="mb-2 block text-sm font-semibold text-slate-700">فایل پیوست اختیاری</label>
-                        <input type="file" wire:model="attachment" class="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+                        <input type="file" wire:model="attachment" class="block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
                         @error('attachment')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
                         <p class="mt-1 text-xs text-slate-500">حداکثر ۲۰ مگابایت؛ فایل فقط از مسیر احراز هویت‌شده قابل دریافت است.</p>
                     </div>
@@ -95,7 +96,7 @@
 
                 @error('project_status_id')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
-                <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-workspace-surface/95 px-4 pb-1 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-none">
+                <x-ui.form-actions mobile-sticky>
                     <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save,attachment">
                         <span wire:loading.remove wire:target="save">{{ __('app.save') }}</span>
                         <span wire:loading wire:target="save">{{ __('app.loading') }}</span>

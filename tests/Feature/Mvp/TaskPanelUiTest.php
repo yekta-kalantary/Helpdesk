@@ -23,6 +23,11 @@ it('keeps task list filters and responsive task fields represented', function ()
         'title' => 'Panel task',
         'priority' => TaskPriority::High,
     ]);
+    app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+        'title' => 'Attention task',
+        'assigned_to' => $admin->id,
+        'due_date' => now()->subDay()->toDateString(),
+    ]);
 
     $this->actingAs($admin);
 
@@ -37,11 +42,17 @@ it('keeps task list filters and responsive task fields represented', function ()
         ->assertSeeHtml('wire:click="$set(\'assignee\', \'unassigned\')" aria-pressed="false"')
         ->assertSeeHtml('wire:click="$set(\'assignee\', \'unassigned\')"')
         ->assertSeeHtml('wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort"')
+        ->assertSeeHtml('data-task-list')
+        ->assertSeeHtml('data-task-row')
+        ->assertSeeHtml('aria-label="متادیتای تسک"')
+        ->assertSee('مسئول دارد')
+        ->assertSee('عقب‌افتاده')
         ->assertSeeHtml('class="space-y-3 lg:hidden"')
         ->assertSeeHtml('wire:key="task-card-'.$task->id.'"')
         ->assertSeeHtml('aria-pressed="false"')
         ->assertSeeHtml('min-h-11')
         ->assertSeeHtml('<details class="mobile-filter-details group">')
+        ->assertSeeHtml('data-active-filter-count')
         ->assertSeeHtml('wire:model.live.debounce.300ms="q"')
         ->assertSeeHtml('wire:model.live="project"')
         ->assertSeeHtml('wire:model.live="status"')
@@ -103,7 +114,14 @@ it('loads project task statuses in the task create form', function (): void {
     Livewire::test(Form::class)
         ->set('project_id', $project->id)
         ->assertSee($status->title)
-        ->assertSeeHtml('wire:model="project_status_id"');
+        ->assertSeeHtml('wire:model="project_status_id"')
+        ->assertSee('زمینه پروژه')
+        ->assertSee('محتوا')
+        ->assertSee('مالکیت')
+        ->assertSee('زمان‌بندی و تخصیص')
+        ->assertSeeHtml('data-task-form')
+        ->assertSeeHtml('wire:loading.class="opacity-60" wire:target="save"')
+        ->assertSeeHtml('sticky bottom-0');
 });
 
 it('hides admin-only task create controls from customers', function (): void {
