@@ -49,8 +49,8 @@
                             @endforelse
                         </div>
                     @endif
-                    @error('member_ids')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
-                    @error('member_ids.*')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                    @error('member_ids')<p class="mt-2 text-xs font-medium text-danger-text">{{ $message }}</p>@enderror
+                    @error('member_ids.*')<p class="mt-2 text-xs font-medium text-danger-text">{{ $message }}</p>@enderror
                 </div>
             </x-ui.card>
 

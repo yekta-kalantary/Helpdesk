@@ -9,6 +9,20 @@
         </x-slot:actions>
     </x-ui.page-header>
 
+    <div class="mb-4 flex flex-wrap items-center gap-2" aria-label="فیلترهای سریع">
+        <span class="text-caption font-bold text-text-muted">فیلتر سریع</span>
+        <button type="button" wire:click="$set('status', 'active')" aria-pressed="{{ $status === 'active' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-caption font-bold transition',
+            'border-primary bg-primary-surface text-primary-text' => $status === 'active',
+            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary-text' => $status !== 'active',
+        ])>فعال</button>
+        <button type="button" wire:click="$set('status', 'inactive')" aria-pressed="{{ $status === 'inactive' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-caption font-bold transition',
+            'border-primary bg-primary-surface text-primary-text' => $status === 'inactive',
+            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary-text' => $status !== 'inactive',
+        ])>غیرفعال</button>
+    </div>
+
     <x-ui.filter-bar :livewire="true">
         <div class="grid w-full gap-3 sm:grid-cols-2">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" placeholder="جستجو در نام مشتری" />

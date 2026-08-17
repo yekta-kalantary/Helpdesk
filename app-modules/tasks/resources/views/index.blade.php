@@ -109,7 +109,7 @@
                 <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block p-4 transition hover:bg-workspace-info-surface/40">
                     <div class="flex items-start justify-between gap-3" data-task-row>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-workspace-teal">{{ $task->reference }}</p>
+                            <p dir="ltr" class="text-xs font-bold text-workspace-teal">{{ $task->reference }}</p>
                             <h2 class="mt-1 break-words font-bold leading-6 text-workspace-text">{{ $task->title }}</h2>
                         </div>
                         <x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge>
@@ -143,7 +143,7 @@
                     <div class="flex items-start justify-between gap-6">
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
-                                <span class="text-xs font-bold text-workspace-teal">{{ $task->reference }}</span>
+                                <span dir="ltr" class="text-xs font-bold text-workspace-teal">{{ $task->reference }}</span>
                                 <x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge>
                                 <x-ui.badge :tone="$task->priority === \Modules\Tasks\Domain\Enums\TaskPriority::High ? 'warning' : 'neutral'">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</x-ui.badge>
                                 <x-ui.badge :tone="$task->assignee ? 'info' : 'neutral'">{{ $task->assignee ? 'مسئول دارد' : 'بدون مسئول' }}</x-ui.badge>

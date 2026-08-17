@@ -11,6 +11,20 @@
         @endif
     </x-ui.page-header>
 
+    <div class="mb-4 flex flex-wrap items-center gap-2" aria-label="فیلترهای سریع">
+        <span class="text-caption font-bold text-text-muted">فیلتر سریع</span>
+        <button type="button" wire:click="$set('status', 'active')" aria-pressed="{{ $status === 'active' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-caption font-bold transition',
+            'border-primary bg-primary-surface text-primary-text' => $status === 'active',
+            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary-text' => $status !== 'active',
+        ])>فعال</button>
+        <button type="button" wire:click="$set('status', 'completed')" aria-pressed="{{ $status === 'completed' ? 'true' : 'false' }}" @class([
+            'min-h-11 rounded-full border px-3 py-1.5 text-caption font-bold transition',
+            'border-primary bg-primary-surface text-primary-text' => $status === 'completed',
+            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary-text' => $status !== 'completed',
+        ])>تکمیل‌شده</button>
+    </div>
+
     <x-ui.filter-bar :livewire="true">
         <div class="grid w-full gap-3 md:grid-cols-3">
             <x-ui.input name="q" :value="$q" wire:model.live.debounce.300ms="q" :placeholder="__('projects::messages.search_placeholder')" />

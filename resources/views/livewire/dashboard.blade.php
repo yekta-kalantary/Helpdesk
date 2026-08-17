@@ -25,12 +25,12 @@
                 </p>
             </div>
             @if($isAdmin)
-                <a href="{{ route('tasks.index', ['assignee' => 'unassigned']) }}" wire:navigate class="inline-flex min-h-11 items-center justify-center gap-2 rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-white transition hover:brightness-95">
+                    <a href="{{ route('tasks.index', ['assignee' => 'unassigned']) }}" wire:navigate class="inline-flex min-h-11 items-center justify-center gap-2 rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-surface transition hover:brightness-95">
                     <i class="fa-light fa-inbox" aria-hidden="true"></i>
                     مشاهده صف بدون مسئول
                 </a>
             @else
-                <a href="{{ route('tasks.index', ['assignee' => auth()->id()]) }}" wire:navigate class="inline-flex min-h-11 items-center justify-center gap-2 rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-white transition hover:brightness-95">
+                    <a href="{{ route('tasks.index', ['assignee' => auth()->id()]) }}" wire:navigate class="inline-flex min-h-11 items-center justify-center gap-2 rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-surface transition hover:brightness-95">
                     <i class="fa-light fa-user-check" aria-hidden="true"></i>
                     مشاهده کارهای من
                 </a>
@@ -88,7 +88,7 @@
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div class="min-w-0">
                                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                        <span class="text-xs font-bold text-workspace-info">{{ $task->reference }}</span>
+                                        <span dir="ltr" class="text-xs font-bold text-workspace-info">{{ $task->reference }}</span>
                                         <span class="text-workspace-muted" aria-hidden="true">·</span>
                                         <h3 class="break-words font-bold text-workspace-text">{{ $task->title }}</h3>
                                     </div>
@@ -104,7 +104,7 @@
                         </a>
                     @empty
                         <x-ui.empty-state title="تسکی برای نمایش نیست" description="برای شروع، فهرست تسک‌ها را باز کنید و یک کار جدید بسازید.">
-                            <a href="{{ route('tasks.index') }}" wire:navigate class="inline-flex min-h-11 items-center rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-white">رفتن به تسک‌ها</a>
+                            <a href="{{ route('tasks.index') }}" wire:navigate class="inline-flex min-h-11 items-center rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-surface">رفتن به تسک‌ها</a>
                         </x-ui.empty-state>
                     @endforelse
                 </div>
@@ -129,7 +129,7 @@
                         </a>
                     @empty
                         <x-ui.empty-state title="پروژه‌ای برای نمایش نیست" description="پس از ایجاد یا عضویت در یک پروژه، فعالیت‌های آن را اینجا خواهید دید.">
-                            <a href="{{ route('projects.index') }}" wire:navigate class="inline-flex min-h-11 items-center rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-white">رفتن به پروژه‌ها</a>
+                            <a href="{{ route('projects.index') }}" wire:navigate class="inline-flex min-h-11 items-center rounded-workspace bg-workspace-accent px-4 text-sm font-bold text-surface">رفتن به پروژه‌ها</a>
                         </x-ui.empty-state>
                     @endforelse
                 </div>
@@ -143,7 +143,7 @@
             <div class="space-y-4">
             @forelse($recentActivities as $activity)
                 <div class="relative border-r-2 border-workspace-info/20 pr-4">
-                    <span class="absolute -right-[7px] top-1.5 h-3 w-3 rounded-full border-2 border-workspace-page bg-workspace-teal" aria-hidden="true"></span>
+                    <span class="absolute -end-[7px] top-1.5 h-3 w-3 rounded-full border-2 border-workspace-page bg-workspace-teal" aria-hidden="true"></span>
                     <div class="min-w-0 flex-1">
                         <div><span class="font-semibold text-workspace-text">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-workspace-muted">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
                         <time class="mt-1 block text-xs text-workspace-muted"><x-ui.date :value="$activity->created_at" datetime /></time>
