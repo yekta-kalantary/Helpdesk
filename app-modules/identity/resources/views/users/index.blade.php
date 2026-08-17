@@ -58,7 +58,7 @@
 
     <div class="space-y-3 md:hidden" wire:loading.class="opacity-60" wire:target="q,client,status">
         @forelse($users as $user)
-            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="mobile-user-{{ $user->id }}" class="block rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)] transition hover:border-workspace-teal hover:bg-teal-50/30 focus:outline-none">
+            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="mobile-user-{{ $user->id }}" class="block rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)] transition hover:border-workspace-teal hover:bg-teal-50/30">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <div class="truncate font-black text-slate-950">{{ $user->full_name }}</div>

@@ -43,3 +43,17 @@ Applied the approved full-panel redesign language to identity, user management, 
 
 - Focused feature tests remain unverified until the local MariaDB `helpdesk` credentials and `helpdesk_testing` database access are corrected.
 - No backend or dependency changes were made.
+
+## Review Fixes
+
+- Removed the mobile user-card `focus:outline-none` suppression so the global `focus-visible` indicator remains effective.
+- Added `min-h-11` to the shared input and select primitives without changing their props, attributes, or slot contracts.
+- Added route-level guest auth coverage for login, forgot-password, and reset-password labels, inputs, submit actions, and Livewire loading/action markup.
+
+## Review Fix Verification
+
+- `git diff --check`: passed.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `php artisan view:cache`: passed; Blade templates cached successfully.
+- `npm run build`: passed; Vite production build completed successfully.
+- `php artisan test --compact --filter="user|profile|notification|login|password"`: blocked during database bootstrap by the existing MariaDB SQLSTATE 1045 credential error for `helpdesk` on `helpdesk_testing`; 37 tests were attempted, 2 passed, and 35 errored before database-backed assertions.

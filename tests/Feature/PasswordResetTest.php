@@ -7,6 +7,37 @@ use Livewire\Livewire;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Identity\Presentation\Livewire\Auth\ResetPassword;
 
+it('renders accessible guest auth forms with labels, actions, and loading states', function (): void {
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('for="email"', false)
+        ->assertSee('name="email"', false)
+        ->assertSee(__('app.login'))
+        ->assertSee('wire:submit="login"', false)
+        ->assertSee('wire:loading', false)
+        ->assertSee('wire:target="login"', false);
+
+    $this->get(route('password.request'))
+        ->assertOk()
+        ->assertSee('for="email"', false)
+        ->assertSee('name="email"', false)
+        ->assertSee('ارسال لینک بازیابی')
+        ->assertSee('wire:submit="send"', false)
+        ->assertSee('wire:loading', false)
+        ->assertSee('wire:target="send"', false);
+
+    $this->get(route('password.reset', ['token' => 'test-token']).'?email=reset@example.test')
+        ->assertOk()
+        ->assertSee('for="email"', false)
+        ->assertSee('name="email"', false)
+        ->assertSee('name="password"', false)
+        ->assertSee('name="password_confirmation"', false)
+        ->assertSee('ذخیره رمز عبور')
+        ->assertSee('wire:submit="resetPassword"', false)
+        ->assertSee('wire:loading', false)
+        ->assertSee('wire:target="resetPassword"', false);
+});
+
 it('allows five password reset submissions before throttling', function (): void {
     $user = User::factory()->create(['email' => 'reset@example.test']);
     foreach (range(1, 5) as $attempt) {
