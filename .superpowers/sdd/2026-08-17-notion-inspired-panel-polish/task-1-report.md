@@ -59,3 +59,16 @@ Final:
 ### Fix Concerns
 
 - No browser screenshot pass was run; responsive visual review remains outside this shared-token fix.
+
+## Neutral Alert Regression Fix
+
+- Added an explicit `neutral` alert tone mapping using shared divider, neutral-surface, and neutral text tokens.
+- Kept the existing `info` default branch and all success, danger/error, and warning tone mappings unchanged.
+- Preserved the alert component's public `tone` prop, slot, and rendered role semantics.
+
+Verification:
+
+- `php artisan view:cache` -> PASS.
+- `npm run build` -> PASS.
+- `vendor/bin/pint --dirty --format agent` -> PASS.
+- `git diff --check` -> PASS.
