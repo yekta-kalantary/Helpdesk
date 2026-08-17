@@ -1,8 +1,8 @@
 <div class="space-y-8">
     <x-ui.page-header :title="__('app.dashboard')">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-sm text-slate-500">خلاصه وضعیت پروژه‌ها و تسک‌های قابل دسترسی شما</p>
-            <a href="{{ route('notifications.index') }}" wire:navigate class="inline-flex min-h-10 items-center gap-2 self-start rounded-xl border border-workspace-border bg-workspace-surface px-3 text-sm font-semibold text-slate-600 transition hover:border-workspace-teal hover:text-workspace-teal sm:self-auto">
+            <p class="text-sm text-workspace-muted">خلاصه وضعیت پروژه‌ها و تسک‌های قابل دسترسی شما</p>
+            <a href="{{ route('notifications.index') }}" wire:navigate class="inline-flex min-h-11 items-center gap-2 self-start rounded-xl border border-workspace-border bg-workspace-surface px-3 text-sm font-semibold text-workspace-muted transition hover:border-workspace-teal hover:text-workspace-teal sm:self-auto">
                 <i class="fa-light fa-bell" aria-hidden="true"></i>
                 اعلان‌ها
             </a>

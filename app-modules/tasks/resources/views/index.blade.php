@@ -149,7 +149,7 @@
                                 <x-ui.badge :tone="$task->assignee ? 'info' : 'neutral'">{{ $task->assignee ? 'مسئول دارد' : 'بدون مسئول' }}</x-ui.badge>
                                 @if($task->due_date && $task->due_date->isBefore(today()) && !$task->isDone())<x-ui.badge tone="danger">عقب‌افتاده</x-ui.badge>@endif
                             </div>
-                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="mt-2 block break-words text-base font-bold leading-7 text-workspace-text hover:text-workspace-teal hover:underline">{{ $task->title }}</a>
+                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="mt-2 flex min-h-11 items-center break-words rounded-md text-base font-bold leading-7 text-workspace-text hover:text-workspace-teal hover:underline focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2">{{ $task->title }}</a>
                             @if($task->description)<p class="mt-1 max-w-3xl truncate text-sm text-workspace-muted">{{ $task->description }}</p>@endif
                         </div>
                         <div class="shrink-0 text-left text-xs text-workspace-muted">

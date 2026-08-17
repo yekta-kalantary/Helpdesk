@@ -11,5 +11,10 @@ it('keeps the drawer accessibility state transitions in the shell script', funct
         ->toContain('[data-sidebar-close], [data-sidebar-backdrop]')
         ->toContain("if (event.key === 'Escape')")
         ->toContain('lastSidebarOpener.focus({ preventScroll: true });')
-        ->toContain("lastSidebarOpener = event.target.closest('[data-sidebar-open]');");
+        ->toContain("lastSidebarOpener = event.target.closest('[data-sidebar-open]');")
+        ->toContain("syncSidebarAccessibility(element.dataset.open === 'true');")
+        ->toContain("window.addEventListener('hashchange', syncSectionTabs);")
+        ->toContain('function syncSectionTabs()')
+        ->toContain("window.location.hash || tabs[0]?.getAttribute('href')")
+        ->toContain("tab.toggleAttribute('aria-current', active);");
 });

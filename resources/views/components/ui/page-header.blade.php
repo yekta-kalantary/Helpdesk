@@ -15,6 +15,12 @@
         @endif
     </div>
 
+    @if(! $slot->isEmpty())
+        <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            {{ $slot }}
+        </div>
+    @endif
+
     @isset($primary)
         <div class="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             {{ $primary }}

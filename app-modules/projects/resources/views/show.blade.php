@@ -138,7 +138,7 @@
                                     aria-label="{{ $task->reference }}: {{ $task->title }}"
                                     class="rounded-workspace border border-workspace-divider bg-workspace-surface p-3 transition hover:border-workspace-teal {{ $task->projectStatus?->is_done ? 'bg-workspace-success-surface' : '' }}"
                                 >
-                                    <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block">
+                                    <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block min-h-11 rounded-md focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2">
                                         <div class="text-xs font-bold text-workspace-muted">{{ $task->reference }}</div>
                                         <div class="mt-1 font-bold leading-6 text-workspace-text {{ $task->projectStatus?->is_done ? 'line-through decoration-workspace-success' : '' }}">{{ $task->title }}</div>
                                         <div class="mt-3 space-y-1 text-xs text-workspace-muted">
@@ -184,7 +184,7 @@
                 </div>
                 <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                     @forelse($rootTasks as $task)
-                        <a href="{{ route('tasks.show', $task) }}" wire:navigate class="rounded-workspace border border-workspace-divider bg-workspace-surface p-3 hover:bg-workspace-neutral-surface">
+                        <a href="{{ route('tasks.show', $task) }}" wire:navigate class="min-h-11 rounded-workspace border border-workspace-divider bg-workspace-surface p-3 hover:bg-workspace-neutral-surface focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2">
                             <div class="text-xs font-bold text-workspace-muted">{{ $task->reference }}</div>
                             <div class="mt-1 font-bold">{{ $task->title }}</div>
                             <div class="mt-1 text-xs text-workspace-muted">{{ $task->projectStatus->title }}</div>
@@ -216,7 +216,7 @@
                         </div>
                         <div class="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                             @forelse($directTasks as $task)
-                                <a href="{{ route('tasks.show', $task) }}" wire:navigate class="rounded-workspace border border-workspace-divider bg-workspace-neutral-surface p-3 hover:bg-workspace-surface">
+                                <a href="{{ route('tasks.show', $task) }}" wire:navigate class="min-h-11 rounded-workspace border border-workspace-divider bg-workspace-neutral-surface p-3 hover:bg-workspace-surface focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2">
                                     <div class="text-xs font-bold text-workspace-muted">{{ $task->reference }}</div>
                                     <div class="mt-1 font-bold">{{ $task->title }}</div>
                                     <div class="mt-1 text-xs text-workspace-muted">{{ $task->projectStatus->title }}</div>
