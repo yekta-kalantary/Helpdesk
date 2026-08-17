@@ -19,6 +19,7 @@
     $id = $attributes->get('id', str_replace(['[', ']', '.'], ['-', '', '-'], $name));
     $listId = $id.'-options';
     $selectedValue = $value === null ? '' : (string) $value;
+    $errorId = $id.'-error';
     $normalizedOptions = collect($options)->map(fn ($option) => [
         'value' => data_get($option, $optionValue),
         'label' => (string) data_get($option, $optionLabel),
@@ -63,7 +64,7 @@
     class="relative min-w-0"
 >
     @if($label)
-        <label for="{{ $id }}-search" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ $label }}</label>
+        <label for="{{ $id }}-search" class="mb-1.5 block text-label font-semibold text-field-label">{{ $label }}</label>
     @endif
 
     <div class="relative">
@@ -72,7 +73,7 @@
             fill="none"
             stroke="currentColor"
             stroke-width="1.7"
-            class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            class="pointer-events-none absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
             aria-hidden="true"
         >
             <circle cx="9" cy="9" r="5.5" />
@@ -82,11 +83,13 @@
         <input
             id="{{ $id }}-search"
             type="search"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-controls="{{ $listId }}"
+             role="combobox"
+             aria-autocomplete="list"
+             aria-controls="{{ $listId }}"
+             x-bind:aria-activedescendant="activeIndex >= 0 ? '{{ $listId }}-' + activeIndex : null"
             x-bind:aria-expanded="open.toString()"
             @if($required) aria-required="true" @endif
+            @error($name) aria-invalid="true" aria-describedby="{{ $errorId }}" @enderror
             @disabled($disabled)
             @if($searchModel) wire:model.live.debounce.200ms="{{ $searchModel }}" @endif
             placeholder="{{ $searchPlaceholder ?: $placeholder ?: __('app.search') }}"
@@ -97,12 +100,12 @@
             x-on:keydown.arrow-up.prevent="move(-1)"
             x-on:keydown.enter.prevent="if (open) chooseActive(); else show()"
             x-on:keydown.tab="open = false"
-            class="w-full rounded-lg border border-slate-300 bg-white py-2 pe-9 ps-10 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:ring-0"
+            class="min-h-11 w-full rounded-control border border-input-border bg-input-background py-2 pe-9 ps-10 text-body-sm text-text outline-none transition placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-focus/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-text-muted disabled:shadow-none disabled:ring-0"
         >
 
         @if($searchModel)
-            <span wire:loading.delay.flex wire:target="{{ $searchModel }}" class="absolute left-3 top-1/2 -translate-y-1/2 items-center" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4 animate-spin text-slate-400">
+            <span wire:loading.delay.flex wire:target="{{ $searchModel }}" class="absolute start-3 top-1/2 -translate-y-1/2 items-center" aria-label="در حال جستجو">
+                <svg viewBox="0 0 24 24" fill="none" class="h-4 w-4 animate-spin text-text-muted" aria-hidden="true">
                     <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" class="opacity-25" />
                     <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                 </svg>
@@ -119,7 +122,7 @@
         x-transition:leave="transition ease-in duration-75"
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-1"
-        class="absolute inset-x-0 z-50 mt-1.5 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-950/10"
+        class="absolute inset-x-0 z-50 mt-1.5 overflow-hidden rounded-surface border border-border bg-surface shadow-subtle"
     >
         <div x-ref="list" id="{{ $listId }}" role="listbox" class="max-h-72 overflow-y-auto overscroll-contain p-1.5">
             @forelse($normalizedOptions as $option)
@@ -128,22 +131,23 @@
                     $isSelected = $optionStringValue === $selectedValue;
                 @endphp
 
-                <button
-                    type="button"
-                    role="option"
+                 <button
+                     type="button"
+                     role="option"
+                     id="{{ $listId }}-{{ $loop->index }}"
                     data-searchable-option
                     data-selected="{{ $isSelected ? 'true' : 'false' }}"
                     aria-selected="{{ $isSelected ? 'true' : 'false' }}"
                     @if($selectAction) wire:click="{{ $selectAction }}({{ (int) $option['value'] }})" @endif
                     x-on:mouseenter="activeIndex = options().indexOf($el)"
                     x-on:click="open = false"
-                    x-bind:class="activeIndex === options().indexOf($el) ? 'bg-slate-100 text-slate-950' : ''"
-                    class="flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-right text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-950"
+                    x-bind:class="activeIndex === options().indexOf($el) ? 'bg-surface-muted text-text' : ''"
+                    class="flex min-h-11 w-full items-start gap-3 rounded-control px-3 py-2.5 text-right text-body-sm text-text transition hover:bg-surface-muted hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 >
                     <span class="min-w-0 flex-1">
-                        <span class="block truncate {{ $isSelected ? 'font-bold text-slate-950' : 'font-semibold' }}">{{ $option['label'] }}</span>
+                        <span class="block truncate {{ $isSelected ? 'font-bold text-text' : 'font-semibold' }}">{{ $option['label'] }}</span>
                         @if($option['email'] || $option['mobile'])
-                            <span dir="ltr" class="mt-0.5 flex flex-wrap justify-end gap-x-3 gap-y-0.5 text-xs font-normal text-slate-400">
+                            <span dir="ltr" class="mt-0.5 flex flex-wrap justify-end gap-x-3 gap-y-0.5 text-caption font-normal text-text-muted">
                                 @if($option['email'])<span>{{ $option['email'] }}</span>@endif
                                 @if($option['mobile'])<span>{{ $option['mobile'] }}</span>@endif
                             </span>
@@ -151,19 +155,19 @@
                     </span>
 
                     @if($isSelected)
-                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5 h-4 w-4 shrink-0 text-slate-700" aria-hidden="true">
+                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m5 10 3 3 7-7" />
                         </svg>
                     @endif
                 </button>
             @empty
-                <div class="px-3 py-8 text-center text-sm text-slate-500">
+                <div class="px-3 py-8 text-center text-body-sm text-text-muted">
                     {{ $emptyText ?: __('app.no_records') }}
                 </div>
             @endforelse
         </div>
     </div>
 
-    @if($hint)<p class="mt-1.5 text-xs leading-5 text-slate-500">{{ $hint }}</p>@endif
-    @error($name)<p class="mt-1.5 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+    @if($hint)<p class="mt-1.5 text-caption leading-5 text-field-helper">{{ $hint }}</p>@endif
+    @error($name)<p id="{{ $errorId }}" class="mt-1.5 text-caption font-medium text-field-error">{{ $message }}</p>@enderror
 </div>

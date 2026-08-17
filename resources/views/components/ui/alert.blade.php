@@ -4,14 +4,14 @@
 
 @php
     $classes = match ($tone) {
-        'success' => 'border-workspace-success/30 bg-workspace-success-surface text-workspace-success',
-        'danger', 'error' => 'border-workspace-danger/30 bg-workspace-danger-surface text-workspace-danger',
-        'warning' => 'border-workspace-warning/30 bg-workspace-warning-surface text-workspace-warning',
-        'neutral' => 'border-workspace-divider bg-workspace-neutral-surface text-workspace-neutral',
-        default => 'border-workspace-divider bg-workspace-info-surface text-workspace-info',
+        'success' => 'border-success bg-success-surface text-success-text',
+        'danger', 'error' => 'border-danger bg-danger-surface text-danger-text',
+        'warning' => 'border-warning bg-warning-surface text-warning-text',
+        'neutral' => 'border-border bg-surface-muted text-text',
+        default => 'border-border bg-info-surface text-info-text',
     };
 @endphp
 
-<div role="{{ in_array($tone, ['danger', 'error', 'warning'], true) ? 'alert' : 'status' }}" {{ $attributes->class(["rounded-workspace border px-4 py-3 text-sm leading-6 {$classes}"]) }}>
+<div role="{{ in_array($tone, ['danger', 'error', 'warning'], true) ? 'alert' : 'status' }}" {{ $attributes->class(["rounded-surface border px-4 py-3 text-body-sm leading-6 {$classes}"]) }}>
     {{ $slot }}
 </div>
