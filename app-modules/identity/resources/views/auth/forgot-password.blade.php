@@ -16,6 +16,6 @@
             </x-ui.button>
         </form>
 
-        <a href="{{ route('login') }}" wire:navigate class="mt-5 block text-center text-sm font-semibold text-slate-600 hover:text-slate-950">بازگشت به ورود</a>
+        <a href="{{ route('login') }}" wire:navigate class="mt-5 inline-flex min-h-11 w-full items-center justify-center px-3 text-center text-sm font-semibold text-workspace-muted hover:text-workspace-text">بازگشت به ورود</a>
     </section>
 </div>

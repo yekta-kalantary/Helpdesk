@@ -24,7 +24,8 @@ it('renders accessible guest auth forms with labels, actions, and loading states
         ->assertSee('wire:loading.remove wire:target="login"', false)
         ->assertSee('wire:loading', false)
         ->assertSee('wire:target="login"', false)
-        ->assertSee('href="'.route('password.request').'"', false);
+        ->assertSee('href="'.route('password.request').'"', false)
+        ->assertSee('min-h-11', false);
 
     $this->get(route('password.request'))
         ->assertOk()
@@ -40,7 +41,8 @@ it('renders accessible guest auth forms with labels, actions, and loading states
         ->assertSee('wire:loading', false)
         ->assertSee('wire:target="send"', false)
         ->assertSee('href="'.route('login').'"', false)
-        ->assertSee('بازگشت به ورود');
+        ->assertSee('بازگشت به ورود')
+        ->assertSee('min-h-11', false);
 
     $this->get(route('password.reset', ['token' => 'test-token']).'?email=reset@example.test')
         ->assertOk()

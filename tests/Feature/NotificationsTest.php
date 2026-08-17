@@ -2,6 +2,7 @@
 
 use App\Livewire\Notifications\Index;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Modules\Clients\Infrastructure\Models\Client;
@@ -44,8 +45,34 @@ it('renders notification rows as readable links with unread emphasis', function 
         ->assertSee('Review task')
         ->assertSee('A task needs your attention.')
         ->assertSee('خوانده‌نشده')
-        ->assertSee('border-y', false)
+        ->assertSee('notification-'.$notification->id.'-title', false)
+        ->assertSee('notification-'.$notification->id.'-details', false)
+        ->assertSee('notification-'.$notification->id.'-status', false)
+        ->assertSee('bg-workspace-info-surface', false)
         ->assertSee("wire:click=\"open('{$notification->id}')\"", false);
+});
+
+it('groups notification rows by date and exposes read state in the accessible context', function (): void {
+    $user = User::factory()->admin()->create();
+    $unread = createUnreadNotification($user, ['title' => 'Unread update', 'body' => 'Unread body']);
+    $unread->forceFill(['created_at' => Carbon::parse('2026-08-17 10:00:00')])->save();
+    $read = createUnreadNotification($user, ['title' => 'Read update', 'body' => 'Read body']);
+    $read->forceFill(['created_at' => Carbon::parse('2026-08-16 10:00:00'), 'read_at' => Carbon::parse('2026-08-16 11:00:00')])->save();
+
+    $this->actingAs($user);
+
+    Livewire::test(Index::class)
+        ->assertSee('Unread update')
+        ->assertSee('Read update')
+        ->assertSee('خوانده شده')
+        ->assertSee('notification-'.$unread->id.'-status', false)
+        ->assertSee('notification-'.$read->id.'-status', false)
+        ->assertSeeInOrder([
+            $unread->created_at->translatedFormat('l، j F'),
+            'Unread update',
+            $read->created_at->translatedFormat('l، j F'),
+            'Read update',
+        ]);
 });
 
 it('caps large unread counts for a usable notification badge', function (): void {

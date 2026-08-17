@@ -35,14 +35,19 @@ it('keeps user management controls and identity form labels admin-only', functio
         ->assertSee(route('users.create'))
         ->assertSee('همه وضعیت‌ها')
         ->assertSee('آخرین ورود')
-        ->assertSee('wire:navigate', false);
+        ->assertSee('wire:navigate', false)
+        ->assertSee('min-h-11', false)
+        ->assertSee('text-workspace-text', false);
 
     $this->actingAs($customer)
         ->get(route('profile'))
         ->assertOk()
         ->assertSee('name="name"', false)
         ->assertSee('name="last_name"', false)
-        ->assertSee(__('app.save'));
+        ->assertSee(__('app.save'))
+        ->assertSee('aria-labelledby="profile-identity-heading"', false)
+        ->assertSee('autocomplete="new-password"', false)
+        ->assertSee('min-h-11', false);
 
     $this->actingAs($customer)->get(route('users.index'))->assertForbidden();
 });

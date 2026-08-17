@@ -48,10 +48,10 @@
             <section aria-labelledby="user-summary-heading">
                 <h2 id="user-summary-heading" class="mb-3 font-bold text-workspace-text">خلاصه حساب</h2>
                 <dl class="space-y-4 text-sm">
-                    <div><dt class="text-slate-500">مشتری</dt><dd class="mt-1 font-bold">{{ $user->client?->name ?? '—' }}</dd></div>
-                    <div><dt class="text-slate-500">نقش</dt><dd class="mt-1 font-bold">{{ __('tasks::messages.roles.'.$user->role->value) }}</dd></div>
-                    <div><dt class="text-slate-500">وضعیت</dt><dd class="mt-1"><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></dd></div>
-                    <div><dt class="text-slate-500">آخرین ورود</dt><dd class="mt-1 font-bold"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
+                    <div><dt class="text-workspace-muted">مشتری</dt><dd class="mt-1 font-bold">{{ $user->client?->name ?? '—' }}</dd></div>
+                    <div><dt class="text-workspace-muted">نقش</dt><dd class="mt-1 font-bold">{{ __('tasks::messages.roles.'.$user->role->value) }}</dd></div>
+                    <div><dt class="text-workspace-muted">وضعیت</dt><dd class="mt-1"><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></dd></div>
+                    <div><dt class="text-workspace-muted">آخرین ورود</dt><dd class="mt-1 font-bold"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
                 </dl>
             </section>
 
@@ -62,7 +62,7 @@
                     @forelse($projects as $project)
                         <a href="{{ route('projects.show', $project) }}" wire:navigate class="block min-h-11 py-3 font-semibold text-workspace-text hover:text-workspace-accent">{{ $project->name }}</a>
                     @empty
-                        <p class="text-sm text-slate-500">عضویت فعالی ندارد.</p>
+                        <p class="text-sm text-workspace-muted">عضویت فعالی ندارد.</p>
                     @endforelse
                 </div>
             </section>

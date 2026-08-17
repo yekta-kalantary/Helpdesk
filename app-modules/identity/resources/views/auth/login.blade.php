@@ -15,7 +15,7 @@
             <x-ui.input name="password" :label="__('app.password')" type="password" wire:model="password" required autocomplete="current-password" />
             <div class="flex items-center justify-between gap-4">
                 <x-ui.checkbox name="remember" :label="__('app.remember_me')" model="remember" />
-                <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold text-slate-600 hover:text-slate-950">رمز عبور را فراموش کرده‌اید؟</a>
+                <a href="{{ route('password.request') }}" wire:navigate class="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-workspace-muted hover:text-workspace-text">رمز عبور را فراموش کرده‌اید؟</a>
             </div>
             <x-ui.button class="w-full" type="submit" wire:loading.attr="disabled" wire:target="login">
                 <span wire:loading.remove wire:target="login">{{ __('app.login') }}</span>

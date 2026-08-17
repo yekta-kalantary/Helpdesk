@@ -27,7 +27,7 @@
                         @endforeach
                     </x-ui.select>
                     <x-ui.checkbox name="is_active" label="کاربر فعال باشد" model="is_active" />
-                    <p class="text-sm leading-6 text-slate-500">پس از ایجاد کاربر فعال، لینک تنظیم رمز عبور به ایمیل او ارسال می‌شود.</p>
+                    <p class="text-sm leading-6 text-workspace-muted">پس از ایجاد کاربر فعال، لینک تنظیم رمز عبور به ایمیل او ارسال می‌شود.</p>
                 </div>
             </section>
 
