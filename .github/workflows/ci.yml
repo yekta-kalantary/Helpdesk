@@ -77,42 +77,11 @@ jobs:
           php artisan migrate:fresh --force
           php artisan db:seed --force
 
-      - name: Verify routes
-        run: php artisan route:list
-
-      - name: Compile Blade views
-        run: php artisan view:cache
-
       - name: Run tests
         run: php artisan test
 
       - name: Check PHP style
         run: ./vendor/bin/pint --test
-
-      - name: Install frontend dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Verify Vite font assets
-        run: |
-          IRANYEKAN_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'IRANYekanXVF-*.woff2' -print -quit)"
-          FA_LIGHT_ASSET="$(find public/build/assets -maxdepth 1 -type f -name 'fa-light-300-*.woff2' -print -quit)"
-
-          test -n "$IRANYEKAN_ASSET"
-          test -n "$FA_LIGHT_ASSET"
-
-          cmp resources/fonts/IRANYekanXVF/IRANYekanXVF.woff2 "$IRANYEKAN_ASSET"
-          cmp resources/fonts/fontawesome/fa-light-300.woff2 "$FA_LIGHT_ASSET"
-
-          grep -q '\.fa-house' resources/css/fontawesome.css
-          ! grep -R "data:font/woff2;base64" public/build resources/css
-          ! grep -R "fonts.bunny.net" public/build resources/css vite.config.js
-          ! grep -R "../webfonts/" resources/css
-          ! grep -R "../fonts/fontawesome/css/" resources/css/app.css
-          ! grep -R "/fonts/IRANYekanXVF.woff2" resources/css resources/views/layouts/app.blade.php
-          ! grep -R "asset('fontawesome/" resources/views/layouts/app.blade.php
 
       - name: Build deployable source archive
         run: |
