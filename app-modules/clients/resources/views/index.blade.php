@@ -20,30 +20,33 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="space-y-3 sm:hidden">
+    <div class="space-y-2 sm:hidden" data-client-list="rows">
         @forelse($clients as $client)
-            <article wire:key="client-mobile-{{ $client->id }}" class="rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)]">
-                <div class="flex items-start justify-between gap-3">
-                    <a class="-mx-2 inline-flex min-h-11 min-w-0 items-center rounded-lg px-2 font-bold text-slate-950 hover:text-workspace-teal hover:underline" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a>
-                    <x-ui.badge :tone="$client->status->value === 'active' ? 'success' : 'neutral'">{{ $client->status->value === 'active' ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
-                </div>
-                <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div><dt class="text-slate-500">کاربران</dt><dd class="mt-1 font-bold text-slate-900">{{ $client->users_count }}</dd></div>
-                    <div><dt class="text-slate-500">پروژه‌ها</dt><dd class="mt-1 font-bold text-slate-900">{{ $client->projects_count }}</dd></div>
-                </dl>
+            <article wire:key="client-mobile-{{ $client->id }}" class="rounded-workspace border border-workspace-border bg-workspace-surface">
+                <a class="group block min-h-11 rounded-workspace p-4 hover:bg-workspace-info-surface" href="{{ route('clients.show', $client) }}" wire:navigate>
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="min-w-0 truncate font-bold text-workspace-text group-hover:text-workspace-teal">{{ $client->name }}</span>
+                        <x-ui.badge :tone="$client->status->value === 'active' ? 'success' : 'neutral'">{{ $client->status->value === 'active' ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
+                    </div>
+                    <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-workspace-muted">
+                        <div><dt class="inline">کاربران: </dt><dd class="inline font-bold text-workspace-text">{{ $client->users_count }}</dd></div>
+                        <div><dt class="inline">پروژه‌ها: </dt><dd class="inline font-bold text-workspace-text">{{ $client->projects_count }}</dd></div>
+                        <div><dt class="inline">آخرین تغییر: </dt><dd class="inline"><x-ui.date :value="$client->updated_at" /></dd></div>
+                    </dl>
+                </a>
             </article>
         @empty
-            <x-ui.card><div class="text-center text-sm text-slate-500">مشتری‌ای پیدا نشد. <a class="font-bold text-workspace-teal hover:underline" href="{{ route('clients.create') }}" wire:navigate>اولین مشتری را بسازید.</a></div></x-ui.card>
+            <x-ui.card><div class="text-center text-sm text-workspace-muted">مشتری‌ای پیدا نشد. <a class="font-bold text-workspace-teal hover:underline" href="{{ route('clients.create') }}" wire:navigate>اولین مشتری را بسازید.</a></div></x-ui.card>
         @endforelse
     </div>
 
     <div class="hidden sm:block">
-        <x-ui.table>
+        <x-ui.table data-client-table="comparison">
             <thead><tr><th>مشتری</th><th>کاربران</th><th>پروژه‌ها</th><th>{{ __('app.status') }}</th></tr></thead>
             <tbody>
                 @forelse($clients as $client)
                     <tr wire:key="client-{{ $client->id }}">
-                        <td><a class="font-bold text-slate-950 hover:text-workspace-teal hover:underline" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a></td>
+                        <td><a class="inline-flex min-h-11 items-center rounded-md font-bold text-workspace-text hover:text-workspace-teal hover:underline" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a></td>
                         <td>{{ $client->users_count }}</td><td>{{ $client->projects_count }}</td>
                         <td><x-ui.badge :tone="$client->status->value === 'active' ? 'success' : 'neutral'">{{ $client->status->value === 'active' ? 'فعال' : 'غیرفعال' }}</x-ui.badge></td>
                     </tr>
