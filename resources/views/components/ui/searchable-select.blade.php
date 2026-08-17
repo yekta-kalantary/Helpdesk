@@ -19,7 +19,11 @@
     $id = $attributes->get('id', str_replace(['[', ']', '.'], ['-', '', '-'], $name));
     $listId = $id.'-options';
     $selectedValue = $value === null ? '' : (string) $value;
+    $hintId = $id.'-hint';
     $errorId = $id.'-error';
+    $hasError = $errors->has($name);
+    $hasHint = filled($hint);
+    $describedBy = collect([$hasHint ? $hintId : null, $hasError ? $errorId : null])->filter()->implode(' ');
     $normalizedOptions = collect($options)->map(fn ($option) => [
         'value' => data_get($option, $optionValue),
         'label' => (string) data_get($option, $optionLabel),
@@ -89,7 +93,8 @@
              x-bind:aria-activedescendant="activeIndex >= 0 ? '{{ $listId }}-' + activeIndex : null"
             x-bind:aria-expanded="open.toString()"
             @if($required) aria-required="true" @endif
-            @error($name) aria-invalid="true" aria-describedby="{{ $errorId }}" @enderror
+             @if($hasError) aria-invalid="true" @endif
+             @if($describedBy) aria-describedby="{{ $describedBy }}" @endif
             @disabled($disabled)
             @if($searchModel) wire:model.live.debounce.200ms="{{ $searchModel }}" @endif
             placeholder="{{ $searchPlaceholder ?: $placeholder ?: __('app.search') }}"
@@ -100,7 +105,7 @@
             x-on:keydown.arrow-up.prevent="move(-1)"
             x-on:keydown.enter.prevent="if (open) chooseActive(); else show()"
             x-on:keydown.tab="open = false"
-            class="min-h-11 w-full rounded-control border border-input-border bg-input-background py-2 pe-9 ps-10 text-body-sm text-text outline-none transition placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-focus/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-text-muted disabled:shadow-none disabled:ring-0"
+             class="min-h-11 w-full rounded-control border border-input-border bg-input-background py-2 pe-9 ps-10 text-body-sm text-text outline-none transition placeholder:text-text-muted focus:border-focus focus:ring-2 focus:ring-focus/20 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-text-muted disabled:shadow-none disabled:ring-0 read-only:bg-surface-muted read-only:text-text-muted {{ $hasError ? 'border-input-border-error' : '' }}"
         >
 
         @if($searchModel)
@@ -168,6 +173,6 @@
         </div>
     </div>
 
-    @if($hint)<p class="mt-1.5 text-caption leading-5 text-field-helper">{{ $hint }}</p>@endif
+    @if($hint)<p id="{{ $hintId }}" class="mt-1.5 text-caption leading-5 text-field-helper">{{ $hint }}</p>@endif
     @error($name)<p id="{{ $errorId }}" class="mt-1.5 text-caption font-medium text-field-error">{{ $message }}</p>@enderror
 </div>

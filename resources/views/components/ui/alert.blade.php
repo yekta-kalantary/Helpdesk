@@ -12,6 +12,6 @@
     };
 @endphp
 
-<div role="{{ in_array($tone, ['danger', 'error', 'warning'], true) ? 'alert' : 'status' }}" {{ $attributes->class(["rounded-surface border px-4 py-3 text-body-sm leading-6 {$classes}"]) }}>
+<div role="{{ in_array($tone, ['danger', 'error', 'warning'], true) ? 'alert' : 'status' }}" aria-live="{{ in_array($tone, ['danger', 'error'], true) ? 'assertive' : 'polite' }}" data-tone="{{ $tone }}" {{ $attributes->class(["rounded-surface border px-4 py-3 text-body-sm leading-6 {$classes}"]) }}>
     {{ $slot }}
 </div>

@@ -4,6 +4,7 @@
     'type' => 'button',
     'size' => 'md',
     'icon' => null,
+    'loading' => false,
 ])
 
 @php
@@ -30,12 +31,12 @@
 @endphp
 
 @if($href)
-    <a href="{{ $href }}" {{ $attributes->class([$classes]) }}>
+    <a href="{{ $href }}" @if($loading) aria-busy="true" @endif {{ $attributes->class([$classes]) }}>
         @if($icon)<i class="fa-light {{ $icon }} fa-fw {{ $iconClasses }}" aria-hidden="true"></i>@endif
         {{ $slot }}
     </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class([$classes]) }}>
+    <button type="{{ $type }}" @if($loading) aria-busy="true" @endif {{ $attributes->class([$classes]) }}>
         @if($icon)<i class="fa-light {{ $icon }} fa-fw {{ $iconClasses }}" aria-hidden="true"></i>@endif
         {{ $slot }}
     </button>

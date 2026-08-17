@@ -9,11 +9,17 @@
     'disabled' => false,
 ])
 
-@php($id = $attributes->get('id', str_replace(['[', ']', '.'], ['-', '', '-'], $name)))
+@php
+    $id = $attributes->get('id', str_replace(['[', ']', '.'], ['-', '', '-'], $name));
+    $errorId = $id.'-error';
+    $hasError = $errors->has($name);
+    $isReadonly = $attributes->has('readonly');
+@endphp
 
 <label
     for="{{ $id }}"
     @if($disabled) aria-disabled="true" @endif
+    @if($isReadonly) aria-readonly="true" @endif
     {{ $attributes->except(['id'])->class([
         'flex items-start gap-3 rounded-surface border p-3.5 transition',
         'cursor-pointer border-border bg-surface hover:border-primary' => ! $disabled,
@@ -27,6 +33,8 @@
         name="{{ $name }}"
         value="{{ $value }}"
         @disabled($disabled)
+        @if($hasError) aria-invalid="true" aria-describedby="{{ $errorId }}" @endif
+        @if($isReadonly) aria-readonly="true" @endif
         @if($model && $live) wire:model.live="{{ $model }}" @elseif($model) wire:model="{{ $model }}" @else @checked($checked) @endif
     >
     <span class="min-w-0">
@@ -34,3 +42,4 @@
         @if($hint)<span class="mt-1 block text-caption leading-5 text-text-muted">{{ $hint }}</span>@endif
     </span>
 </label>
+@error($name)<p id="{{ $errorId }}" class="mt-1.5 text-caption font-medium text-field-error">{{ $message }}</p>@enderror
