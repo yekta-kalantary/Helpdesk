@@ -259,20 +259,23 @@ it('presents task detail as a conversation-first workspace with actionable prope
     ]);
     app(TaskChecklist::class)->add($admin, $task, 'Review the result');
     app(TaskCollaboration::class)->comment($admin, $task, 'A useful conversation.', []);
-    app(TaskCollaboration::class)->attach($admin, $task, UploadedFile::fake()->create('detail.pdf', 10, 'application/pdf'));
+    $attachment = app(TaskCollaboration::class)->attach($admin, $task, UploadedFile::fake()->create('detail.pdf', 10, 'application/pdf'));
 
     Livewire::actingAs($admin)
         ->test(Show::class, ['task' => $task->reference])
         ->assertSee('Detail task')
+        ->assertSee($task->reference)
         ->assertSee('A useful task description.')
         ->assertSee('Review the result')
         ->assertSee('A useful conversation.')
         ->assertSee('detail.pdf')
-        ->assertSee('مشخصات تسک')
-        ->assertSee('وضعیت')
+        ->assertSeeInOrder(['شرح تسک', 'گفت‌وگو', 'فایل‌های تسک', 'چک‌لیست تسک', 'تاریخچه فعالیت'])
+        ->assertSeeHtml('aria-label="وضعیت تسک"')
+        ->assertSeeHtml('<dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1" aria-label="ویژگی‌های تسک">')
         ->assertSee('مسئول')
         ->assertSee('اولویت')
         ->assertSee('موعد')
+        ->assertSee('پروژه')
         ->assertSee('گروه کاری')
         ->assertSee('ایجادکننده')
         ->assertSee('عملیات تسک')
@@ -282,7 +285,9 @@ it('presents task detail as a conversation-first workspace with actionable prope
         ->assertSeeHtml('wire:submit="addSubtask"')
         ->assertSeeHtml('wire:loading wire:target="uploads"')
         ->assertSeeHtml('wire:click="hideComment(')
-        ->assertSeeHtml('wire:click="hideAttachment(');
+        ->assertSeeHtml('wire:click="hideAttachment('.$attachment->id.')')
+        ->call('hideAttachment', $attachment->id)
+        ->assertSee('فایل مخفی‌شده: detail.pdf');
 });
 
 it('keeps task detail collaboration available to members without admin moderation controls', function (): void {

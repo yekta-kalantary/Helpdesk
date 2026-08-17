@@ -4,6 +4,6 @@
 ])
 
 <div {{ $attributes->class(['min-w-0']) }}>
-    <div class="text-xs font-medium text-slate-500">{{ $label }}</div>
-    <div class="mt-1 break-words text-sm font-semibold {{ $valueClass }}">{{ $slot }}</div>
+    <dt class="text-xs font-medium text-workspace-muted">{{ $label }}</dt>
+    <dd class="mt-1 break-words text-sm font-semibold {{ $valueClass }}">{{ $slot }}</dd>
 </div>
