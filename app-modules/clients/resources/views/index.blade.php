@@ -22,8 +22,8 @@
 
     <div class="space-y-2 sm:hidden" data-client-list="rows">
         @forelse($clients as $client)
-            <article wire:key="client-mobile-{{ $client->id }}" class="rounded-workspace border border-workspace-border bg-workspace-surface">
-                <a class="group block min-h-11 rounded-workspace p-4 hover:bg-workspace-info-surface" href="{{ route('clients.show', $client) }}" wire:navigate>
+            <article wire:key="client-mobile-{{ $client->id }}" data-client-id="{{ $client->id }}" data-status="{{ $client->status->value }}" data-count-users="{{ $client->users_count }}" data-count-projects="{{ $client->projects_count }}" class="rounded-workspace border border-workspace-border bg-workspace-surface">
+                <a class="group block min-h-11 rounded-workspace p-4 transition-colors duration-150 hover:bg-workspace-info-surface focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2" href="{{ route('clients.show', $client) }}" wire:navigate>
                     <div class="flex items-start justify-between gap-3">
                         <span class="min-w-0 truncate font-bold text-workspace-text group-hover:text-workspace-teal">{{ $client->name }}</span>
                         <x-ui.badge :tone="$client->status->value === 'active' ? 'success' : 'neutral'">{{ $client->status->value === 'active' ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
@@ -36,7 +36,7 @@
                 </a>
             </article>
         @empty
-            <x-ui.card><div class="text-center text-sm text-workspace-muted">مشتری‌ای پیدا نشد. <a class="font-bold text-workspace-teal hover:underline" href="{{ route('clients.create') }}" wire:navigate>اولین مشتری را بسازید.</a></div></x-ui.card>
+            <x-ui.card><div data-empty-state="clients" class="text-center text-sm text-workspace-muted">مشتری‌ای پیدا نشد. <a class="inline-flex min-h-11 items-center rounded-md font-bold text-workspace-teal transition-colors duration-150 hover:underline focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2" href="{{ route('clients.create') }}" wire:navigate>اولین مشتری را بسازید.</a></div></x-ui.card>
         @endforelse
     </div>
 
@@ -46,7 +46,7 @@
             <tbody>
                 @forelse($clients as $client)
                     <tr wire:key="client-{{ $client->id }}">
-                        <td><a class="inline-flex min-h-11 items-center rounded-md font-bold text-workspace-text hover:text-workspace-teal hover:underline" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a></td>
+                        <td><a class="inline-flex min-h-11 items-center rounded-md font-bold text-workspace-text transition-colors duration-150 hover:text-workspace-teal hover:underline focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2" href="{{ route('clients.show', $client) }}" wire:navigate>{{ $client->name }}</a></td>
                         <td>{{ $client->users_count }}</td><td>{{ $client->projects_count }}</td>
                         <td><x-ui.badge :tone="$client->status->value === 'active' ? 'success' : 'neutral'">{{ $client->status->value === 'active' ? 'فعال' : 'غیرفعال' }}</x-ui.badge></td>
                     </tr>

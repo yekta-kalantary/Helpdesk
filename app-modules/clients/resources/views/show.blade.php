@@ -33,7 +33,7 @@
         </div>
         <div class="divide-y divide-workspace-divider">
             @forelse($client->users as $user)
-                <a class="group flex min-h-11 items-center justify-between gap-3 py-3 hover:text-workspace-teal" href="{{ route('users.show', $user) }}" wire:navigate>
+                <a class="group flex min-h-11 items-center justify-between gap-3 py-3 transition-colors duration-150 hover:text-workspace-teal focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2" href="{{ route('users.show', $user) }}" wire:navigate>
                     <span class="font-bold text-workspace-text group-hover:text-workspace-teal">{{ $user->full_name }}</span>
                     <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
                 </a>
@@ -47,7 +47,7 @@
         <h2 id="client-projects-heading" class="mb-4 font-bold text-workspace-text">پروژه‌های اخیر</h2>
         <div class="divide-y divide-workspace-divider">
             @forelse($projects as $project)
-                <a class="group flex min-h-11 items-center justify-between py-3 font-bold text-workspace-text hover:text-workspace-teal" href="{{ route('projects.show', $project) }}" wire:navigate>{{ $project->name }}<span class="text-sm font-normal text-workspace-muted">مشاهده</span></a>
+                <a class="group flex min-h-11 items-center justify-between py-3 font-bold text-workspace-text transition-colors duration-150 hover:text-workspace-teal focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2" href="{{ route('projects.show', $project) }}" wire:navigate>{{ $project->name }}<span class="text-sm font-normal text-workspace-muted">مشاهده</span></a>
             @empty
                 <p class="text-sm text-workspace-muted">پروژه‌ای ثبت نشده است.</p>
             @endforelse

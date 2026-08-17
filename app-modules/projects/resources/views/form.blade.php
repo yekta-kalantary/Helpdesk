@@ -61,7 +61,7 @@
                 </div>
             </x-ui.card>
 
-            <x-ui.form-actions>
+            <x-ui.form-actions mobile-sticky>
                 <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">{{ __('app.save') }}</x-ui.button>
                 <x-ui.button variant="secondary" :href="route('projects.index')" icon="fa-xmark" wire:navigate>{{ __('app.cancel') }}</x-ui.button>
             </x-ui.form-actions>

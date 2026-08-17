@@ -7,6 +7,48 @@ use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Presentation\Livewire\Form;
 
+it('renders project form sections in order with preserved bindings and mobile actions', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+
+    $html = $this->actingAs($admin)
+        ->get(route('projects.create'))
+        ->assertSuccessful()
+        ->getContent();
+
+    $identity = strpos($html, '۱. هویت پروژه');
+    $context = strpos($html, '۲. زمینه پروژه');
+    $membership = strpos($html, '۳. عضویت');
+    $schedule = strpos($html, '۴. زمان‌بندی');
+
+    expect($identity)->toBeInt()
+        ->and($context)->toBeInt()
+        ->and($membership)->toBeInt()
+        ->and($schedule)->toBeInt()
+        ->and($identity)->toBeLessThan($context)
+        ->and($context)->toBeLessThan($membership)
+        ->and($membership)->toBeLessThan($schedule)
+        ->and($html)
+        ->toContain('wire:submit="save"')
+        ->toContain('wire:model="name"')
+        ->toContain('wire:model.live.number="client_id"')
+        ->toContain('wire:model="description"')
+        ->toContain('model="member_ids"')
+        ->toContain('wire:model="start_date"')
+        ->toContain('wire:model="due_date"')
+        ->toMatch('/<div[^>]*sticky bottom-0 z-20[^>]*pb-\[calc\(0\.5rem\+env\(safe-area-inset-bottom\)\)\][^>]*>.*?wire:target="save"/s');
+});
+
+it('keeps non-sticky form actions in normal flow for existing client forms', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+
+    $html = $this->actingAs($admin)
+        ->get(route('clients.create'))
+        ->assertSuccessful()
+        ->getContent();
+
+    expect($html)->not->toContain('sticky bottom-0 z-20');
+});
+
 it('does not create a project when requested members are not eligible for its client', function (): void {
     $admin = User::query()->admins()->firstOrFail();
     $clientA = Client::factory()->create();

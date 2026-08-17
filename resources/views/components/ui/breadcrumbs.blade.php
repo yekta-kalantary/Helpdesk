@@ -13,7 +13,7 @@
                 @if($isCurrent || ! $item['href'])
                     <span class="truncate font-semibold {{ $isCurrent ? 'text-slate-900' : '' }}" @if($isCurrent) aria-current="page" @endif>{{ $item['label'] }}</span>
                 @else
-                    <a class="ui-loading-stable inline-flex min-h-11 items-center truncate rounded-md py-2 font-medium hover:text-workspace-teal" href="{{ $item['href'] }}" wire:navigate>{{ $item['label'] }}</a>
+                    <a class="ui-loading-stable inline-flex min-h-11 items-center truncate rounded-md py-2 font-medium transition-colors duration-150 hover:text-workspace-teal focus-visible:outline focus-visible:outline-3 focus-visible:outline-workspace-focus focus-visible:outline-offset-2" href="{{ $item['href'] }}" wire:navigate>{{ $item['label'] }}</a>
                 @endif
             </li>
         @endforeach
