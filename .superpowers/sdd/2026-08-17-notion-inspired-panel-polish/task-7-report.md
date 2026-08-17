@@ -32,3 +32,26 @@
 ## Concerns
 
 - The focused feature tests could not execute until the local test MariaDB credentials/database are available. The UI assertions and moderation interaction therefore remain unexecuted in this environment.
+
+## Review Fix Report
+
+### Changes
+
+- Removed `size="sm"` from task status controls so the existing shared button default renders `min-h-11` with the normal 44px action target.
+- Replaced all raw `text-slate-*`, `border-slate-*`, and shadow utilities in the changed task detail view with workspace semantic classes; removed the activity disclosure shadow.
+- Changed `x-ui.meta-item`'s default value class to `text-workspace-text` without changing its public `label`, `valueClass`, or slot interface.
+- Added assertions for the rendered status title, read-only status message, standalone attachment empty state, checklist/status loading targets, and 44px status button markup.
+
+### Verification
+
+- `php artisan test --compact --filter="task.*detail|checklist|comment|attachment"`
+  - Blocked before assertions with the same MariaDB error: access denied for `helpdesk` at `127.0.0.1:3306` on `helpdesk_testing`.
+  - Pest reported 28 errors, 0 passed, and 0 assertions.
+- `php artisan view:cache`
+  - PASS: Blade templates cached successfully.
+- `vendor/bin/pint --dirty --format agent`
+  - PASS: formatted the focused test file.
+- `npm run build`
+  - PASS: Vite production build completed successfully.
+- `git diff --check`
+  - PASS: no whitespace errors.

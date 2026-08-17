@@ -252,10 +252,12 @@ it('presents task detail as a conversation-first workspace with actionable prope
     $client = Client::factory()->create();
     $admin = User::query()->admins()->firstOrFail();
     $project = mvpProject($client, 'Detail project');
+    $status = mvpOpenStatus($project, 1);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Detail task',
         'description' => 'A useful task description.',
         'priority' => TaskPriority::High,
+        'project_status_id' => $status->id,
     ]);
     app(TaskChecklist::class)->add($admin, $task, 'Review the result');
     app(TaskCollaboration::class)->comment($admin, $task, 'A useful conversation.', []);
@@ -269,6 +271,7 @@ it('presents task detail as a conversation-first workspace with actionable prope
         ->assertSee('Review the result')
         ->assertSee('A useful conversation.')
         ->assertSee('detail.pdf')
+        ->assertSee($status->title)
         ->assertSeeInOrder(['شرح تسک', 'گفت‌وگو', 'فایل‌های تسک', 'چک‌لیست تسک', 'تاریخچه فعالیت'])
         ->assertSeeHtml('aria-label="وضعیت تسک"')
         ->assertSeeHtml('<dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1" aria-label="ویژگی‌های تسک">')
@@ -284,6 +287,11 @@ it('presents task detail as a conversation-first workspace with actionable prope
         ->assertSeeHtml('wire:submit="addComment"')
         ->assertSeeHtml('wire:submit="addSubtask"')
         ->assertSeeHtml('wire:loading wire:target="uploads"')
+        ->assertSeeHtml('wire:loading.class="ui-loading-stable" wire:target="addSubtask,toggleSubtask,renameSubtask,removeSubtask,moveSubtask"')
+        ->assertSeeHtml('wire:loading wire:target="changeStatus"')
+        ->assertSeeHtml('wire:click="changeStatus('.$status->id.')"')
+        ->assertSeeHtml('min-h-11 px-4 py-2 text-sm')
+        ->assertDontSeeHtml('min-h-8 px-3 py-1.5 text-xs')
         ->assertSeeHtml('wire:click="hideComment(')
         ->assertSeeHtml('wire:click="hideAttachment('.$attachment->id.')')
         ->call('hideAttachment', $attachment->id)
@@ -328,6 +336,8 @@ it('keeps completed task detail read only and hides admin moderation controls', 
     Livewire::actingAs($customer)
         ->test(Show::class, ['task' => $task->reference])
         ->assertSee('Completed step')
+        ->assertSee('این تسک فقط خواندنی است.')
+        ->assertSee('هنوز فایل مستقلی برای این تسک ثبت نشده است.')
         ->assertSee('چک‌لیست در تسک Done یا پروژه تکمیل‌شده فقط خواندنی است.')
         ->assertSee('این تسک یا پروژه بسته است و همکاری جدید پذیرفته نمی‌شود.')
         ->assertDontSeeHtml('wire:submit="addComment"')

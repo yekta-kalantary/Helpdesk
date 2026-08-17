@@ -1,6 +1,6 @@
 @props([
     'label',
-    'valueClass' => 'text-slate-800',
+    'valueClass' => 'text-workspace-text',
 ])
 
 <div {{ $attributes->class(['min-w-0']) }}>

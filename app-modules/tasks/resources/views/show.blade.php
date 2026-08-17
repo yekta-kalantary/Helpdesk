@@ -37,9 +37,9 @@
         <div class="min-w-0 space-y-5 sm:space-y-6">
             <x-ui.card title="شرح تسک" subtitle="زمینه و جزئیات مورد نیاز برای ادامه کار">
                 @if($task->description)
-                    <div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $task->description }}</div>
+                    <div class="whitespace-pre-wrap text-sm leading-7 text-workspace-text">{{ $task->description }}</div>
                 @else
-                    <p class="text-sm text-slate-500">برای این تسک توضیحی ثبت نشده است.</p>
+                    <p class="text-sm text-workspace-muted">برای این تسک توضیحی ثبت نشده است.</p>
                 @endif
             </x-ui.card>
 
@@ -59,7 +59,7 @@
                             @if($commentItem->hidden_at)
                                  <p class="text-sm text-workspace-muted">این نظر توسط ادمین مخفی شده است.</p>
                             @else
-                                @if($commentItem->body)<div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $commentItem->body }}</div>@endif
+                                @if($commentItem->body)<div class="whitespace-pre-wrap text-sm leading-7 text-workspace-text">{{ $commentItem->body }}</div>@endif
                                 @if($commentItem->attachments->isNotEmpty())
                                     <div class="mt-3 flex flex-wrap gap-2" aria-label="فایل‌های نظر">
                                         @foreach($commentItem->attachments as $attachment)
@@ -132,10 +132,10 @@
                 @error('checklist')<x-ui.alert class="mb-4" tone="danger">{{ $message }}</x-ui.alert>@enderror
                 <div class="space-y-2">
                     @forelse($task->checklistItems as $item)
-                        <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center" wire:key="subtask-{{ $item->id }}">
+                        <div class="flex flex-col gap-2 rounded-workspace border border-workspace-divider p-3 sm:flex-row sm:items-center" wire:key="subtask-{{ $item->id }}">
                             @if($canCollaborate)
                                 <button type="button" class="h-11 w-11 shrink-0 rounded border p-0 text-xs" wire:click="toggleSubtask({{ $item->id }}, {{ $item->is_completed ? 'false' : 'true' }})" aria-label="تغییر وضعیت زیرتسک"><span class="flex h-6 w-6 items-center justify-center rounded border text-xs">{{ $item->is_completed ? '✓' : '' }}</span></button>
-                                <input type="text" wire:model="checklistEdits.{{ $item->id }}" class="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm {{ $item->is_completed ? 'line-through text-slate-400' : '' }}" aria-label="عنوان زیرتسک" />
+                                <input type="text" wire:model="checklistEdits.{{ $item->id }}" class="min-h-11 min-w-0 flex-1 rounded-lg border border-workspace-divider px-3 py-2 text-sm {{ $item->is_completed ? 'line-through text-workspace-muted' : '' }}" aria-label="عنوان زیرتسک" />
                                 <div class="flex flex-wrap gap-1">
                                     <x-ui.button variant="secondary" wire:click="renameSubtask({{ $item->id }})">ذخیره</x-ui.button>
                                     <x-ui.button variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'up')" aria-label="انتقال زیرتسک به بالا">↑</x-ui.button>
@@ -144,11 +144,11 @@
                                 </div>
                             @else
                                 <span class="flex min-h-11 h-6 w-6 shrink-0 items-center justify-center rounded border text-xs" role="img" aria-label="{{ $item->is_completed ? 'زیرتسک انجام شده است' : 'زیرتسک انجام نشده است' }}">{{ $item->is_completed ? '✓' : '' }}</span>
-                                <span @class(['text-sm', 'line-through text-slate-400' => $item->is_completed])>{{ $item->title }}</span>
+                                <span @class(['text-sm', 'line-through text-workspace-muted' => $item->is_completed])>{{ $item->title }}</span>
                             @endif
                         </div>
                     @empty
-                        <p class="rounded-xl border border-dashed border-workspace-border px-4 py-5 text-sm text-slate-500">هنوز مرحله‌ای به چک‌لیست اضافه نشده است.</p>
+                        <p class="rounded-workspace border border-dashed border-workspace-divider px-4 py-5 text-sm text-workspace-muted">هنوز مرحله‌ای به چک‌لیست اضافه نشده است.</p>
                     @endforelse
                 </div>
                 @if($canCollaborate)
@@ -157,23 +157,23 @@
                         <x-ui.button type="submit" icon="fa-plus">افزودن</x-ui.button>
                     </form>
                 @else
-                    <p class="mt-4 text-xs text-slate-500">چک‌لیست در تسک Done یا پروژه تکمیل‌شده فقط خواندنی است.</p>
+                    <p class="mt-4 text-xs text-workspace-muted">چک‌لیست در تسک Done یا پروژه تکمیل‌شده فقط خواندنی است.</p>
                 @endif
             </x-ui.card>
 
-            <details class="group rounded-2xl border border-workspace-border bg-workspace-surface shadow-[0_8px_24px_rgba(15,92,90,0.04)]">
-                <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-slate-900 sm:px-6 [&::-webkit-details-marker]:hidden">
-                    <span>تاریخچه فعالیت</span><span class="text-xs font-medium text-slate-500 group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-slate-500 group-open:inline">مخفی‌کردن</span>
+            <details class="group rounded-workspace border border-workspace-divider bg-workspace-surface">
+                <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-workspace-text sm:px-6 [&::-webkit-details-marker]:hidden">
+                    <span>تاریخچه فعالیت</span><span class="text-xs font-medium text-workspace-muted group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-workspace-muted group-open:inline">مخفی‌کردن</span>
                 </summary>
-                <div class="border-t border-slate-100 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+                <div class="border-t border-workspace-divider px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
                     <div class="space-y-3">
                         @forelse($activities as $activity)
-                            <div class="flex flex-col gap-1 border-b border-slate-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                                <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
-                                <time class="text-xs text-slate-500"><x-ui.date :value="$activity->created_at" datetime /></time>
+                            <div class="flex flex-col gap-1 border-b border-workspace-divider pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                                <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-workspace-muted">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
+                                <time class="text-xs text-workspace-muted"><x-ui.date :value="$activity->created_at" datetime /></time>
                             </div>
                         @empty
-                            <p class="text-sm text-slate-500">فعالیتی ثبت نشده است.</p>
+                            <p class="text-sm text-workspace-muted">فعالیتی ثبت نشده است.</p>
                         @endforelse
                     </div>
                     <div class="mt-4">{{ $activities->links() }}</div>
@@ -195,19 +195,19 @@
 
             <x-ui.card :padding="false">
                 <details open class="group">
-                    <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-slate-900 sm:px-6 [&::-webkit-details-marker]:hidden">
-                        <span>عملیات تسک</span><span class="text-xs font-medium text-slate-500 group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-slate-500 group-open:inline">مخفی‌کردن</span>
+                    <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-workspace-text sm:px-6 [&::-webkit-details-marker]:hidden">
+                        <span>عملیات تسک</span><span class="text-xs font-medium text-workspace-muted group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-workspace-muted group-open:inline">مخفی‌کردن</span>
                     </summary>
-                    <div class="border-t border-slate-100 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+                    <div class="border-t border-workspace-divider px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
                         <div class="space-y-3">
-                            <p class="text-sm font-semibold text-slate-600">وضعیت پروژه‌ای</p>
+                            <p class="text-sm font-semibold text-workspace-muted">وضعیت پروژه‌ای</p>
                             <div class="grid gap-2">
                                 @foreach($activeStatuses as $statusItem)
-                                    <x-ui.button size="sm" :variant="$statusItem->id === $task->project_status_id ? 'primary' : 'secondary'" wire:click="changeStatus({{ $statusItem->id }})" wire:loading.attr="disabled" wire:target="changeStatus" :disabled="!$canChangeStatus || $statusItem->id === $task->project_status_id">{{ $statusItem->title }}</x-ui.button>
+                                    <x-ui.button :variant="$statusItem->id === $task->project_status_id ? 'primary' : 'secondary'" wire:click="changeStatus({{ $statusItem->id }})" wire:loading.attr="disabled" wire:target="changeStatus" :disabled="!$canChangeStatus || $statusItem->id === $task->project_status_id">{{ $statusItem->title }}</x-ui.button>
                                 @endforeach
                             </div>
-                            <p class="text-xs text-slate-500" wire:loading wire:target="changeStatus" role="status">در حال تغییر وضعیت...</p>
-                            @if(!$canChangeStatus)<p class="text-xs leading-5 text-slate-500">برای تغییر وضعیت، ابتدا پروژه باید بازگشایی شود.</p>@endif
+                            <p class="text-xs text-workspace-muted" wire:loading wire:target="changeStatus" role="status">در حال تغییر وضعیت...</p>
+                            @if(!$canChangeStatus)<p class="text-xs leading-5 text-workspace-muted">برای تغییر وضعیت، ابتدا پروژه باید بازگشایی شود.</p>@endif
                         </div>
                     </div>
                 </details>
