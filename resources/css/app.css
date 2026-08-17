@@ -59,6 +59,7 @@
     --text-label: var(--semantic-type-label-size);
     --text-metadata: var(--semantic-type-metadata-size);
     --text-caption: var(--semantic-type-caption-size);
+    --tracking-section: 0.16em;
     --spacing-control: var(--semantic-space-control);
     --spacing-component: var(--semantic-space-component);
     --spacing-section: var(--semantic-space-section);
@@ -256,11 +257,6 @@
         font-size: var(--semantic-type-heading-md-size);
     }
 
-    /* Keep legacy utility consumers aligned with the typography scale. */
-    .font-black {
-        font-weight: var(--primitive-font-weight-semibold) !important;
-    }
-
     label,
     button,
     [role='button'],
@@ -376,6 +372,63 @@
 }
 
 @layer components {
+    .ui-list-row {
+        padding-block: var(--semantic-space-component);
+        padding-inline: var(--semantic-space-component);
+        transition-property: background-color, color;
+        transition-duration: var(--primitive-motion-fast);
+        transition-timing-function: ease-out;
+    }
+
+    .ui-list-row:hover,
+    .ui-list-row:focus-within {
+        background-color: var(--semantic-info-surface);
+    }
+
+    .ui-list-meta {
+        color: var(--semantic-text-muted);
+        font-family: var(--font-metadata);
+        font-size: var(--semantic-type-metadata-size);
+        line-height: 1.6;
+    }
+
+    .ui-list-divider {
+        border-block-end: 1px solid var(--semantic-border);
+    }
+
+    .ui-list-action {
+        transition-property: background-color, color, opacity;
+        transition-duration: var(--primitive-motion-fast);
+        transition-timing-function: ease-out;
+    }
+
+    .ui-list-action:focus-visible,
+    .ui-filter-chip:focus-visible {
+        outline: 3px solid var(--semantic-focus);
+        outline-offset: 3px;
+    }
+
+    .ui-filter-chip {
+        min-height: 2.75rem;
+        border: 1px solid var(--semantic-border);
+        border-radius: var(--radius-control);
+        padding-block: var(--primitive-space-2);
+        padding-inline: var(--primitive-space-3);
+        color: var(--semantic-text-muted);
+        font-family: var(--font-label);
+        font-size: var(--semantic-type-caption-size);
+        font-weight: var(--primitive-font-weight-bold);
+        line-height: 1.5;
+        transition-property: background-color, border-color, color;
+        transition-duration: var(--primitive-motion-standard);
+        transition-timing-function: ease-out;
+    }
+
+    .ui-filter-chip:hover {
+        border-color: var(--semantic-primary);
+        color: var(--semantic-primary-text);
+    }
+
     .workgroup-depth-1 {
         margin-inline-start: 0;
     }

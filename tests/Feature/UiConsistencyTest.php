@@ -1,21 +1,23 @@
 <?php
 
-it('keeps application blade views on the shared UI token vocabulary', function (): void {
+it('keeps application UI sources on the shared UI token vocabulary', function (): void {
     $projectRoot = dirname(__DIR__, 2);
     $viewRoots = [
         $projectRoot.'/resources/views',
         $projectRoot.'/app-modules',
     ];
-    $roundedCornerAllowlist = [];
     $patterns = [
         'workspace compatibility utility' => '/(?<![\w-])workspace-[A-Za-z0-9_-]+/',
         'raw Tailwind palette class' => '/(?<![\w-])(?:[A-Za-z0-9-]+:)*(?:text|bg|border)-(?:slate|red|teal|amber|emerald)-[A-Za-z0-9_\.\/%\[\]-]+/',
         'raw color value' => '/(?:#[0-9A-Fa-f]{3,8}\b|(?:rgb|rgba|hsl|hsla)\([^)]*\))/',
         'inline presentation attribute' => '/\bstyle\s*=/i',
         'disallowed rounded corner' => '/(?<![\w-])(?:[A-Za-z0-9-]+:)*rounded-(?:xl|2xl|lg|md)/',
+        'arbitrary typography utility' => '/(?<![\w-])(?:[A-Za-z0-9-]+:)*(?:text|tracking|leading|font)-\[[^\]\s]+\]/',
+        'backdrop blur utility' => '/(?<![\w-])(?:[A-Za-z0-9-]+:)*backdrop-blur(?:-[A-Za-z0-9_\.\/%\[\]-]+)?/',
+        'black font utility' => '/(?<![\w-])(?:[A-Za-z0-9-]+:)*font-black(?![\w-])/',
         'direct primitive token' => '/\bprimitive-[A-Za-z0-9_-]+/',
     ];
-    $viewPaths = [];
+    $sourcePaths = [];
 
     foreach ($viewRoots as $viewRoot) {
         if (! is_dir($viewRoot)) {
@@ -37,34 +39,49 @@ it('keeps application blade views on the shared UI token vocabulary', function (
                 && str_contains($relativePath, '/resources/views/');
 
             if ($isApplicationView || $isModuleView) {
-                $viewPaths[] = $file->getPathname();
+                $sourcePaths[] = $file->getPathname();
             }
         }
     }
 
-    sort($viewPaths, SORT_STRING);
+    $sourcePaths[] = $projectRoot.'/resources/css/app.css';
+    sort($sourcePaths, SORT_STRING);
 
     $violations = [];
 
-    foreach ($viewPaths as $viewPath) {
-        $relativePath = ltrim(str_replace($projectRoot, '', $viewPath), DIRECTORY_SEPARATOR);
+    foreach ($sourcePaths as $sourcePath) {
+        $relativePath = ltrim(str_replace($projectRoot, '', $sourcePath), DIRECTORY_SEPARATOR);
 
         if ($relativePath === 'resources/views/welcome.blade.php') {
             continue;
         }
 
-        $contents = file_get_contents($viewPath);
+        $contents = file_get_contents($sourcePath);
 
-        foreach ($patterns as $patternName => $pattern) {
-            preg_match_all($pattern, $contents, $matches);
+        if ($contents === false) {
+            continue;
+        }
 
-            foreach (array_unique($matches[0]) as $match) {
-                if ($patternName === 'disallowed rounded corner'
-                    && in_array($match, $roundedCornerAllowlist[$relativePath] ?? [], true)) {
-                    continue;
+        $lines = preg_split('/\R/', $contents);
+
+        if ($lines === false) {
+            continue;
+        }
+
+        foreach ($lines as $line) {
+            $linePatterns = $relativePath === 'resources/css/app.css'
+                ? array_intersect_key($patterns, array_flip([
+                    'workspace compatibility utility',
+                    'black font utility',
+                ]))
+                : $patterns;
+
+            foreach ($linePatterns as $patternName => $pattern) {
+                preg_match_all($pattern, $line, $matches);
+
+                foreach (array_unique($matches[0]) as $match) {
+                    $violations[] = sprintf('%s: %s (%s)', $relativePath, $match, $patternName);
                 }
-
-                $violations[] = sprintf('%s: %s (%s)', $relativePath, $match, $patternName);
             }
         }
     }

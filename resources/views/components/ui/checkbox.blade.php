@@ -14,16 +14,16 @@
     $errorId = $id.'-error';
     $hasError = $errors->has($name);
     $isReadonly = $attributes->has('readonly');
+    $isDisabled = $disabled || $isReadonly;
 @endphp
 
 <label
     for="{{ $id }}"
-    @if($disabled) aria-disabled="true" @endif
-    @if($isReadonly) aria-readonly="true" @endif
-    {{ $attributes->except(['id'])->class([
+    @if($isDisabled) aria-disabled="true" @endif
+    {{ $attributes->except(['id', 'readonly'])->class([
         'flex items-start gap-3 rounded-surface border p-3.5 transition',
-        'cursor-pointer border-border bg-surface hover:border-primary' => ! $disabled,
-        'cursor-not-allowed border-border bg-surface-muted opacity-70' => $disabled,
+        'cursor-pointer border-border bg-surface hover:border-primary' => ! $isDisabled,
+        'cursor-not-allowed border-border bg-surface-muted opacity-70' => $isDisabled,
     ]) }}
 >
     <input
@@ -32,9 +32,8 @@
         type="checkbox"
         name="{{ $name }}"
         value="{{ $value }}"
-        @disabled($disabled)
+        @disabled($isDisabled)
         @if($hasError) aria-invalid="true" aria-describedby="{{ $errorId }}" @endif
-        @if($isReadonly) aria-readonly="true" @endif
         @if($model && $live) wire:model.live="{{ $model }}" @elseif($model) wire:model="{{ $model }}" @else @checked($checked) @endif
     >
     <span class="min-w-0">

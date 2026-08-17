@@ -6,7 +6,7 @@
             <div class="space-y-7">
                 <section aria-labelledby="task-context-heading" class="space-y-4">
                     <div class="border-b border-border pb-4">
-                        <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۱</p>
+                        <p class="text-label font-semibold uppercase tracking-section text-primary">۱</p>
                         <h2 id="task-context-heading" class="mt-1 text-heading-lg font-semibold text-text">زمینه پروژه</h2>
                         <p class="mt-1 text-body-sm text-text-muted">پروژه، وضعیت و ساختار کاری تسک را مشخص کنید.</p>
                     </div>
@@ -31,7 +31,7 @@
 
                 <section aria-labelledby="task-content-heading" class="space-y-4 border-t border-border pt-6">
                     <div>
-                        <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۲</p>
+                        <p class="text-label font-semibold uppercase tracking-section text-primary">۲</p>
                         <h2 id="task-content-heading" class="mt-1 text-heading-lg font-semibold text-text">محتوا</h2>
                         <p class="mt-1 text-body-sm text-text-muted">عنوان و توضیحی بنویسید که انجام کار را برای تیم روشن کند.</p>
                     </div>
@@ -41,7 +41,7 @@
                 @if($project_id)
                     <section aria-labelledby="task-ownership-heading" class="space-y-4 border-t border-border pt-6">
                         <div>
-                            <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۳</p>
+                            <p class="text-label font-semibold uppercase tracking-section text-primary">۳</p>
                             <h2 id="task-ownership-heading" class="mt-1 text-heading-lg font-semibold text-text">مالکیت</h2>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2">
@@ -67,7 +67,7 @@
                 @if($isAdmin)
                     <section aria-labelledby="task-scheduling-heading" class="space-y-4 border-t border-border pt-6">
                         <div>
-                            <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۴</p>
+                            <p class="text-label font-semibold uppercase tracking-section text-primary">۴</p>
                             <h2 id="task-scheduling-heading" class="mt-1 text-heading-lg font-semibold text-text">زمان‌بندی و تخصیص</h2>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

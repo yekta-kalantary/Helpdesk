@@ -27,7 +27,7 @@
                 <i class="fa-light fa-bell" aria-hidden="true"></i>
                 @php($unreadNotificationCount = auth()->user()->unreadNotifications()->count())
                 @if($unreadNotificationCount > 0)
-                    <span class="absolute -start-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-5 text-surface" aria-label="{{ $unreadNotificationCount }} اعلان خوانده‌نشده">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+                    <span class="absolute -start-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1 text-caption font-semibold leading-5 text-surface" aria-label="{{ $unreadNotificationCount }} اعلان خوانده‌نشده">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
                 @endif
             </a>
         </header>
@@ -57,12 +57,12 @@
         @auth
             <nav aria-label="ناوبری اصلی" class="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-3">
                 <div>
-                    <p class="shell-nav-label mb-1 px-3 text-[11px] font-semibold text-text-muted">صفحه اصلی</p>
+                    <p class="shell-nav-label mb-1 px-3 text-caption font-semibold text-text-muted">صفحه اصلی</p>
                     <x-ui.nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" icon="fa-gauge-high">{{ __('app.dashboard') }}</x-ui.nav-link>
                 </div>
 
                 <div>
-                    <p class="shell-nav-label mb-1 px-3 text-[11px] font-semibold text-text-muted">کارها</p>
+                    <p class="shell-nav-label mb-1 px-3 text-caption font-semibold text-text-muted">کارها</p>
                     <div class="space-y-1">
                         <x-ui.nav-link :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" icon="fa-list-check">{{ __('app.tasks') }}</x-ui.nav-link>
                         <x-ui.nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')" icon="fa-bell">اعلان‌ها</x-ui.nav-link>
@@ -70,13 +70,13 @@
                 </div>
 
                 <div>
-                    <p class="shell-nav-label mb-1 px-3 text-[11px] font-semibold text-text-muted">فضاها</p>
+                    <p class="shell-nav-label mb-1 px-3 text-caption font-semibold text-text-muted">فضاها</p>
                     <x-ui.nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')" icon="fa-diagram-project">{{ __('app.projects') }}</x-ui.nav-link>
                 </div>
 
                 @if(auth()->user()->isAdmin())
                     <div>
-                        <p class="shell-nav-label mb-1 px-3 text-[11px] font-semibold text-text-muted">مدیریت</p>
+                        <p class="shell-nav-label mb-1 px-3 text-caption font-semibold text-text-muted">مدیریت</p>
                         <div class="space-y-1">
                             <x-ui.nav-link :href="route('clients.index')" :active="request()->routeIs('clients.*')" icon="fa-building">مشتریان</x-ui.nav-link>
                             <x-ui.nav-link :href="route('users.index')" :active="request()->routeIs('users.*')" icon="fa-users">{{ __('app.users') }}</x-ui.nav-link>
