@@ -40,7 +40,7 @@ it('renders Kanban and hierarchy from project-owned workflow and searches indepe
         ->assertSeeHtml('aria-current="location"')
         ->assertSeeHtml('aria-label="برد کانبان با پیمایش افقی"')
         ->assertSeeHtml('wire:change="moveTask(')
-        ->assertSeeHtml('min-h-11')
+        ->assertSeeHtml('class="min-h-11 w-full rounded-lg border-workspace-border text-xs"')
         ->assertSee('Root Tasks')
         ->assertSee('Delivery group')
         ->assertSee('Root searchable task')
@@ -65,8 +65,22 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertSee('Activity')
         ->assertSee('Members')
         ->assertSee('Project Management')
-        ->assertSeeHtml('<details')
-        ->assertSeeHtml('wire:click="complete"')
+        ->assertSeeInOrder([
+            'data-project-header',
+            'فهرست تسک‌ها',
+            '</header>',
+            'data-project-management-disclosure',
+        ])
+        ->assertSeeHtml('<details data-project-management-disclosure')
+        ->assertDontSeeHtml('data-project-management-disclosure open')
+        ->assertSeeInOrder([
+            'data-project-management-disclosure',
+            'wire:click="complete"',
+            'Workflow پروژه',
+            'wire:submit="createStatus"',
+            'مدیریت Work Group',
+            'wire:submit="createWorkGroup"',
+        ])
         ->assertSee($client->name)
         ->assertSee('Workflow پروژه')
         ->assertSee('مدیریت Work Group');
@@ -82,6 +96,7 @@ it('renders project workspace sections for admins and keeps management controls 
         ->assertDontSee('Project Management')
         ->assertDontSee('Workflow پروژه')
         ->assertDontSee('مدیریت Work Group')
+        ->assertDontSeeHtml('data-project-management-disclosure')
         ->assertDontSeeHtml('wire:click="complete"');
 });
 
@@ -153,6 +168,6 @@ it('explains that completed project boards are read-only to customers', function
         ->assertSee('این پروژه تکمیل شده و برد فقط خواندنی است.')
         ->assertSee('برای تغییر وضعیت تسک یا ایجاد تسک جدید، ابتدا پروژه را بازگشایی کنید.')
         ->assertSeeHtml('aria-label="برد کانبان با پیمایش افقی"')
-        ->assertDontSeeHtml('wire:change="moveTask')
+        ->assertDontSeeHtml('wire:change="moveTask(')
         ->assertDontSeeHtml('draggable="true"');
 });
