@@ -8,7 +8,7 @@
 
 @php
     $accentClasses = match ($accent) {
-        'primary' => 'border-workspace-teal/30 bg-workspace-page',
+        'primary' => 'border-workspace-info/30 bg-workspace-page',
         'danger' => 'border-workspace-danger/30 bg-workspace-page',
         default => 'border-workspace-divider/80 bg-workspace-surface',
     };
@@ -21,7 +21,7 @@
             <div class="mt-1 text-2xl font-black tracking-tight {{ $accent === 'danger' ? 'text-workspace-danger' : 'text-workspace-text' }}">{{ $value }}</div>
         </div>
         @if($icon)
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {{ $accent === 'danger' ? 'bg-red-50 text-workspace-danger' : 'bg-workspace-page text-workspace-teal' }}" aria-hidden="true">
+            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-workspace {{ $accent === 'danger' ? 'bg-workspace-danger-surface text-workspace-danger' : 'bg-workspace-page text-workspace-info' }}" aria-hidden="true">
                 <i class="fa-light {{ $icon }} text-lg"></i>
             </span>
         @endif

@@ -25,26 +25,43 @@
     --color-workspace-teal: var(--workspace-teal);
     --color-workspace-coral: var(--workspace-coral);
     --color-workspace-success: var(--workspace-success);
+    --color-workspace-success-surface: var(--workspace-success-surface);
     --color-workspace-danger: var(--workspace-danger);
+    --color-workspace-danger-surface: var(--workspace-danger-surface);
+    --color-workspace-warning: var(--workspace-warning);
+    --color-workspace-warning-surface: var(--workspace-warning-surface);
+    --color-workspace-info: var(--workspace-info);
+    --color-workspace-info-surface: var(--workspace-info-surface);
+    --color-workspace-neutral-surface: var(--workspace-neutral-surface);
     --color-workspace-text: var(--workspace-text);
     --color-workspace-muted: var(--workspace-muted);
     --color-workspace-divider: var(--workspace-divider);
     --color-workspace-accent: var(--workspace-accent);
     --color-workspace-focus: var(--workspace-focus);
+    --radius-workspace: var(--workspace-radius);
+    --spacing-workspace: var(--workspace-space);
+    --transition-duration-workspace: var(--workspace-motion);
 }
 
 :root {
     --workspace-page: #fbfbfa;
     --workspace-surface: #ffffff;
     --workspace-text: #37352f;
-    --workspace-muted: #787774;
+    --workspace-muted: #6b6965;
     --workspace-divider: #e8e7e2;
     --workspace-border: var(--workspace-divider);
     --workspace-accent: #c85f45;
     --workspace-coral: var(--workspace-accent);
     --workspace-teal: #4f7166;
     --workspace-success: #3f6f5c;
+    --workspace-success-surface: #edf5f0;
     --workspace-danger: #b54736;
+    --workspace-danger-surface: #fdf0ed;
+    --workspace-warning: #8a5a16;
+    --workspace-warning-surface: #fff6e5;
+    --workspace-info: var(--workspace-teal);
+    --workspace-info-surface: #eef5f2;
+    --workspace-neutral-surface: #f1f1ef;
     --workspace-focus: #c85f45;
     --workspace-radius: 0.5rem;
     --workspace-space: 1.5rem;
@@ -109,6 +126,7 @@
     :where(button, [role='button'], summary) {
         min-height: 2.75rem;
         touch-action: manipulation;
+        transition-duration: var(--workspace-motion);
     }
 
     [wire\:loading].ui-loading-stable {
