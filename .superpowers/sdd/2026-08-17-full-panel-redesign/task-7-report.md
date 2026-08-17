@@ -44,7 +44,8 @@ Implemented the task detail redesign as a conversation-first, responsive Calm Wo
 ## Commits
 
 - `76831db` Redesign task detail panel
-- Report commit: added after this report was written.
+- `9acf274` Document Task 7 verification
+- `7ddb2b3` Fix Task 7 review findings
 
 ## Concerns
 
