@@ -1,6 +1,9 @@
-@props(['label'])
+@props([
+    'label',
+    'valueClass' => 'text-slate-800',
+])
 
-<div {{ $attributes }}>
+<div {{ $attributes->class(['min-w-0']) }}>
     <div class="text-xs font-medium text-slate-500">{{ $label }}</div>
-    <div class="mt-1 text-sm font-semibold text-slate-800">{{ $slot }}</div>
+    <div class="mt-1 break-words text-sm font-semibold {{ $valueClass }}">{{ $slot }}</div>
 </div>

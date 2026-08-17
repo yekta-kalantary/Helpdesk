@@ -1,11 +1,22 @@
-<div class="space-y-6">
+@php
+    $isOverdue = $task->due_date && $task->due_date->isBefore(today()) && ! $task->isDone();
+@endphp
+
+<div class="space-y-5 sm:space-y-6">
     @if(session('success'))
         <x-ui.alert tone="success">{{ session('success') }}</x-ui.alert>
     @endif
 
-    <x-ui.page-header :title="$task->reference.' · '.$task->title">
+    <x-ui.page-header
+        :title="$task->title"
+        :subtitle="$task->reference"
+        :breadcrumbs="[
+            ['label' => 'پروژه‌ها', 'href' => route('projects.index')],
+            ['label' => $task->project->name, 'href' => route('projects.show', $task->project)],
+            ['label' => $task->reference, 'href' => null],
+        ]"
+    >
         <x-slot:actions>
-            <x-ui.button variant="secondary" :href="route('projects.show', $task->project)" icon="fa-diagram-project" wire:navigate>{{ $task->project->name }}</x-ui.button>
             @if($canEditTask)
                 <x-ui.button :href="route('tasks.edit', $task)" icon="fa-pen" wire:navigate>ویرایش تسک</x-ui.button>
             @endif
@@ -14,176 +25,185 @@
 
     @error('status')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
 
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        <x-ui.card><div class="text-sm text-slate-500">وضعیت</div><div class="mt-2"><x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge></div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">گروه کاری</div><div class="mt-2 font-black">{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">اولویت</div><div class="mt-2 font-black">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">مسئول</div><div class="mt-2 font-black">{{ $task->assignee?->full_name ?? __('tasks::messages.assignee.none') }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">موعد</div><div @class(['mt-2 font-black', 'text-red-600' => $task->due_date && $task->due_date->isBefore(today()) && !$task->isDone()])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}</div></x-ui.card>
-        <x-ui.card><div class="text-sm text-slate-500">ایجادکننده</div><div class="mt-2 font-black">{{ $task->creator->full_name }}</div></x-ui.card>
-    </div>
+    <div class="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <main class="min-w-0 space-y-5 sm:space-y-6">
+            <x-ui.card title="شرح تسک" subtitle="زمینه و جزئیات مورد نیاز برای ادامه کار">
+                @if($task->description)
+                    <div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $task->description }}</div>
+                @else
+                    <p class="text-sm text-slate-500">برای این تسک توضیحی ثبت نشده است.</p>
+                @endif
+            </x-ui.card>
 
-    @if($task->description)
-        <x-ui.card><div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $task->description }}</div></x-ui.card>
-    @endif
-
-    <x-ui.card>
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="ml-2 text-sm font-semibold text-slate-600">وضعیت پروژه‌ای:</span>
-            @foreach($activeStatuses as $statusItem)
-                <x-ui.button
-                    size="sm"
-                    :variant="$statusItem->id === $task->project_status_id ? 'primary' : 'secondary'"
-                    wire:click="changeStatus({{ $statusItem->id }})"
-                    wire:loading.attr="disabled"
-                    wire:target="changeStatus"
-                    :disabled="!$canChangeStatus || $statusItem->id === $task->project_status_id"
-                >{{ $statusItem->title }}</x-ui.button>
-            @endforeach
-        </div>
-        @if(!$canChangeStatus)
-            <p class="mt-3 text-xs text-slate-500">برای تغییر وضعیت، ابتدا پروژه باید بازگشایی شود.</p>
-        @endif
-    </x-ui.card>
-
-    <x-ui.card>
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 class="font-black">چک‌لیست تسک</h2>
-            @if($task->checklistItems->isNotEmpty())
-                <span class="text-sm text-slate-500">{{ $checklistCompleted }}/{{ $task->checklistItems->count() }} انجام‌شده</span>
-            @endif
-        </div>
-
-        @error('checklist')<x-ui.alert tone="danger">{{ $message }}</x-ui.alert>@enderror
-
-        <div class="space-y-2">
-            @forelse($task->checklistItems as $item)
-                <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center" wire:key="subtask-{{ $item->id }}">
-                    <button type="button" class="h-6 w-6 shrink-0 rounded border text-xs" wire:click="toggleSubtask({{ $item->id }}, {{ $item->is_completed ? 'false' : 'true' }})" @disabled(!$canCollaborate) aria-label="تغییر وضعیت زیرتسک">
-                        {{ $item->is_completed ? '✓' : '' }}
-                    </button>
-                    @if($canCollaborate)
-                        <input type="text" wire:model="checklistEdits.{{ $item->id }}" class="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm {{ $item->is_completed ? 'line-through text-slate-400' : '' }}" />
-                        <div class="flex gap-1">
-                            <x-ui.button size="sm" variant="secondary" wire:click="renameSubtask({{ $item->id }})">ذخیره</x-ui.button>
-                            <x-ui.button size="sm" variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'up')">↑</x-ui.button>
-                            <x-ui.button size="sm" variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'down')">↓</x-ui.button>
-                            <x-ui.button size="sm" variant="secondary" wire:click="removeSubtask({{ $item->id }})" wire:confirm="این زیرتسک به‌صورت منطقی حذف شود؟">حذف</x-ui.button>
-                        </div>
-                    @else
-                        <span @class(['text-sm', 'line-through text-slate-400' => $item->is_completed])>{{ $item->title }}</span>
-                    @endif
-                </div>
-            @empty
-                <p class="text-sm text-slate-500">هنوز زیرتسکی ثبت نشده است.</p>
-            @endforelse
-        </div>
-
-        @if($canCollaborate)
-            <form wire:submit="addSubtask" class="mt-4 flex flex-col gap-2 sm:flex-row">
-                <div class="flex-1">
-                    <x-ui.input name="checklistTitle" :value="$checklistTitle" wire:model="checklistTitle" placeholder="یک مرحله کوچک اضافه کنید" />
-                </div>
-                <x-ui.button type="submit" icon="fa-plus">افزودن</x-ui.button>
-            </form>
-        @else
-            <p class="mt-4 text-xs text-slate-500">چک‌لیست در تسک Done یا پروژه تکمیل‌شده فقط خواندنی است.</p>
-        @endif
-    </x-ui.card>
-
-    @if($taskAttachments->isNotEmpty())
-        <x-ui.card>
-            <h2 class="mb-4 font-black">فایل‌های تسک</h2>
-            <div class="space-y-2">
-                @foreach($taskAttachments as $attachment)
-                    <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="min-w-0">
-                            @if($attachment->hidden_at)
-                                <span class="text-sm font-semibold text-slate-500">فایل مخفی‌شده: {{ $attachment->original_name }}</span>
-                            @else
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <a class="font-semibold text-slate-900 hover:underline" href="{{ route('attachments.download', $attachment) }}">{{ $attachment->original_name }}</a>
-                                    @if($attachment->isPreviewable())<a class="text-xs font-semibold text-slate-600 hover:text-slate-950" href="{{ route('attachments.preview', $attachment) }}" target="_blank" rel="noreferrer">پیش‌نمایش</a>@endif
-                                </div>
-                            @endif
-                            <div class="mt-1 text-xs text-slate-500">{{ number_format($attachment->size / 1024, 1) }} KB · {{ $attachment->mime_type }}</div>
-                        </div>
-                        @if($isAdmin && !$attachment->hidden_at)<x-ui.button size="sm" variant="secondary" wire:click="hideAttachment({{ $attachment->id }})" wire:confirm="این فایل از دید مشتری مخفی شود؟">مخفی‌کردن</x-ui.button>@endif
-                    </div>
-                @endforeach
-            </div>
-            <div class="mt-4">{{ $taskAttachments->links() }}</div>
-        </x-ui.card>
-    @endif
-
-    <x-ui.card>
-        <h2 class="mb-4 font-black">گفت‌وگوی تسک</h2>
-        <div class="space-y-4">
-            @forelse($comments as $commentItem)
-                <article class="rounded-2xl border border-slate-200 p-4">
-                    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div class="font-bold">{{ $commentItem->user->full_name }}</div>
-                        <div class="flex items-center gap-2 text-xs text-slate-500">
-                            <time><x-ui.date :value="$commentItem->created_at" datetime /></time>
-                            @if($isAdmin && !$commentItem->hidden_at)<button type="button" wire:click="hideComment({{ $commentItem->id }})" wire:confirm="این نظر از دید مشتری مخفی شود؟" class="font-semibold text-slate-600 hover:text-slate-950">مخفی‌کردن</button>@endif
-                        </div>
-                    </div>
-                    @if($commentItem->hidden_at)
-                        <p class="text-sm text-slate-500">این نظر توسط ادمین مخفی شده است.</p>
-                    @else
-                        @if($commentItem->body)<div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $commentItem->body }}</div>@endif
-                        @if($commentItem->attachments->isNotEmpty())
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                @foreach($commentItem->attachments as $attachment)
-                                    @if($attachment->hidden_at)
-                                        <span class="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-500">فایل مخفی‌شده: {{ $attachment->original_name }}</span>
-                                    @else
-                                        <span class="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs">
-                                            <a href="{{ route('attachments.download', $attachment) }}" class="font-semibold hover:underline">{{ $attachment->original_name }}</a>
-                                            @if($attachment->isPreviewable())<a href="{{ route('attachments.preview', $attachment) }}" target="_blank" rel="noreferrer" class="font-semibold text-slate-600 hover:text-slate-950">پیش‌نمایش</a>@endif
-                                            @if($isAdmin)<button type="button" wire:click="hideAttachment({{ $attachment->id }})" class="text-slate-500 hover:text-slate-950">مخفی</button>@endif
-                                        </span>
+            <x-ui.card title="گفت‌وگو" subtitle="آخرین تصمیم‌ها و فایل‌های مرتبط با این تسک">
+                <div class="space-y-4">
+                    @forelse($comments as $commentItem)
+                        <article class="rounded-2xl border border-workspace-border bg-slate-50/60 p-4" wire:key="comment-{{ $commentItem->id }}">
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                <div class="font-bold text-slate-900">{{ $commentItem->user->full_name }}</div>
+                                <div class="flex items-center gap-2 text-xs text-slate-500">
+                                    <time datetime="{{ $commentItem->created_at->toIso8601String() }}"><x-ui.date :value="$commentItem->created_at" datetime /></time>
+                                    @if($isAdmin && !$commentItem->hidden_at)
+                                        <button type="button" wire:click="hideComment({{ $commentItem->id }})" wire:confirm="این نظر از دید مشتری مخفی شود؟" class="min-h-11 rounded-md px-2 font-semibold text-slate-600 hover:text-slate-950" aria-label="مخفی‌کردن نظر">مخفی‌کردن</button>
                                     @endif
+                                </div>
+                            </div>
+                            @if($commentItem->hidden_at)
+                                <p class="text-sm text-slate-500">این نظر توسط ادمین مخفی شده است.</p>
+                            @else
+                                @if($commentItem->body)<div class="whitespace-pre-wrap text-sm leading-7 text-slate-700">{{ $commentItem->body }}</div>@endif
+                                @if($commentItem->attachments->isNotEmpty())
+                                    <div class="mt-3 flex flex-wrap gap-2" aria-label="فایل‌های نظر">
+                                        @foreach($commentItem->attachments as $attachment)
+                                            @if($attachment->hidden_at)
+                                                <span class="rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-500">فایل مخفی‌شده: {{ $attachment->original_name }}</span>
+                                            @else
+                                                <span class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs ring-1 ring-slate-200">
+                                                    <a href="{{ route('attachments.download', $attachment) }}" class="font-semibold text-slate-900 hover:underline">{{ $attachment->original_name }}</a>
+                                                    @if($attachment->isPreviewable())<a href="{{ route('attachments.preview', $attachment) }}" target="_blank" rel="noreferrer" class="font-semibold text-slate-600 hover:text-slate-950">پیش‌نمایش</a>@endif
+                                                    @if($isAdmin)<button type="button" wire:click="hideAttachment({{ $attachment->id }})" aria-label="مخفی‌کردن فایل {{ $attachment->original_name }}" class="min-h-11 rounded-md px-1 text-slate-500 hover:text-slate-950">مخفی</button>@endif
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endif
+                            @endif
+                        </article>
+                    @empty
+                        <p class="rounded-xl border border-dashed border-workspace-border px-4 py-5 text-sm text-slate-500">هنوز گفت‌وگویی شروع نشده است.</p>
+                    @endforelse
+                </div>
+                <div class="mt-4">{{ $comments->links() }}</div>
+
+                @if($canCollaborate)
+                    <form wire:submit="addComment" class="mt-6 border-t border-slate-100 pt-5" aria-label="ثبت نظر جدید">
+                        <div class="space-y-4">
+                            <x-ui.textarea name="comment" label="نظر جدید" :value="$comment" wire:model="comment" />
+                            <div>
+                                <label for="task-uploads" class="mb-2 block text-sm font-semibold text-slate-700">فایل‌ها</label>
+                                <input id="task-uploads" type="file" multiple wire:model="uploads" wire:loading.attr="disabled" wire:target="uploads" class="block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+                                <p class="mt-1 text-xs text-slate-500" wire:loading wire:target="uploads" role="status">در حال آماده‌سازی فایل‌ها...</p>
+                                @error('uploads.*')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                            </div>
+                            <x-ui.button type="submit" icon="fa-paper-plane" wire:loading.attr="disabled" wire:target="addComment,uploads">
+                                <span wire:loading.remove wire:target="addComment">ثبت نظر</span>
+                                <span wire:loading wire:target="addComment" role="status">در حال ثبت نظر...</span>
+                            </x-ui.button>
+                        </div>
+                    </form>
+                @else
+                    <x-ui.alert class="mt-6" tone="neutral">این تسک یا پروژه بسته است و همکاری جدید پذیرفته نمی‌شود.</x-ui.alert>
+                @endif
+            </x-ui.card>
+
+            <x-ui.card title="چک‌لیست تسک" :subtitle="$task->checklistItems->isNotEmpty() ? $checklistCompleted.'/'.$task->checklistItems->count().' انجام‌شده' : 'مراحل قابل پیگیری برای تکمیل تسک'">
+                @error('checklist')<x-ui.alert class="mb-4" tone="danger">{{ $message }}</x-ui.alert>@enderror
+                <div class="space-y-2">
+                    @forelse($task->checklistItems as $item)
+                        <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center" wire:key="subtask-{{ $item->id }}">
+                            @if($canCollaborate)
+                                <button type="button" class="min-h-11 h-6 w-6 shrink-0 rounded border text-xs" wire:click="toggleSubtask({{ $item->id }}, {{ $item->is_completed ? 'false' : 'true' }})" aria-label="تغییر وضعیت زیرتسک">{{ $item->is_completed ? '✓' : '' }}</button>
+                                <input type="text" wire:model="checklistEdits.{{ $item->id }}" class="min-h-11 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm {{ $item->is_completed ? 'line-through text-slate-400' : '' }}" aria-label="عنوان زیرتسک" />
+                                <div class="flex flex-wrap gap-1">
+                                    <x-ui.button size="sm" variant="secondary" wire:click="renameSubtask({{ $item->id }})">ذخیره</x-ui.button>
+                                    <x-ui.button size="sm" variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'up')" aria-label="انتقال زیرتسک به بالا">↑</x-ui.button>
+                                    <x-ui.button size="sm" variant="secondary" wire:click="moveSubtask({{ $item->id }}, 'down')" aria-label="انتقال زیرتسک به پایین">↓</x-ui.button>
+                                    <x-ui.button size="sm" variant="secondary" wire:click="removeSubtask({{ $item->id }})" wire:confirm="این زیرتسک به‌صورت منطقی حذف شود؟">حذف</x-ui.button>
+                                </div>
+                            @else
+                                <span class="flex min-h-11 h-6 w-6 shrink-0 items-center justify-center rounded border text-xs" role="img" aria-label="{{ $item->is_completed ? 'زیرتسک انجام شده است' : 'زیرتسک انجام نشده است' }}">{{ $item->is_completed ? '✓' : '' }}</span>
+                                <span @class(['text-sm', 'line-through text-slate-400' => $item->is_completed])>{{ $item->title }}</span>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="rounded-xl border border-dashed border-workspace-border px-4 py-5 text-sm text-slate-500">هنوز مرحله‌ای به چک‌لیست اضافه نشده است.</p>
+                    @endforelse
+                </div>
+                @if($canCollaborate)
+                    <form wire:submit="addSubtask" class="mt-4 flex flex-col gap-2 sm:flex-row">
+                        <div class="flex-1"><x-ui.input name="checklistTitle" :value="$checklistTitle" wire:model="checklistTitle" placeholder="یک مرحله کوچک اضافه کنید" /></div>
+                        <x-ui.button type="submit" icon="fa-plus">افزودن</x-ui.button>
+                    </form>
+                @else
+                    <p class="mt-4 text-xs text-slate-500">چک‌لیست در تسک Done یا پروژه تکمیل‌شده فقط خواندنی است.</p>
+                @endif
+            </x-ui.card>
+
+            @if($taskAttachments->isNotEmpty())
+                <x-ui.card title="فایل‌های تسک" subtitle="فایل‌های مستقل از گفت‌وگو">
+                    <div class="space-y-2">
+                        @foreach($taskAttachments as $attachment)
+                            <div class="flex flex-col gap-2 rounded-xl border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="min-w-0">
+                                    @if($attachment->hidden_at)
+                                        <span class="text-sm font-semibold text-slate-500">فایل مخفی‌شده: {{ $attachment->original_name }}</span>
+                                    @else
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a class="font-semibold text-slate-900 hover:underline" href="{{ route('attachments.download', $attachment) }}">{{ $attachment->original_name }}</a>
+                                            @if($attachment->isPreviewable())<a class="text-xs font-semibold text-slate-600 hover:text-slate-950" href="{{ route('attachments.preview', $attachment) }}" target="_blank" rel="noreferrer">پیش‌نمایش</a>@endif
+                                        </div>
+                                    @endif
+                                    <div class="mt-1 text-xs text-slate-500">{{ number_format($attachment->size / 1024, 1) }} KB · {{ $attachment->mime_type }}</div>
+                                </div>
+                                @if($isAdmin && !$attachment->hidden_at)<x-ui.button size="sm" variant="secondary" wire:click="hideAttachment({{ $attachment->id }})" wire:confirm="این فایل از دید مشتری مخفی شود؟">مخفی‌کردن</x-ui.button>@endif
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-4">{{ $taskAttachments->links() }}</div>
+                </x-ui.card>
+            @endif
+
+            <details class="group rounded-2xl border border-workspace-border bg-workspace-surface shadow-[0_8px_24px_rgba(15,92,90,0.04)]">
+                <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-slate-900 sm:px-6 [&::-webkit-details-marker]:hidden">
+                    <span>تاریخچه فعالیت</span><span class="text-xs font-medium text-slate-500 group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-slate-500 group-open:inline">مخفی‌کردن</span>
+                </summary>
+                <div class="border-t border-slate-100 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+                    <div class="space-y-3">
+                        @forelse($activities as $activity)
+                            <div class="flex flex-col gap-1 border-b border-slate-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                                <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
+                                <time class="text-xs text-slate-500"><x-ui.date :value="$activity->created_at" datetime /></time>
+                            </div>
+                        @empty
+                            <p class="text-sm text-slate-500">فعالیتی ثبت نشده است.</p>
+                        @endforelse
+                    </div>
+                    <div class="mt-4">{{ $activities->links() }}</div>
+                </div>
+            </details>
+        </main>
+
+        <aside class="min-w-0 space-y-5 lg:sticky lg:top-5">
+            <x-ui.card title="مشخصات تسک" subtitle="اطلاعات عملیاتی و مالکیت">
+                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                    <x-ui.meta-item label="وضعیت"><x-ui.badge :tone="$task->projectStatus->is_done ? 'success' : 'neutral'">{{ $task->projectStatus->title }}</x-ui.badge></x-ui.meta-item>
+                    <x-ui.meta-item label="مسئول">{{ $task->assignee?->full_name ?? __('tasks::messages.assignee.none') }}</x-ui.meta-item>
+                    <x-ui.meta-item label="اولویت">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</x-ui.meta-item>
+                    <x-ui.meta-item label="موعد" :value-class="$isOverdue ? 'text-red-700' : 'text-slate-800'"><span @class(['font-bold' => $isOverdue])><x-ui.date :value="$task->due_date" />{{ $task->due_date ? '' : '—' }}{{ $isOverdue ? ' · عقب‌افتاده' : '' }}</span></x-ui.meta-item>
+                    <x-ui.meta-item label="گروه کاری">{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</x-ui.meta-item>
+                    <x-ui.meta-item label="ایجادکننده">{{ $task->creator->full_name }}</x-ui.meta-item>
+                </div>
+            </x-ui.card>
+
+            <x-ui.card padding="false">
+                <details open class="group">
+                    <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 font-bold text-slate-900 sm:px-6 [&::-webkit-details-marker]:hidden">
+                        <span>عملیات تسک</span><span class="text-xs font-medium text-slate-500 group-open:hidden">نمایش</span><span class="hidden text-xs font-medium text-slate-500 group-open:inline">مخفی‌کردن</span>
+                    </summary>
+                    <div class="border-t border-slate-100 px-4 pb-4 pt-4 sm:px-6 sm:pb-6">
+                        <div class="space-y-3">
+                            <p class="text-sm font-semibold text-slate-600">وضعیت پروژه‌ای</p>
+                            <div class="grid gap-2">
+                                @foreach($activeStatuses as $statusItem)
+                                    <x-ui.button size="sm" :variant="$statusItem->id === $task->project_status_id ? 'primary' : 'secondary'" wire:click="changeStatus({{ $statusItem->id }})" wire:loading.attr="disabled" wire:target="changeStatus" :disabled="!$canChangeStatus || $statusItem->id === $task->project_status_id">{{ $statusItem->title }}</x-ui.button>
                                 @endforeach
                             </div>
-                        @endif
-                    @endif
-                </article>
-            @empty
-                <p class="text-sm text-slate-500">هنوز نظری ثبت نشده است.</p>
-            @endforelse
-        </div>
-        <div class="mt-4">{{ $comments->links() }}</div>
-
-        @if($canCollaborate)
-            <form wire:submit="addComment" class="mt-6 border-t border-slate-100 pt-5">
-                <div class="space-y-4">
-                    <x-ui.textarea name="comment" label="نظر جدید" :value="$comment" wire:model="comment" />
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">فایل‌ها</label>
-                        <input type="file" multiple wire:model="uploads" class="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
-                        @error('uploads.*')<p class="mt-2 text-xs font-medium text-red-600">{{ $message }}</p>@enderror
+                            <p class="text-xs text-slate-500" wire:loading wire:target="changeStatus" role="status">در حال تغییر وضعیت...</p>
+                            @if(!$canChangeStatus)<p class="text-xs leading-5 text-slate-500">برای تغییر وضعیت، ابتدا پروژه باید بازگشایی شود.</p>@endif
+                        </div>
                     </div>
-                    <x-ui.button type="submit" icon="fa-paper-plane" wire:loading.attr="disabled" wire:target="addComment,uploads">ثبت نظر</x-ui.button>
-                </div>
-            </form>
-        @else
-            <x-ui.alert class="mt-6" tone="neutral">این تسک یا پروژه بسته است و همکاری جدید پذیرفته نمی‌شود.</x-ui.alert>
-        @endif
-    </x-ui.card>
-
-    <x-ui.card>
-        <h2 class="mb-4 font-black">تاریخچه فعالیت</h2>
-        <div class="space-y-3">
-            @forelse($activities as $activity)
-                <div class="flex flex-col gap-1 border-b border-slate-100 pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                    <div><span class="font-semibold">{{ $activity->actor?->full_name ?? 'سیستم' }}</span> <span class="text-sm text-slate-600">{{ __('tasks::messages.activity_actions.'.$activity->action) }}</span></div>
-                    <time class="text-xs text-slate-500"><x-ui.date :value="$activity->created_at" datetime /></time>
-                </div>
-            @empty
-                <p class="text-sm text-slate-500">فعالیتی ثبت نشده است.</p>
-            @endforelse
-        </div>
-        <div class="mt-4">{{ $activities->links() }}</div>
-    </x-ui.card>
+                </details>
+            </x-ui.card>
+        </aside>
+    </div>
 </div>
