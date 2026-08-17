@@ -8,14 +8,14 @@
 
 @php
     $variantClasses = match ($variant) {
-        'secondary' => 'border border-workspace-border bg-workspace-surface text-slate-700 hover:border-workspace-teal hover:bg-teal-50 focus:ring-workspace-focus',
-        'danger' => 'bg-red-600 text-white hover:bg-red-500 focus:ring-red-300',
-        'ghost' => 'bg-transparent text-slate-600 hover:bg-teal-50 hover:text-workspace-teal focus:ring-workspace-focus',
-        default => 'bg-workspace-teal text-white hover:bg-teal-700 focus:ring-workspace-focus',
+        'secondary' => 'border border-border bg-surface text-text hover:border-primary hover:bg-primary-surface focus:ring-focus',
+        'danger' => 'border border-danger bg-danger text-surface hover:bg-danger-text focus:ring-focus',
+        'ghost' => 'bg-transparent text-text-muted hover:bg-primary-surface hover:text-primary focus:ring-focus',
+        default => 'bg-primary text-surface hover:bg-primary-text focus:ring-focus',
     };
 
     $sizeClasses = match ($size) {
-        'sm' => 'min-h-8 px-3 py-1.5 text-xs',
+        'sm' => 'min-h-11 px-3 py-1.5 text-xs',
         'lg' => 'min-h-11 px-5 py-2.5 text-sm',
         default => 'min-h-11 px-4 py-2 text-sm',
     };
@@ -26,7 +26,7 @@
         default => 'text-sm',
     };
 
-    $classes = "ui-loading-stable inline-flex min-w-11 items-center justify-center gap-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 {$variantClasses} {$sizeClasses}";
+    $classes = "ui-loading-stable inline-flex min-w-11 items-center justify-center gap-2 rounded-button font-semibold transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 {$variantClasses} {$sizeClasses}";
 @endphp
 
 @if($href)
