@@ -49,3 +49,16 @@
 ### Fix Concerns
 
 - The focused Pest assertions could not execute until the configured MariaDB test credentials/database are available.
+
+## Disclosure Assertion Fix
+
+- Set explicit project start and due dates in the Admin workspace UI fixture.
+- Added assertions against the existing project-details `<details>` markup for closed-by-default state, member count, formatted start date, and formatted due date. No runtime view or Livewire implementation was changed.
+
+### Disclosure Fix Verification
+
+- `php artisan test --compact --filter="ProjectWorkManagement|kanban|ProjectWorkflow"` - BLOCKED before test execution: 33 errors, 0 assertions; MariaDB rejected `helpdesk` at `127.0.0.1:3306` for `helpdesk_testing` with SQLSTATE[HY000] [1045] access denied.
+- `php artisan view:cache` - PASS.
+- `npm run build` - PASS; Vite production build completed successfully.
+- `vendor/bin/pint --dirty --format agent` - PASS.
+- `git diff --check` - PASS.

@@ -55,6 +55,10 @@ it('renders project workspace sections for admins and keeps management controls 
     $admin = User::factory()->admin()->create();
     $customer = User::factory()->customer($client)->create();
     $project = mvpProject($client, 'Workspace project');
+    $project->forceFill([
+        'start_date' => '2026-08-01',
+        'due_date' => '2026-08-31',
+    ])->save();
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
 
     $this->actingAs($admin);
@@ -73,6 +77,15 @@ it('renders project workspace sections for admins and keeps management controls 
         ])
         ->assertSeeHtml('<details data-project-management-disclosure')
         ->assertDontSeeHtml('data-project-management-disclosure open')
+        ->assertSeeInOrder([
+            '<details class="group rounded-workspace border border-workspace-divider bg-workspace-surface">',
+            'جزئیات پروژه',
+            'تعداد اعضا: 1',
+            'شروع: 2026/08/01',
+            'موعد: 2026/08/31',
+            '</details>',
+        ])
+        ->assertDontSeeHtml('<details class="group rounded-workspace border border-workspace-divider bg-workspace-surface" open')
         ->assertSeeInOrder([
             'data-project-management-disclosure',
             'wire:click="complete"',
