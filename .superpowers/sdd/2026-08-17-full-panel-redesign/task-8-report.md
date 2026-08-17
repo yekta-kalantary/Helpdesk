@@ -57,3 +57,12 @@ Applied the approved full-panel redesign language to identity, user management, 
 - `php artisan view:cache`: passed; Blade templates cached successfully.
 - `npm run build`: passed; Vite production build completed successfully.
 - `php artisan test --compact --filter="user|profile|notification|login|password"`: blocked during database bootstrap by the existing MariaDB SQLSTATE 1045 credential error for `helpdesk` on `helpdesk_testing`; 37 tests were attempted, 2 passed, and 35 errored before database-backed assertions.
+
+## Auth Coverage Follow-up
+
+- Expanded `tests/Feature/PasswordResetTest.php` to verify every guest auth form's visible labels, input names/types, submit button semantics, disabled-on-loading attribute, loading/normal action spans, Livewire submit/target markup, and preserved auth navigation links.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `git diff --check`: passed.
+- `php artisan view:cache`: passed; Blade templates cached successfully.
+- `npm run build`: passed; Vite production build completed successfully.
+- `php artisan test --compact --filter="user|profile|notification|login|password"`: blocked by the existing MariaDB SQLSTATE 1045 credential error for `helpdesk` on `helpdesk_testing`; 37 tests were attempted, 2 passed, and 35 errored before database-backed assertions.
