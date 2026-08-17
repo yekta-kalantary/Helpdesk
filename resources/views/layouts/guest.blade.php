@@ -16,7 +16,7 @@
     <main class="guest-shell flex min-h-screen items-center justify-center bg-page px-4 py-10 sm:px-6">
         <div class="w-full max-w-md min-w-0">
             <div class="guest-brand mb-8 text-center">
-                <a href="{{ route('login') }}" wire:navigate class="inline-flex min-h-11 items-center gap-2 text-lg font-black tracking-tight text-text">
+                <a href="{{ route('login') }}" wire:navigate class="inline-flex min-h-11 items-center gap-2 text-lg font-semibold tracking-tight text-text">
                     <span class="inline-flex h-9 w-9 items-center justify-center rounded-control bg-primary text-surface"><i class="fa-light fa-gauge-high" aria-hidden="true"></i></span>
                     {{ __('app.name') }}
                 </a>

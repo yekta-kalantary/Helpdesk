@@ -5,19 +5,19 @@
         <x-ui.card>
             <div class="space-y-7">
                 <section aria-labelledby="task-context-heading" class="space-y-4">
-                    <div class="border-b border-workspace-divider pb-4">
-                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-workspace-teal">۱</p>
-                        <h2 id="task-context-heading" class="mt-1 text-lg font-bold text-workspace-text">زمینه پروژه</h2>
-                        <p class="mt-1 text-sm text-workspace-muted">پروژه، وضعیت و ساختار کاری تسک را مشخص کنید.</p>
+                    <div class="border-b border-border pb-4">
+                        <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۱</p>
+                        <h2 id="task-context-heading" class="mt-1 text-heading-lg font-semibold text-text">زمینه پروژه</h2>
+                        <p class="mt-1 text-body-sm text-text-muted">پروژه، وضعیت و ساختار کاری تسک را مشخص کنید.</p>
                     </div>
                     <div class="grid gap-4 sm:grid-cols-2">
                     <x-ui.input name="title" :label="__('app.title')" :value="$title" wire:model="title" required />
 
                     @if($taskId)
                         <div>
-                            <label class="mb-2 block text-sm font-semibold text-workspace-text">پروژه</label>
-                            <div class="rounded-xl border border-workspace-divider bg-workspace-page px-4 py-3 font-semibold">{{ $projectName }}</div>
-                            <p class="mt-1 text-xs text-workspace-muted">پروژه تسک بعد از ایجاد قابل تغییر نیست.</p>
+                            <label class="mb-2 block text-label font-semibold text-text">پروژه</label>
+                            <div class="rounded-control border border-border bg-page px-4 py-3 font-semibold text-text">{{ $projectName }}</div>
+                            <p class="mt-1 text-metadata text-text-muted">پروژه تسک بعد از ایجاد قابل تغییر نیست.</p>
                         </div>
                     @else
                         <x-ui.select name="project_id" :label="__('tasks::messages.project')" wire:model.live.number="project_id" required>
@@ -29,20 +29,20 @@
 
                 </section>
 
-                <section aria-labelledby="task-content-heading" class="space-y-4 border-t border-workspace-divider pt-6">
+                <section aria-labelledby="task-content-heading" class="space-y-4 border-t border-border pt-6">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-workspace-teal">۲</p>
-                        <h2 id="task-content-heading" class="mt-1 text-lg font-bold text-workspace-text">محتوا</h2>
-                        <p class="mt-1 text-sm text-workspace-muted">عنوان و توضیحی بنویسید که انجام کار را برای تیم روشن کند.</p>
+                        <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۲</p>
+                        <h2 id="task-content-heading" class="mt-1 text-heading-lg font-semibold text-text">محتوا</h2>
+                        <p class="mt-1 text-body-sm text-text-muted">عنوان و توضیحی بنویسید که انجام کار را برای تیم روشن کند.</p>
                     </div>
                     <x-ui.textarea name="description" :label="__('app.description')" hint="جزئیات، نتیجه مورد انتظار یا زمینه لازم را اضافه کنید." :value="$description" wire:model="description" />
                 </section>
 
                 @if($project_id)
-                    <section aria-labelledby="task-ownership-heading" class="space-y-4 border-t border-workspace-divider pt-6">
+                    <section aria-labelledby="task-ownership-heading" class="space-y-4 border-t border-border pt-6">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-workspace-teal">۳</p>
-                            <h2 id="task-ownership-heading" class="mt-1 text-lg font-bold text-workspace-text">مالکیت</h2>
+                            <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۳</p>
+                            <h2 id="task-ownership-heading" class="mt-1 text-heading-lg font-semibold text-text">مالکیت</h2>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2">
                         <x-ui.select name="project_status_id" label="وضعیت پروژه‌ای تسک" wire:model="project_status_id">
@@ -65,10 +65,10 @@
                 @endif
 
                 @if($isAdmin)
-                    <section aria-labelledby="task-scheduling-heading" class="space-y-4 border-t border-workspace-divider pt-6">
+                    <section aria-labelledby="task-scheduling-heading" class="space-y-4 border-t border-border pt-6">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-workspace-teal">۴</p>
-                            <h2 id="task-scheduling-heading" class="mt-1 text-lg font-bold text-workspace-text">زمان‌بندی و تخصیص</h2>
+                            <p class="text-label font-semibold uppercase tracking-[0.16em] text-primary">۴</p>
+                            <h2 id="task-scheduling-heading" class="mt-1 text-heading-lg font-semibold text-text">زمان‌بندی و تخصیص</h2>
                         </div>
                         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                         <x-ui.select name="priority" label="اولویت" wire:model="priority" required>
@@ -87,10 +87,10 @@
 
                 @if(!$taskId)
                     <div>
-                        <label class="mb-2 block text-sm font-semibold text-workspace-text">فایل پیوست اختیاری</label>
-                        <input type="file" wire:model="attachment" class="block min-h-11 w-full rounded-xl border border-workspace-divider bg-workspace-surface px-3 py-2 text-sm" />
-                        @error('attachment')<p class="mt-2 text-xs font-medium text-workspace-danger">{{ $message }}</p>@enderror
-                        <p class="mt-1 text-xs text-workspace-muted">حداکثر ۲۰ مگابایت؛ فایل فقط از مسیر احراز هویت‌شده قابل دریافت است.</p>
+                        <label class="mb-2 block text-label font-semibold text-text">فایل پیوست اختیاری</label>
+                        <input type="file" wire:model="attachment" class="block min-h-11 w-full rounded-control border border-border bg-surface px-3 py-2 text-body-sm" />
+                        @error('attachment')<p class="mt-2 text-metadata font-medium text-danger-text">{{ $message }}</p>@enderror
+                        <p class="mt-1 text-metadata text-text-muted">حداکثر ۲۰ مگابایت؛ فایل فقط از مسیر احراز هویت‌شده قابل دریافت است.</p>
                     </div>
                 @endif
 

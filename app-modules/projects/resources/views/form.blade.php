@@ -13,9 +13,9 @@
                 <div class="space-y-5">
                     @if($projectId)
                         <div>
-                            <label class="mb-2 block text-sm font-semibold text-workspace-text">مشتری <span class="text-xs font-normal text-workspace-muted">الزامی</span></label>
-                            <div class="rounded-workspace border border-workspace-border bg-workspace-neutral-surface px-4 py-3 font-semibold text-workspace-text">{{ $clientName }}</div>
-                            <p class="mt-1 text-xs text-workspace-muted">مشتری پروژه بعد از ایجاد قابل تغییر نیست.</p>
+                            <label class="mb-2 block text-label font-semibold text-text">مشتری <span class="text-caption font-normal text-text-muted">الزامی</span></label>
+                            <div class="rounded-surface border border-border bg-surface-muted px-4 py-3 font-semibold text-text">{{ $clientName }}</div>
+                            <p class="mt-1 text-metadata text-text-muted">مشتری پروژه بعد از ایجاد قابل تغییر نیست.</p>
                         </div>
                     @else
                         <x-ui.select name="client_id" label="مشتری (الزامی)" wire:model.live.number="client_id" required>
@@ -31,9 +31,9 @@
 
             <x-ui.card title="۳. عضویت" subtitle="اعضای فعال این مشتری را به پروژه اضافه کنید.">
                 <div>
-                    <div class="mb-2 text-sm font-semibold text-workspace-text">اعضای مشتری پروژه</div>
+                    <div class="mb-2 text-label font-semibold text-text">اعضای مشتری پروژه</div>
                     @if(!$client_id)
-                        <p class="text-sm text-workspace-muted">ابتدا مشتری را انتخاب کنید.</p>
+                        <p class="text-body-sm text-text-muted">ابتدا مشتری را انتخاب کنید.</p>
                     @else
                         <div class="grid gap-2 sm:grid-cols-2">
                             @forelse($members as $member)
@@ -45,12 +45,12 @@
                                     model="member_ids"
                                 />
                             @empty
-                                <p class="text-sm text-workspace-muted">کاربر فعال قابل عضویت وجود ندارد.</p>
+                                <p class="text-body-sm text-text-muted">کاربر فعال قابل عضویت وجود ندارد.</p>
                             @endforelse
                         </div>
                     @endif
-                    @error('member_ids')<p class="mt-2 text-xs font-medium text-danger-text">{{ $message }}</p>@enderror
-                    @error('member_ids.*')<p class="mt-2 text-xs font-medium text-danger-text">{{ $message }}</p>@enderror
+                    @error('member_ids')<p class="mt-2 text-metadata font-medium text-danger-text">{{ $message }}</p>@enderror
+                    @error('member_ids.*')<p class="mt-2 text-metadata font-medium text-danger-text">{{ $message }}</p>@enderror
                 </div>
             </x-ui.card>
 

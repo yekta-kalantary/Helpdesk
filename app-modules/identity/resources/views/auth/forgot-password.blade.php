@@ -1,6 +1,6 @@
 <div>
     <section aria-labelledby="forgot-password-heading">
-        <div class="mb-5"><h1 id="forgot-password-heading" class="text-heading-lg font-black text-text">بازیابی رمز عبور</h1><p class="mt-1 text-body-sm leading-6 text-text-muted">ایمیل حساب خود را وارد کنید.</p></div>
+        <div class="mb-5"><h1 id="forgot-password-heading" class="text-heading-lg font-semibold text-text">بازیابی رمز عبور</h1><p class="mt-1 text-body-sm leading-6 text-text-muted">ایمیل حساب خود را وارد کنید.</p></div>
 
         @if($sent)
             <x-ui.alert class="mb-4" tone="success">

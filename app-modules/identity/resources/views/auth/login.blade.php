@@ -1,6 +1,6 @@
 <div>
     <section aria-labelledby="login-heading">
-        <div class="mb-5"><h1 id="login-heading" class="text-heading-lg font-black text-text">{{ __('identity::messages.login_title') }}</h1><p class="mt-1 text-body-sm leading-6 text-text-muted">برای ادامه وارد حساب خود شوید.</p></div>
+        <div class="mb-5"><h1 id="login-heading" class="text-heading-lg font-semibold text-text">{{ __('identity::messages.login_title') }}</h1><p class="mt-1 text-body-sm leading-6 text-text-muted">برای ادامه وارد حساب خود شوید.</p></div>
 
         @if(session('success'))
             <x-ui.alert class="mb-4" tone="success">{{ session('success') }}</x-ui.alert>

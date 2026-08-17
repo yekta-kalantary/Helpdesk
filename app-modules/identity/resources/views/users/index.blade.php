@@ -31,7 +31,7 @@
             <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="user-{{ $user->id }}" class="block min-h-11 bg-surface px-1 py-4 transition hover:bg-surface-muted focus-visible:bg-surface-muted sm:px-3">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
-                        <div class="break-words font-bold text-text text-workspace-text">{{ $user->full_name }}</div>
+                        <div class="break-words font-semibold text-text">{{ $user->full_name }}</div>
                         <div dir="ltr" class="mt-1 truncate text-right text-body-sm text-text-muted">{{ $user->email }}</div>
                     </div>
                     <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge>

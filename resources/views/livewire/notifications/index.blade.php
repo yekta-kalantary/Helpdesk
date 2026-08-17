@@ -12,18 +12,18 @@
         </x-slot:actions>
     </x-ui.page-header>
 
-    <div class="divide-y divide-workspace-divider border-y border-workspace-divider">
+    <div class="divide-y divide-border border-y border-border">
         @php($notificationDate = null)
         @forelse($notifications as $notification)
             @php($currentDate = $notification->created_at->translatedFormat('l، j F'))
             @if($notificationDate !== $currentDate)
                 @php($notificationDate = $currentDate)
-                <h2 class="border-b border-border px-1 pb-2 pt-5 text-caption font-black tracking-wide text-text-muted first:pt-0">{{ $currentDate }}</h2>
+                <h2 class="border-b border-border px-1 pb-2 pt-5 text-label font-semibold tracking-wide text-text-muted first:pt-0">{{ $currentDate }}</h2>
             @endif
             <button type="button" aria-labelledby="notification-{{ $notification->id }}-title" aria-describedby="notification-{{ $notification->id }}-details notification-{{ $notification->id }}-status" wire:click="open('{{ $notification->id }}')" wire:loading.attr="disabled" wire:target="open('{{ $notification->id }}')" @class([
                 'block min-h-11 w-full px-1 py-4 text-right transition hover:bg-surface-muted sm:px-3',
                 'bg-surface' => $notification->read_at,
-                'bg-info-surface bg-workspace-info-surface' => !$notification->read_at,
+                'bg-info-surface' => !$notification->read_at,
             ])>
                 <div class="flex items-start gap-3">
                     <span @class([
@@ -33,7 +33,7 @@
                     ])><i class="fa-light {{ $notification->read_at ? 'fa-envelope-open' : 'fa-bell' }}" aria-hidden="true"></i></span>
                     <div class="min-w-0 flex-1">
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div id="notification-{{ $notification->id }}-title" @class(['font-bold text-text', 'font-black' => !$notification->read_at])>{{ $notification->data['title'] ?? 'اعلان' }}</div>
+                            <div id="notification-{{ $notification->id }}-title" class="font-semibold text-text">{{ $notification->data['title'] ?? 'اعلان' }}</div>
                             @if(!$notification->read_at)
                                 <x-ui.badge tone="info">خوانده‌نشده</x-ui.badge>
                             @endif

@@ -27,12 +27,12 @@
                 <i class="fa-light fa-bell" aria-hidden="true"></i>
                 @php($unreadNotificationCount = auth()->user()->unreadNotifications()->count())
                 @if($unreadNotificationCount > 0)
-                    <span class="absolute -start-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-black leading-5 text-surface" aria-label="{{ $unreadNotificationCount }} اعلان خوانده‌نشده">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
+                    <span class="absolute -start-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-5 text-surface" aria-label="{{ $unreadNotificationCount }} اعلان خوانده‌نشده">{{ $unreadNotificationCount > 99 ? '99+' : $unreadNotificationCount }}</span>
                 @endif
             </a>
         </header>
 
-        <button type="button" data-sidebar-backdrop data-open="false" aria-label="بستن منو" class="pointer-events-none fixed inset-0 z-40 bg-workspace-text/20 opacity-0 transition-opacity duration-200 data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 lg:hidden"></button>
+        <button type="button" data-sidebar-backdrop data-open="false" aria-label="بستن منو" class="pointer-events-none fixed inset-0 z-40 bg-text/20 opacity-0 transition-opacity duration-200 data-[open=true]:pointer-events-auto data-[open=true]:opacity-100 lg:hidden"></button>
     @endauth
 
     <aside id="app-sidebar" data-sidebar data-open="false" aria-hidden="true" inert class="sidebar-shell fixed inset-y-0 end-0 z-50 flex w-72 max-w-[86vw] translate-x-full flex-col border-s border-border bg-surface transition-transform duration-200 ease-out data-[open=true]:translate-x-0 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:w-64 lg:max-w-none lg:shrink-0 lg:translate-x-0">

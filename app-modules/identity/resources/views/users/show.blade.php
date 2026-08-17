@@ -38,7 +38,7 @@
                     </div>
                 </section>
 
-                <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-page/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-5 sm:backdrop-blur-none">
+                <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 border-t border-border bg-page/95 px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-5">
                     <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="saveProfile">{{ __('app.save') }}</x-ui.button>
                 </x-ui.form-actions>
             </div>
@@ -47,10 +47,10 @@
         <div class="space-y-5">
             <section aria-labelledby="user-summary-heading">
                 <h2 id="user-summary-heading" class="mb-3 font-bold text-text">خلاصه حساب</h2>
-                <dl class="space-y-4 text-sm">
+                <dl class="space-y-4 text-body-sm">
                     <div><dt class="text-text-muted">مشتری</dt><dd class="mt-1 font-bold">{{ $user->client?->name ?? '—' }}</dd></div>
                     <div><dt class="text-text-muted">نقش</dt><dd class="mt-1 font-bold">{{ __('tasks::messages.roles.'.$user->role->value) }}</dd></div>
-                    <div><dt class="text-workspace-muted">وضعیت</dt><dd class="mt-1"><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></dd></div>
+                    <div><dt class="text-text-muted">وضعیت</dt><dd class="mt-1"><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></dd></div>
                     <div><dt class="text-text-muted">آخرین ورود</dt><dd class="mt-1 font-bold"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
                 </dl>
             </section>

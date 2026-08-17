@@ -37,7 +37,7 @@
                 <p class="text-body-sm leading-6 text-text-muted">ایمیل، نقش، مشتری و وضعیت حساب فقط توسط ادمین مدیریت می‌شوند.</p>
             </section>
 
-            <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-page/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-5 sm:backdrop-blur-none">
+            <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 border-t border-border bg-page/95 px-4 py-3 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-5">
                 <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="save">{{ __('app.save') }}</x-ui.button>
             </x-ui.form-actions>
         </div>
