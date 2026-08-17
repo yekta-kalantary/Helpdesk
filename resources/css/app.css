@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+    --color-brand-50: #eef2ff;
+    --color-brand-600: #4f46e5;
+    --color-brand-700: #4338ca;
+}
+
+@layer base {
+    :root {
+        font-family: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+        color: #172033;
+        background: #f8fafc;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+    }
+
+    :focus-visible {
+        outline: 2px solid #4f46e5;
+        outline-offset: 3px;
+    }
+}
