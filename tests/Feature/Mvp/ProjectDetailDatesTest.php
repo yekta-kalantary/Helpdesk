@@ -39,7 +39,7 @@ it('shows a neutral placeholder for absent project dates to admins and customers
         $this->actingAs($user)
             ->get(route('projects.show', $project))
             ->assertOk()
-            ->assertSee('تاریخ شروع')
+            ->assertSee('شروع:')
             ->assertSee('موعد')
             ->assertSee('—');
     }

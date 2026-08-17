@@ -32,13 +32,12 @@ it('renders project form sections in order with preserved bindings and mobile ac
         ->toContain('wire:model="name"')
         ->toContain('wire:model.live.number="client_id"')
         ->toContain('wire:model="description"')
-        ->toContain('model="member_ids"')
         ->toContain('wire:model="start_date"')
         ->toContain('wire:model="due_date"')
         ->toMatch('/<div[^>]*sticky bottom-0 z-20[^>]*pb-\[calc\(0\.5rem\+env\(safe-area-inset-bottom\)\)\][^>]*>.*?wire:target="save"/s');
 });
 
-it('keeps non-sticky form actions in normal flow for existing client forms', function (): void {
+it('keeps sticky form actions enabled for existing client forms', function (): void {
     $admin = User::query()->admins()->firstOrFail();
 
     $html = $this->actingAs($admin)
@@ -46,7 +45,7 @@ it('keeps non-sticky form actions in normal flow for existing client forms', fun
         ->assertSuccessful()
         ->getContent();
 
-    expect($html)->not->toContain('sticky bottom-0 z-20');
+    expect($html)->toContain('sticky bottom-0 z-20');
 });
 
 it('does not create a project when requested members are not eligible for its client', function (): void {

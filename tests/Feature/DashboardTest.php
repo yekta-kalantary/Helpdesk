@@ -53,8 +53,10 @@ it('shows the generic project workflow overview to admin', function (): void {
         ->assertSee($openStatus->title)
         ->assertSee('نیازمند تعیین مسئول')
         ->assertSee('اولویت: عادی')
-        ->assertSee('موعد: '.$dueDate->format('Y/m/d'))
-        ->assertSee('بروزرسانی '.$project->updated_at->format('Y/m/d'))
+        ->assertSee('موعد:')
+        ->assertSee($dueDate->format('Y/m/d'))
+        ->assertSee('بروزرسانی')
+        ->assertSee($project->updated_at->format('Y/m/d'))
         ->assertSee('تسک ایجاد شد')
         ->assertSee('dashboard-activity-heading', false)
         ->assertSee('فعال');

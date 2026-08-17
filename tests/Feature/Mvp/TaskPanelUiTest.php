@@ -328,10 +328,10 @@ it('keeps completed task detail read only and hides admin moderation controls', 
     app(ProjectMembershipManager::class)->add($project, $customer, $admin);
     $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Read only task',
-        'project_status_id' => mvpDoneStatus($project)->id,
         'priority' => TaskPriority::Normal,
     ]);
     app(TaskChecklist::class)->add($admin, $task, 'Completed step');
+    app(TaskWorkflow::class)->changeStatus($admin, $task, mvpDoneStatus($project));
 
     Livewire::actingAs($customer)
         ->test(Show::class, ['task' => $task->reference])
