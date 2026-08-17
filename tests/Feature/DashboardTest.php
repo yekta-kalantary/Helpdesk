@@ -54,9 +54,10 @@ it('shows the generic project workflow overview to admin', function (): void {
         ->assertSee('نیازمند تعیین مسئول')
         ->assertSee('اولویت: عادی')
         ->assertSee('موعد: '.$dueDate->format('Y/m/d'))
+        ->assertSee('بروزرسانی '.$project->updated_at->format('Y/m/d'))
         ->assertSee('تسک ایجاد شد')
         ->assertSee('dashboard-activity-heading', false)
-        ->assertSee('datetime=', false);
+        ->assertSee('فعال');
 });
 
 it('limits customer dashboard projects and tasks to active memberships', function (): void {

@@ -53,3 +53,9 @@ Implemented the focused Dashboard workday page polish. Backend behavior, Dashboa
 ### Fix Concerns
 
 - The strengthened rendered assertions require the configured MariaDB test database to execute; no production defect was found or changed.
+
+## Date Assertion Fix
+
+- Removed the impossible `assertSee('datetime=', false)` check because `x-ui.date` consumes `datetime` as a formatting prop and renders text only.
+- Added an assertion for the actual project row output, `بروزرسانی YYYY/MM/DD`, using the fixture's existing `updated_at` value.
+- Kept recent activity coverage on stable rendered content (`تسک ایجاد شد`) and the activity section heading marker without changing production code.
