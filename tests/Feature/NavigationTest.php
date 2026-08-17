@@ -30,11 +30,24 @@ it('renders role-aware authenticated navigation', function (): void {
     $customerNavigation = $customerNavigationMatches[1] ?? '';
 
     expect($customerNavigation)->not->toBeEmpty()
+        ->toContain('صفحه اصلی')
+        ->toContain('کارها')
+        ->toContain('فضاها')
         ->not->toContain(route('users.index'))
         ->not->toContain(route('clients.index'))
         ->toContain(route('projects.index'))
         ->toContain(route('tasks.index'))
         ->toContain(route('notifications.index'));
+
+    expect($adminResponse->getContent())
+        ->toContain('aria-label="ناوبری اصلی"')
+        ->toContain('data-sidebar')
+        ->toContain('aria-hidden="true"')
+        ->toContain('id="main-content"')
+        ->toContain('data-route-focus')
+        ->toContain('data-sidebar-open')
+        ->toContain('data-sidebar-close')
+        ->toContain('data-sidebar-backdrop');
 });
 
 it('keeps client and project entry actions role-aware and links visible projects to details', function (): void {

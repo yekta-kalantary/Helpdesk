@@ -2,6 +2,7 @@ const sidebar = () => document.querySelector('[data-sidebar]');
 const sidebarBackdrop = () => document.querySelector('[data-sidebar-backdrop]');
 const sidebarOpeners = () => document.querySelectorAll('[data-sidebar-open]');
 let lastSidebarOpener = null;
+let focusMainAfterNavigation = false;
 
 function focusSidebar() {
     const element = sidebar();
@@ -21,11 +22,7 @@ function syncSidebarAccessibility(open) {
 
     element.toggleAttribute('inert', mobileClosed);
 
-    if (mobileClosed) {
-        element.setAttribute('aria-hidden', 'true');
-    } else {
-        element.removeAttribute('aria-hidden');
-    }
+    element.setAttribute('aria-hidden', mobileClosed ? 'true' : 'false');
 }
 
 function setSidebarOpen(open) {
@@ -86,8 +83,20 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-document.addEventListener('livewire:navigate', closeSidebar);
-document.addEventListener('livewire:navigated', closeSidebar);
+document.addEventListener('livewire:navigate', () => {
+    focusMainAfterNavigation = true;
+    closeSidebar();
+});
+document.addEventListener('livewire:navigated', () => {
+    closeSidebar();
+
+    if (! focusMainAfterNavigation) {
+        return;
+    }
+
+    focusMainAfterNavigation = false;
+    window.requestAnimationFrame(() => document.querySelector('[data-route-focus]')?.focus({ preventScroll: true }));
+});
 
 window.addEventListener('resize', () => {
     if (window.innerWidth >= 1024) {
