@@ -78,62 +78,25 @@
     --button-secondary-border: var(--semantic-border);
     --button-secondary-text: var(--semantic-text);
     --button-focus-ring: var(--semantic-focus);
-    --input-background: var(--semantic-surface);
-    --input-border: var(--semantic-border);
-    --input-border-error: var(--semantic-danger);
-    --input-focus-ring: var(--semantic-focus);
-    --badge-neutral-background: var(--semantic-surface-muted);
-    --badge-neutral-text: var(--semantic-text-muted);
-    --badge-success-background: var(--semantic-success-surface);
-    --badge-success-text: var(--semantic-success-text);
-    --badge-warning-background: var(--semantic-warning-surface);
-    --badge-warning-text: var(--semantic-warning-text);
-    --badge-danger-background: var(--semantic-danger-surface);
-    --badge-danger-text: var(--semantic-danger-text);
-    --surface-background: var(--semantic-surface);
-    --surface-border: var(--semantic-border);
-    --field-label: var(--semantic-text);
-    --field-helper: var(--semantic-text-muted);
-    --field-error: var(--semantic-danger-text);
-    --color-input-background: var(--input-background);
-    --color-input-border: var(--input-border);
-    --color-field-label: var(--field-label);
-    --color-field-helper: var(--field-helper);
-    --color-field-error: var(--field-error);
-    --color-badge-neutral-background: var(--badge-neutral-background);
-    --color-badge-neutral-text: var(--badge-neutral-text);
-    --color-badge-success-background: var(--badge-success-background);
-    --color-badge-success-text: var(--badge-success-text);
-    --color-badge-warning-background: var(--badge-warning-background);
-    --color-badge-warning-text: var(--badge-warning-text);
-    --color-badge-danger-background: var(--badge-danger-background);
-    --color-badge-danger-text: var(--badge-danger-text);
+    --color-input-background: var(--semantic-surface);
+    --color-input-border: var(--semantic-border);
+    --color-input-border-error: var(--semantic-danger);
+    --color-input-focus-ring: var(--semantic-focus);
+    --color-badge-neutral-background: var(--semantic-surface-muted);
+    --color-badge-neutral-text: var(--semantic-text-muted);
+    --color-badge-success-background: var(--semantic-success-surface);
+    --color-badge-success-text: var(--semantic-success-text);
+    --color-badge-warning-background: var(--semantic-warning-surface);
+    --color-badge-warning-text: var(--semantic-warning-text);
+    --color-badge-danger-background: var(--semantic-danger-surface);
+    --color-badge-danger-text: var(--semantic-danger-text);
+    --color-surface-background: var(--semantic-surface);
+    --color-surface-border: var(--semantic-border);
+    --color-field-label: var(--semantic-text);
+    --color-field-helper: var(--semantic-text-muted);
+    --color-field-error: var(--semantic-danger-text);
     --shadow-subtle: var(--primitive-elevation-subtle);
 
-    /* Existing utility names remain aliases while consumers migrate in later tasks. */
-    --color-workspace-page: var(--semantic-page);
-    --color-workspace-surface: var(--semantic-surface);
-    --color-workspace-border: var(--semantic-border);
-    --color-workspace-teal: var(--semantic-info);
-    --color-workspace-coral: var(--semantic-accent);
-    --color-workspace-success: var(--semantic-success);
-    --color-workspace-success-surface: var(--semantic-success-surface);
-    --color-workspace-danger: var(--semantic-danger);
-    --color-workspace-danger-surface: var(--semantic-danger-surface);
-    --color-workspace-warning: var(--semantic-warning);
-    --color-workspace-warning-surface: var(--semantic-warning-surface);
-    --color-workspace-info: var(--semantic-info);
-    --color-workspace-info-surface: var(--semantic-info-surface);
-    --color-workspace-neutral: var(--semantic-text);
-    --color-workspace-neutral-surface: var(--semantic-surface-muted);
-    --color-workspace-text: var(--semantic-text);
-    --color-workspace-muted: var(--semantic-text-muted);
-    --color-workspace-divider: var(--semantic-border);
-    --color-workspace-accent: var(--semantic-accent);
-    --color-workspace-focus: var(--semantic-focus);
-    --radius-workspace: var(--primitive-radius-lg);
-    --spacing-workspace: var(--semantic-space-section);
-    --transition-duration-workspace: var(--primitive-motion-standard);
 }
 
 :root {
@@ -413,6 +376,22 @@
 }
 
 @layer components {
+    .workgroup-depth-1 {
+        margin-inline-start: 0;
+    }
+
+    .workgroup-depth-2 {
+        margin-inline-start: 1.25rem;
+    }
+
+    .workgroup-depth-3 {
+        margin-inline-start: 2.5rem;
+    }
+
+    .workgroup-depth-4 {
+        margin-inline-start: 3.75rem;
+    }
+
     .shell-skip-link {
         position: fixed;
         inset-block-start: var(--primitive-space-3);
@@ -473,6 +452,10 @@
         overflow-x: auto;
         overscroll-behavior-inline: contain;
         -webkit-overflow-scrolling: touch;
+    }
+
+    .ui-progress-bar {
+        width: calc(attr(data-progress type(<number>)) * 1%);
     }
 
     @media (min-width: 640px) {
