@@ -118,6 +118,53 @@ it('preserves task filter state and project-scoped statuses', function (): void 
         ->assertSeeHtml('wire:model.live="status"');
 });
 
+it('navigates task pagination and resets the page when search changes', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $project = mvpProject($client, 'Pagination behavior project');
+
+    foreach (range(1, 21) as $index) {
+        app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+            'title' => 'Pagination behavior task '.$index,
+            'due_date' => today()->subDays($index),
+        ]);
+    }
+
+    Livewire::actingAs($admin)
+        ->test(Index::class)
+        ->set('sort', 'due_desc')
+        ->assertSet('paginators.page', 1)
+        ->assertSee('Pagination behavior task 1')
+        ->call('gotoPage', 2)
+        ->assertSet('paginators.page', 2)
+        ->assertSee('Pagination behavior task 21')
+        ->assertDontSee('Pagination behavior task 1')
+        ->set('q', 'Pagination behavior task 1')
+        ->assertSet('paginators.page', 1)
+        ->assertSee('Pagination behavior task 1')
+        ->assertDontSee('Pagination behavior task 21');
+});
+
+it('updates task results when the debounced search value changes', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::query()->admins()->firstOrFail();
+    $project = mvpProject($client, 'Search behavior project');
+    $match = app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Needle match task']);
+    app(TaskWorkflow::class)->createForAdmin($admin, $project, ['title' => 'Other visible task']);
+
+    Livewire::actingAs($admin)
+        ->test(Index::class)
+        ->assertSee('Needle match task')
+        ->assertSee('Other visible task')
+        ->set('q', 'Needle match')
+        ->assertSet('q', 'Needle match')
+        ->assertSet('paginators.page', 1)
+        ->assertSee($match->title)
+        ->assertDontSee('Other visible task')
+        ->assertSeeHtml('wire:model.live.debounce.300ms="q"')
+        ->assertSeeHtml('wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort"');
+});
+
 it('does not expose task detail to an unauthorized user', function (): void {
     $client = Client::factory()->create();
     $otherClient = Client::factory()->create();
