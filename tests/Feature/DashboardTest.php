@@ -18,10 +18,14 @@ it('shows the generic project workflow overview to admin', function (): void {
     $admin = User::query()->admins()->firstOrFail();
     $client = Client::factory()->create(['name' => 'Admin dashboard client']);
     $project = mvpProject($client, 'Admin dashboard project');
+    $openStatus = mvpOpenStatus($project);
+    $dueDate = today()->addDay();
 
-    app(TaskWorkflow::class)->createForAdmin($admin, $project, [
+    $task = app(TaskWorkflow::class)->createForAdmin($admin, $project, [
         'title' => 'Admin dashboard task',
+        'project_status_id' => $openStatus->id,
         'priority' => TaskPriority::Normal,
+        'due_date' => $dueDate,
     ]);
 
     $this->actingAs($admin)
@@ -39,10 +43,20 @@ it('shows the generic project workflow overview to admin', function (): void {
         ->assertSee('فعالیت‌های اخیر')
         ->assertSee(route('tasks.index', ['assignee' => 'unassigned']), false)
         ->assertSee(route('tasks.index', ['overdue' => 1]), false)
+        ->assertSee(route('tasks.show', $task), false)
+        ->assertSee(route('projects.show', $project), false)
         ->assertDontSee('صف ادمین')
         ->assertDontSee('منتظر مشتری')
+        ->assertSee($task->reference)
+        ->assertSee('Admin dashboard task')
         ->assertSee('Admin dashboard project')
-        ->assertSee('Admin dashboard task');
+        ->assertSee($openStatus->title)
+        ->assertSee('نیازمند تعیین مسئول')
+        ->assertSee('اولویت: عادی')
+        ->assertSee('موعد: '.$dueDate->format('Y/m/d'))
+        ->assertSee('تسک ایجاد شد')
+        ->assertSee('dashboard-activity-heading', false)
+        ->assertSee('datetime=', false);
 });
 
 it('limits customer dashboard projects and tasks to active memberships', function (): void {
@@ -78,6 +92,8 @@ it('limits customer dashboard projects and tasks to active memberships', functio
         ->assertSee('فعالیت‌های اخیر')
         ->assertSee(route('tasks.index', ['assignee' => $customer->id]), false)
         ->assertSee(route('tasks.index', ['overdue' => 1]), false)
+        ->assertSee(route('tasks.show', $visibleProject->tasks()->firstOrFail()), false)
+        ->assertSee(route('projects.show', $visibleProject), false)
         ->assertSee('Visible dashboard project')
         ->assertSee('Visible dashboard task')
         ->assertDontSee('Hidden dashboard project')
@@ -94,4 +110,18 @@ it('shows actionable empty states for a customer without dashboard work', functi
         ->assertSee('رفتن به تسک‌ها')
         ->assertSee('پروژه‌ای برای نمایش نیست')
         ->assertSee('رفتن به پروژه‌ها');
+});
+
+it('shows actionable empty states for an admin without dashboard work', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('تسکی برای نمایش نیست')
+        ->assertSee('پروژه‌ای برای نمایش نیست')
+        ->assertSee(route('tasks.index'), false)
+        ->assertSee(route('projects.index'), false)
+        ->assertSee(route('tasks.index', ['assignee' => 'unassigned']), false)
+        ->assertSee('مشاهده صف بدون مسئول');
 });
