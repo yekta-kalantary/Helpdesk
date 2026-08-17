@@ -26,20 +26,20 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="divide-y divide-workspace-divider border-y border-workspace-divider ui-loading-stable" wire:loading.class="opacity-60" wire:target="q,client,status">
+    <div class="divide-y divide-border border-y border-border ui-loading-stable" wire:loading.class="opacity-60" wire:target="q,client,status">
         @forelse($users as $user)
-            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="user-{{ $user->id }}" class="block min-h-11 bg-workspace-surface px-1 py-4 transition hover:bg-workspace-neutral-surface focus-visible:bg-workspace-neutral-surface sm:px-3">
+            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="user-{{ $user->id }}" class="block min-h-11 bg-surface px-1 py-4 transition hover:bg-surface-muted focus-visible:bg-surface-muted sm:px-3">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
-                        <div class="break-words font-bold text-workspace-text">{{ $user->full_name }}</div>
-                        <div dir="ltr" class="mt-1 truncate text-right text-sm text-workspace-muted">{{ $user->email }}</div>
+                        <div class="break-words font-bold text-text text-workspace-text">{{ $user->full_name }}</div>
+                        <div dir="ltr" class="mt-1 truncate text-right text-body-sm text-text-muted">{{ $user->email }}</div>
                     </div>
                     <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
                 </div>
-                <dl class="mt-3 grid gap-2 text-sm text-workspace-muted sm:grid-cols-3">
-                    <div><dt class="text-xs">مشتری</dt><dd class="mt-1 truncate font-semibold text-workspace-text">{{ $user->client?->name ?? '—' }}</dd></div>
-                    <div><dt class="text-xs">موبایل</dt><dd dir="ltr" class="mt-1 truncate text-right font-semibold text-workspace-text">{{ $user->mobile ?: '—' }}</dd></div>
-                    <div><dt class="text-xs">آخرین ورود</dt><dd class="mt-1 font-semibold text-workspace-text"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
+                <dl class="mt-3 grid gap-2 text-body-sm text-text-muted sm:grid-cols-3">
+                    <div><dt class="text-caption">مشتری</dt><dd class="mt-1 truncate font-semibold text-text">{{ $user->client?->name ?? '—' }}</dd></div>
+                    <div><dt class="text-caption">موبایل</dt><dd dir="ltr" class="mt-1 truncate text-right font-semibold text-text">{{ $user->mobile ?: '—' }}</dd></div>
+                    <div><dt class="text-caption">آخرین ورود</dt><dd class="mt-1 font-semibold text-text"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
                 </dl>
             </a>
         @empty

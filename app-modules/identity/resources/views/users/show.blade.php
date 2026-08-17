@@ -12,9 +12,9 @@
 
     <div class="grid gap-8 xl:grid-cols-[2fr_1fr]">
         <form wire:submit="saveProfile">
-            <div class="divide-y divide-workspace-divider rounded-workspace border border-workspace-divider bg-workspace-surface px-4 sm:px-6">
+            <div class="divide-y divide-border rounded-surface border border-border bg-surface px-4 sm:px-6">
                 <section class="py-5 sm:py-6" aria-labelledby="user-contact-heading">
-                    <div class="mb-5"><h2 id="user-contact-heading" class="font-bold text-workspace-text">اطلاعات تماس</h2><p class="mt-1 text-sm leading-6 text-workspace-muted">ایمیل و موبایل برای ارتباط با این کاربر استفاده می‌شوند.</p></div>
+                    <div class="mb-5"><h2 id="user-contact-heading" class="font-bold text-text">اطلاعات تماس</h2><p class="mt-1 text-body-sm leading-6 text-text-muted">ایمیل و موبایل برای ارتباط با این کاربر استفاده می‌شوند.</p></div>
                     <div class="space-y-5">
                         <div class="grid gap-4 sm:grid-cols-2">
                             <x-ui.input name="name" :label="__('app.name_label')" :value="$name" wire:model="name" required />
@@ -28,7 +28,7 @@
                 </section>
 
                 <section class="py-5 sm:py-6" aria-labelledby="user-security-heading">
-                    <h2 id="user-security-heading" class="mb-5 font-bold text-workspace-text">دسترسی و امنیت</h2>
+                    <h2 id="user-security-heading" class="mb-5 font-bold text-text">دسترسی و امنیت</h2>
                     <div class="space-y-5">
                         <x-ui.checkbox name="is_active" label="کاربر فعال باشد" model="is_active" />
                         <div class="grid gap-4 sm:grid-cols-2">
@@ -38,7 +38,7 @@
                     </div>
                 </section>
 
-                <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-workspace-page/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-5 sm:backdrop-blur-none">
+                <x-ui.form-actions class="sticky bottom-0 z-10 -mx-4 bg-page/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-5 sm:backdrop-blur-none">
                     <x-ui.button type="submit" icon="fa-floppy-disk" wire:loading.attr="disabled" wire:target="saveProfile">{{ __('app.save') }}</x-ui.button>
                 </x-ui.form-actions>
             </div>
@@ -46,23 +46,23 @@
 
         <div class="space-y-5">
             <section aria-labelledby="user-summary-heading">
-                <h2 id="user-summary-heading" class="mb-3 font-bold text-workspace-text">خلاصه حساب</h2>
+                <h2 id="user-summary-heading" class="mb-3 font-bold text-text">خلاصه حساب</h2>
                 <dl class="space-y-4 text-sm">
-                    <div><dt class="text-workspace-muted">مشتری</dt><dd class="mt-1 font-bold">{{ $user->client?->name ?? '—' }}</dd></div>
-                    <div><dt class="text-workspace-muted">نقش</dt><dd class="mt-1 font-bold">{{ __('tasks::messages.roles.'.$user->role->value) }}</dd></div>
+                    <div><dt class="text-text-muted">مشتری</dt><dd class="mt-1 font-bold">{{ $user->client?->name ?? '—' }}</dd></div>
+                    <div><dt class="text-text-muted">نقش</dt><dd class="mt-1 font-bold">{{ __('tasks::messages.roles.'.$user->role->value) }}</dd></div>
                     <div><dt class="text-workspace-muted">وضعیت</dt><dd class="mt-1"><x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge></dd></div>
-                    <div><dt class="text-workspace-muted">آخرین ورود</dt><dd class="mt-1 font-bold"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
+                    <div><dt class="text-text-muted">آخرین ورود</dt><dd class="mt-1 font-bold"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
                 </dl>
             </section>
 
-            <section class="border-t border-workspace-divider pt-5" aria-labelledby="user-projects-heading">
-                <h2 id="user-projects-heading" class="font-bold text-workspace-text">پروژه‌های فعال عضو</h2>
-                <p class="mt-1 text-sm leading-6 text-workspace-muted">عضویت‌هایی که هنوز فعال هستند.</p>
-                <div class="mt-4 divide-y divide-workspace-divider border-y border-workspace-divider">
+            <section class="border-t border-border pt-5" aria-labelledby="user-projects-heading">
+                <h2 id="user-projects-heading" class="font-bold text-text">پروژه‌های فعال عضو</h2>
+                <p class="mt-1 text-body-sm leading-6 text-text-muted">عضویت‌هایی که هنوز فعال هستند.</p>
+                <div class="mt-4 divide-y divide-border border-y border-border">
                     @forelse($projects as $project)
-                        <a href="{{ route('projects.show', $project) }}" wire:navigate class="block min-h-11 py-3 font-semibold text-workspace-text hover:text-workspace-accent">{{ $project->name }}</a>
+                        <a href="{{ route('projects.show', $project) }}" wire:navigate class="block min-h-11 py-3 font-semibold text-text hover:text-accent">{{ $project->name }}</a>
                     @empty
-                        <p class="text-sm text-workspace-muted">عضویت فعالی ندارد.</p>
+                        <p class="text-body-sm text-text-muted">عضویت فعالی ندارد.</p>
                     @endforelse
                 </div>
             </section>

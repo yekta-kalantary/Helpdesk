@@ -1,6 +1,6 @@
 <div>
     <section aria-labelledby="forgot-password-heading">
-        <div class="mb-5"><h1 id="forgot-password-heading" class="text-xl font-black text-workspace-text">بازیابی رمز عبور</h1><p class="mt-1 text-sm leading-6 text-workspace-muted">ایمیل حساب خود را وارد کنید.</p></div>
+        <div class="mb-5"><h1 id="forgot-password-heading" class="text-heading-lg font-black text-text">بازیابی رمز عبور</h1><p class="mt-1 text-body-sm leading-6 text-text-muted">ایمیل حساب خود را وارد کنید.</p></div>
 
         @if($sent)
             <x-ui.alert class="mb-4" tone="success">
@@ -16,6 +16,6 @@
             </x-ui.button>
         </form>
 
-        <a href="{{ route('login') }}" wire:navigate class="mt-5 inline-flex min-h-11 w-full items-center justify-center px-3 text-center text-sm font-semibold text-workspace-muted hover:text-workspace-text">بازگشت به ورود</a>
+        <a href="{{ route('login') }}" wire:navigate class="mt-5 inline-flex min-h-11 w-full items-center justify-center px-3 text-center text-body-sm font-semibold text-text-muted hover:text-text">بازگشت به ورود</a>
     </section>
 </div>

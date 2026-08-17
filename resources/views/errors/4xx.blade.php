@@ -10,9 +10,10 @@
 
 @section('content')
     <x-ui.card class="text-center">
-        <div class="text-5xl font-black text-slate-300">{{ $status }}</div>
-        <h1 class="mt-4 text-2xl font-black text-slate-950">{{ __('errors.'.$translationStatus.'.title') }}</h1>
-        <p class="mt-3 text-sm leading-7 text-slate-500">{{ __('errors.'.$translationStatus.'.message') }}</p>
+        <div class="text-display font-black text-text-muted" aria-hidden="true">{{ $status }}</div>
+        <p class="mt-2 text-label font-semibold text-text-muted">خطای درخواست</p>
+        <h1 class="mt-4 text-heading-xl font-black text-text">{{ __('errors.'.$translationStatus.'.title') }}</h1>
+        <p class="mt-3 text-body-sm leading-7 text-text-muted">{{ __('errors.'.$translationStatus.'.message') }}</p>
         <div class="mt-6"><x-ui.button :href="route('dashboard')">{{ __('errors.back_home') }}</x-ui.button></div>
     </x-ui.card>
 @endsection

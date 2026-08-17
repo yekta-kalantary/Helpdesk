@@ -1,6 +1,6 @@
 <div>
     <section aria-labelledby="reset-password-heading">
-        <div class="mb-5"><h1 id="reset-password-heading" class="text-xl font-black text-workspace-text">تنظیم رمز عبور</h1><p class="mt-1 text-sm leading-6 text-workspace-muted">یک رمز عبور جدید برای حساب خود تعیین کنید.</p></div>
+        <div class="mb-5"><h1 id="reset-password-heading" class="text-heading-lg font-black text-text">تنظیم رمز عبور</h1><p class="mt-1 text-body-sm leading-6 text-text-muted">یک رمز عبور جدید برای حساب خود تعیین کنید.</p></div>
 
         <form wire:submit="resetPassword" class="space-y-5">
             <x-ui.input name="email" label="ایمیل" type="email" dir="ltr" :value="$email" wire:model="email" required autocomplete="email" />
