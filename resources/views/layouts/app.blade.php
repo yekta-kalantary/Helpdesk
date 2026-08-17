@@ -90,7 +90,7 @@
         @endauth
     </aside>
 
-    <main id="main-content" data-route-focus tabindex="-1" class="min-w-0 flex-1 px-4 py-5 outline-none sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+    <main id="main-content" data-route-focus tabindex="-1" class="min-w-0 flex-1 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
         <div class="mx-auto w-full max-w-screen-2xl">
         @if($errors->any())
             <x-ui.alert class="mb-5" tone="danger">
