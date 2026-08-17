@@ -1,9 +1,5 @@
 <div>
-    <x-ui.card>
-        <div class="mb-6">
-            <h1 class="text-2xl font-black tracking-tight text-slate-950">بازیابی رمز عبور</h1>
-            <p class="mt-1 text-sm text-slate-500">ایمیل حساب خود را وارد کنید.</p>
-        </div>
+    <x-ui.card title="بازیابی رمز عبور" subtitle="ایمیل حساب خود را وارد کنید.">
 
         @if($sent)
             <x-ui.alert class="mb-4" tone="success">
@@ -11,7 +7,7 @@
             </x-ui.alert>
         @endif
 
-        <form wire:submit="send" class="space-y-4">
+        <form wire:submit="send" class="space-y-5">
             <x-ui.input name="email" label="ایمیل" type="email" dir="ltr" :value="$email" wire:model="email" required autofocus autocomplete="email" />
             <x-ui.button class="w-full" type="submit" wire:loading.attr="disabled" wire:target="send">
                 <span wire:loading.remove wire:target="send">ارسال لینک بازیابی</span>

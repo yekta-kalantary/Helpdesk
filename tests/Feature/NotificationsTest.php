@@ -34,6 +34,19 @@ it('shows the authenticated users unread notification count', function (): void 
         ->assertSee('2');
 });
 
+it('renders notification rows as readable links with unread emphasis', function (): void {
+    $user = User::factory()->admin()->create();
+    $notification = createUnreadNotification($user, ['title' => 'Review task', 'body' => 'A task needs your attention.']);
+
+    $this->actingAs($user);
+
+    Livewire::test(Index::class)
+        ->assertSee('Review task')
+        ->assertSee('A task needs your attention.')
+        ->assertSee('خوانده‌نشده')
+        ->assertSee("wire:click=\"open('{$notification->id}')\"", false);
+});
+
 it('caps large unread counts for a usable notification badge', function (): void {
     $user = User::factory()->admin()->create();
 

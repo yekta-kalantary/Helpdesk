@@ -26,6 +26,25 @@ it('shows customer users to admin and hides system admins from customer manageme
         ->assertDontSee($admin->email);
 });
 
+it('keeps user management controls and identity form labels admin-only', function (): void {
+    $admin = User::query()->admins()->firstOrFail();
+    $customer = User::factory()->customer(Client::factory()->create())->create();
+
+    $this->actingAs($admin)
+        ->get(route('users.index'))
+        ->assertSee(route('users.create'))
+        ->assertSee('همه وضعیت‌ها');
+
+    $this->actingAs($customer)
+        ->get(route('profile'))
+        ->assertOk()
+        ->assertSee('name="name"', false)
+        ->assertSee('name="last_name"', false)
+        ->assertSee(__('app.save'));
+
+    $this->actingAs($customer)->get(route('users.index'))->assertForbidden();
+});
+
 it('filters customer users by client and status while retaining search', function (): void {
     $admin = User::query()->admins()->firstOrFail();
     $client = Client::factory()->create(['name' => 'Acme Client']);

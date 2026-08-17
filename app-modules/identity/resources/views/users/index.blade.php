@@ -3,7 +3,7 @@
         <x-ui.alert class="mb-5" tone="success">{{ session('success') }}</x-ui.alert>
     @endif
 
-    <x-ui.page-header :title="__('identity::messages.users')">
+    <x-ui.page-header :title="__('identity::messages.users')" subtitle="مدیریت کاربران مشتریان و وضعیت دسترسی آن‌ها.">
         <x-slot:actions>
             <x-ui.button :href="route('users.create')" icon="fa-user-plus" wire:navigate>{{ __('identity::messages.new_user') }}</x-ui.button>
         </x-slot:actions>
@@ -26,7 +26,7 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="overflow-x-auto">
+    <div class="hidden overflow-x-auto md:block">
         <x-ui.table wire:loading.class="opacity-60" wire:target="q,client,status">
             <thead>
                 <tr>
@@ -54,6 +54,26 @@
                 @endforelse
             </tbody>
         </x-ui.table>
+    </div>
+
+    <div class="space-y-3 md:hidden" wire:loading.class="opacity-60" wire:target="q,client,status">
+        @forelse($users as $user)
+            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="mobile-user-{{ $user->id }}" class="block rounded-2xl border border-workspace-border bg-workspace-surface p-4 shadow-[0_8px_24px_rgba(15,92,90,0.06)] transition hover:border-workspace-teal hover:bg-teal-50/30 focus:outline-none">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="truncate font-black text-slate-950">{{ $user->full_name }}</div>
+                        <div dir="ltr" class="mt-1 truncate text-right text-sm text-slate-600">{{ $user->email }}</div>
+                    </div>
+                    <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
+                </div>
+                <dl class="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3 text-sm">
+                    <div><dt class="text-xs text-slate-500">مشتری</dt><dd class="mt-1 truncate font-semibold text-slate-800">{{ $user->client?->name ?? '—' }}</dd></div>
+                    <div><dt class="text-xs text-slate-500">آخرین ورود</dt><dd class="mt-1 font-semibold text-slate-800"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>
+                </dl>
+            </a>
+        @empty
+            <x-ui.empty-state title="کاربری پیدا نشد" description="فیلترها را تغییر دهید یا کاربر جدیدی بسازید." />
+        @endforelse
     </div>
 
     <div class="mt-5">{{ $users->links() }}</div>
