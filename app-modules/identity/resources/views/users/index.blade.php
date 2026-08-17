@@ -26,9 +26,9 @@
         </div>
     </x-ui.filter-bar>
 
-    <div class="divide-y divide-border border-y border-border ui-loading-stable" wire:loading.class="opacity-60" wire:target="q,client,status">
+    <div class="border-y border-border ui-loading-stable" wire:loading.class="opacity-60" wire:target="q,client,status">
         @forelse($users as $user)
-            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="user-{{ $user->id }}" class="block min-h-11 bg-surface px-1 py-4 transition hover:bg-surface-muted focus-visible:bg-surface-muted sm:px-3">
+            <a href="{{ route('users.show', $user) }}" wire:navigate wire:key="user-{{ $user->id }}" class="ui-list-action ui-list-row ui-list-divider block min-h-11 bg-surface px-1 sm:px-3">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
                         <div class="break-words font-semibold text-text">{{ $user->full_name }}</div>
@@ -36,7 +36,7 @@
                     </div>
                     <x-ui.badge :tone="$user->is_active ? 'success' : 'neutral'">{{ $user->is_active ? 'فعال' : 'غیرفعال' }}</x-ui.badge>
                 </div>
-                <dl class="mt-3 grid gap-2 text-body-sm text-text-muted sm:grid-cols-3">
+                <dl class="ui-list-meta mt-3 grid gap-2 sm:grid-cols-3">
                     <div><dt class="text-caption">مشتری</dt><dd class="mt-1 truncate font-semibold text-text">{{ $user->client?->name ?? '—' }}</dd></div>
                     <div><dt class="text-caption">موبایل</dt><dd dir="ltr" class="mt-1 truncate text-right font-semibold text-text">{{ $user->mobile ?: '—' }}</dd></div>
                     <div><dt class="text-caption">آخرین ورود</dt><dd class="mt-1 font-semibold text-text"><x-ui.date :value="$user->last_login_at" datetime />{{ $user->last_login_at ? '' : '—' }}</dd></div>

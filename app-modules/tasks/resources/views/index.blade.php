@@ -12,31 +12,31 @@
     <div class="mb-4 flex flex-wrap items-center gap-2" aria-label="فیلترهای سریع">
         <span class="text-label font-bold text-text-muted">فیلترهای سریع</span>
         <button type="button" wire:click="$set('overdue', '1')" aria-pressed="{{ $overdue === '1' ? 'true' : 'false' }}" @class([
-            'min-h-11 rounded-button border px-3 py-1.5 text-label font-bold transition',
+            'ui-filter-chip',
             'border-warning bg-warning-surface text-warning-text' => $overdue === '1',
-            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary' => $overdue !== '1',
+            'bg-surface' => $overdue !== '1',
         ])>فقط عقب‌افتاده</button>
         <button type="button" wire:click="$set('assignee', '{{ auth()->id() }}')" aria-pressed="{{ $assignee === (string) auth()->id() ? 'true' : 'false' }}" @class([
-            'min-h-11 rounded-button border px-3 py-1.5 text-label font-bold transition',
+            'ui-filter-chip',
             'border-primary bg-info-surface text-info-text' => $assignee === (string) auth()->id(),
-            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary' => $assignee !== (string) auth()->id(),
+            'bg-surface' => $assignee !== (string) auth()->id(),
         ])>مسئول من</button>
         <button type="button" wire:click="$set('assignee', 'unassigned')" aria-pressed="{{ $assignee === 'unassigned' ? 'true' : 'false' }}" @class([
-            'min-h-11 rounded-button border px-3 py-1.5 text-label font-bold transition',
+            'ui-filter-chip',
             'border-primary bg-info-surface text-info-text' => $assignee === 'unassigned',
-            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary' => $assignee !== 'unassigned',
+            'bg-surface' => $assignee !== 'unassigned',
         ])>بدون مسئول</button>
         @foreach($priorities as $priorityItem)
             <button type="button" wire:click="$set('priority', '{{ $priorityItem->value }}')" aria-pressed="{{ $priority === $priorityItem->value ? 'true' : 'false' }}" @class([
-                'min-h-11 rounded-button border px-3 py-1.5 text-label font-bold transition',
+                'ui-filter-chip',
                 'border-primary bg-info-surface text-info-text' => $priority === $priorityItem->value,
-                'border-border bg-surface text-text-muted hover:border-primary hover:text-primary' => $priority !== $priorityItem->value,
+                'bg-surface' => $priority !== $priorityItem->value,
             ])>{{ __('tasks::messages.priorities.'.$priorityItem->value) }}</button>
         @endforeach
         <button type="button" wire:click="$set('sort', 'due_asc')" aria-pressed="{{ $sort === 'due_asc' ? 'true' : 'false' }}" @class([
-            'min-h-11 rounded-button border px-3 py-1.5 text-label font-bold transition',
+            'ui-filter-chip',
             'border-primary bg-info-surface text-info-text' => $sort === 'due_asc',
-            'border-border bg-surface text-text-muted hover:border-primary hover:text-primary' => $sort !== 'due_asc',
+            'bg-surface' => $sort !== 'due_asc',
         ])>موعد نزدیک‌تر</button>
     </div>
 
@@ -106,7 +106,7 @@
     <div class="space-y-3 lg:hidden" wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort" data-task-list>
         @forelse($tasks as $task)
             <x-ui.card wire:key="task-card-{{ $task->id }}" padding="false" class="overflow-hidden">
-                <a href="{{ route('tasks.show', $task) }}" wire:navigate class="block p-4 transition hover:bg-info-surface/40">
+                <a href="{{ route('tasks.show', $task) }}" wire:navigate class="ui-list-action ui-list-row block">
                     <div class="flex items-start justify-between gap-3" data-task-row>
                         <div class="min-w-0">
                             <p dir="ltr" class="text-caption font-bold text-info-text">{{ $task->reference }}</p>
@@ -121,7 +121,7 @@
                             <x-ui.badge tone="danger">عقب‌افتاده</x-ui.badge>
                         @endif
                     </div>
-                        <div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-body-sm">
+                    <div class="ui-list-meta mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
                         <div><p class="text-caption text-text-muted">پروژه</p><p class="mt-1 font-semibold text-text">{{ $task->project->name }}</p></div>
                         <div><p class="text-caption text-text-muted">گروه کاری</p><p class="mt-1 font-semibold text-text">{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</p></div>
                         <div><p class="text-caption text-text-muted">اولویت</p><p class="mt-1 font-semibold text-text">{{ __('tasks::messages.priorities.'.$task->priority->value) }}</p></div>
@@ -137,9 +137,9 @@
     </div>
 
     <div class="hidden lg:block" wire:loading.class="opacity-60" wire:target="q,project,status,priority,assignee,overdue,sort" data-task-list>
-        <div class="divide-y divide-border rounded-surface border border-border bg-surface">
+        <div class="rounded-surface border border-border bg-surface">
             @forelse($tasks as $task)
-                <article class="group p-5 transition hover:bg-info-surface/30" wire:key="task-{{ $task->id }}" data-task-row>
+                <article class="ui-list-row ui-list-divider group" wire:key="task-{{ $task->id }}" data-task-row>
                     <div class="flex items-start justify-between gap-6">
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
@@ -157,7 +157,7 @@
                             <p class="mt-1 font-semibold text-text"><x-ui.date :value="$task->updated_at" datetime /></p>
                         </div>
                     </div>
-                    <dl class="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-body-sm text-text-muted" aria-label="متادیتای تسک">
+                    <dl class="ui-list-meta mt-4 flex flex-wrap gap-x-8 gap-y-2" aria-label="متادیتای تسک">
                         <div><dt class="inline text-caption text-text-muted">پروژه: </dt><dd class="inline font-semibold text-text">{{ $task->project->name }}</dd></div>
                         <div><dt class="inline text-caption text-text-muted">گروه کاری: </dt><dd class="inline font-semibold text-text">{{ $task->workGroup?->title ?? 'ریشه پروژه' }}</dd></div>
                         <div><dt class="inline text-caption text-text-muted">مسئول: </dt><dd class="inline font-semibold text-text">{{ $task->assignee?->full_name ?? __('tasks::messages.assignee.none') }}</dd></div>
