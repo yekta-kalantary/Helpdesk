@@ -24,7 +24,7 @@ Project-specific decisions:
 
 - Reuse the Login and Password Recovery shell and spacing.
 - Use a focused two-field form with visible password requirements.
-- Use the local IRANYekanXVF font and local Font Awesome assets only.
+- Use the local IRANYekanXVF font and the installed Lucide icon package only.
 - Provide password visibility toggles for both password fields.
 - Use semantic success and error states; do not use color alone.
 - Do not show the raw token or technical token errors in the interface.

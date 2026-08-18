@@ -15,7 +15,7 @@
 - Keep Identity behavior in `app-modules/identity`; keep shared shell composition in `resources/js`.
 - Do not pass Eloquent models directly to Inertia pages.
 - Do not place domain authorization rules in Vue components.
-- Use local assets only: IRANYekanXVF, Font Awesome Light, and Font Awesome Brands.
+- Use local assets only: IRANYekanXVF and the installed Lucide icon package.
 - Use Tailwind CSS v4 utilities and existing shadcn-vue primitives.
 - Verify each task and commit it before starting the next task.
 

@@ -26,7 +26,7 @@ Project-specific decisions:
 - Use a restrained elevated surface instead of heavy glass blur.
 - Use the local IRANYekanXVF font; do not load the suggested external Google font.
 - Use Indigo as the primary action color and semantic red only for errors.
-- Use Font Awesome Light or Brands only when an icon communicates meaning; never use emoji icons.
+- Use Lucide icons when an icon communicates meaning; never use emoji icons.
 - Keep the page focused on authentication; do not add marketing sections or decorative illustrations.
 
 ## Layout

@@ -24,7 +24,7 @@ Project-specific decisions:
 
 - Reuse the Login page shell, spacing, surface, local font, and RTL behavior.
 - Use a single focused email form with one primary action.
-- Use the local IRANYekanXVF font and local Font Awesome assets only.
+- Use the local IRANYekanXVF font and the installed Lucide icon package only.
 - Do not use external fonts, illustrations, security badges, or marketing sections.
 - Use a neutral success surface rather than a visually alarming confirmation state.
 - Keep the recovery path obvious: submit request, show confirmation, provide a return-to-login action.

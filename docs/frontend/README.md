@@ -39,7 +39,7 @@ Frontend design and implementation are approved one page at a time.
 - Use Laravel, Inertia.js, Vue 3, TypeScript, Vite, Tailwind CSS, shadcn-vue, and Reka UI.
 - Keep page code inside its owning module.
 - Keep shared primitives and shell composition in the shared frontend layer.
-- Use local assets only: IRANYekanXVF, Font Awesome Light, and Font Awesome Brands.
+- Use local assets only: IRANYekanXVF and the installed Lucide icon package.
 - Use Laravel localization with English and Persian entries for every user-facing string.
 - Do not pass Eloquent models directly to Inertia pages.
 - Do not put domain rules in Vue components.
