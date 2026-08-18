@@ -33,6 +33,13 @@ it('requires every customer to belong to exactly one client', function (): void 
     ]))->toThrow(DomainException::class);
 });
 
+it('requires every employee to belong to exactly one client', function (): void {
+    expect(fn () => User::factory()->create([
+        'role' => UserRole::Employee,
+        'client_id' => null,
+    ]))->toThrow(DomainException::class);
+});
+
 it('allows admins without a client', function (): void {
     $admin = User::factory()->admin()->create();
 
@@ -59,4 +66,18 @@ it('blocks customer authentication while its client is inactive', function (): v
     $client->update(['status' => ClientStatus::Active]);
 
     expect($customer->refresh()->canAuthenticate())->toBeTrue();
+});
+
+it('authenticates employees only while their client is active', function (): void {
+    $client = Client::query()->create([
+        'name' => 'Acme',
+        'status' => ClientStatus::Inactive,
+    ]);
+    $employee = User::factory()->employee($client)->create();
+
+    expect($employee->canAuthenticate())->toBeFalse();
+
+    $client->update(['status' => ClientStatus::Active]);
+
+    expect($employee->refresh()->canAuthenticate())->toBeTrue();
 });

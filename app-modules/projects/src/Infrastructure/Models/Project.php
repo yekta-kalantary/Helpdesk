@@ -102,15 +102,31 @@ class Project extends Model
             return $query;
         }
 
-        if (! $user->canAuthenticate() || ! $user->client_id) {
-            return $query->whereRaw('1 = 0');
+        if ($user->isCustomer()) {
+            if (! $user->canAuthenticate() || ! $user->client_id) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query
+                ->where('client_id', $user->client_id)
+                ->whereHas('members', fn (Builder $members) => $members
+                    ->whereKey($user->id)
+                    ->whereNull('project_user.removed_at'));
         }
 
-        return $query
-            ->where('client_id', $user->client_id)
-            ->whereHas('members', fn (Builder $members) => $members
-                ->whereKey($user->id)
-                ->whereNull('project_user.removed_at'));
+        if ($user->isEmployee()) {
+            if (! $user->canAuthenticate() || ! $user->client_id) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query
+                ->where('client_id', $user->client_id)
+                ->whereHas('members', fn (Builder $members) => $members
+                    ->whereKey($user->id)
+                    ->whereNull('project_user.removed_at'));
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 
     public function hasActiveMember(User $user): bool

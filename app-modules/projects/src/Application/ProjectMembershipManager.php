@@ -127,8 +127,16 @@ class ProjectMembershipManager
             throw new DomainException('Membership cannot be added to a project with an inactive client.');
         }
 
-        if (! $user->isCustomer() || ! $user->is_active) {
-            throw new DomainException('Only active customer users can be project members.');
+        if ($user->isCustomer()) {
+            if (! $user->is_active) {
+                throw new DomainException('Only active customer users can be project members.');
+            }
+        } elseif ($user->isEmployee()) {
+            if (! $user->is_active) {
+                throw new DomainException('Only active employee users can be project members.');
+            }
+        } else {
+            throw new DomainException('Only customer or employee users can be project members.');
         }
 
         if ($user->client_id !== $project->client_id) {

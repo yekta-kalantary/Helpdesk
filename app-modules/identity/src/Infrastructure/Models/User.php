@@ -41,6 +41,10 @@ class User extends Authenticatable implements CanResetPasswordContract
                 throw new DomainException('Customer users must belong to a client.');
             }
 
+            if ($role === UserRole::Employee && ! $user->client_id) {
+                throw new DomainException('Employee users must belong to a client.');
+            }
+
             if ($role === UserRole::Admin && $user->client_id) {
                 throw new DomainException('Admin users cannot belong to a client.');
             }
@@ -67,6 +71,11 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $query->where('role', UserRole::Customer->value);
     }
 
+    public function scopeEmployees(Builder $query): Builder
+    {
+        return $query->where('role', UserRole::Employee->value);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
@@ -75,6 +84,11 @@ class User extends Authenticatable implements CanResetPasswordContract
     public function isCustomer(): bool
     {
         return $this->role === UserRole::Customer;
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->role === UserRole::Employee;
     }
 
     public function canAuthenticate(): bool
@@ -87,7 +101,15 @@ class User extends Authenticatable implements CanResetPasswordContract
             return true;
         }
 
-        return $this->client()->active()->exists();
+        if ($this->isCustomer()) {
+            return $this->client()->active()->exists();
+        }
+
+        if ($this->isEmployee()) {
+            return $this->client()->active()->exists();
+        }
+
+        return false;
     }
 
     protected function email(): Attribute

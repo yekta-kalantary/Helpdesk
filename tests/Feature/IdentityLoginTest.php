@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Hash;
+use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 
 it('renders the identity login page for guests', function (): void {
@@ -30,6 +31,20 @@ it('authenticates an active user and regenerates the session', function (): void
     $response->assertRedirect(route('home'));
     $this->assertAuthenticatedAs($user);
     expect($user->refresh()->last_login_at)->not->toBeNull();
+});
+
+it('authenticates an active employee with an active client', function (): void {
+    $employee = User::factory()->employee(Client::factory()->create())->create([
+        'email' => 'employee@example.test',
+        'password' => Hash::make('secret-password'),
+    ]);
+
+    $this->post(route('login.store'), [
+        'email' => 'employee@example.test',
+        'password' => 'secret-password',
+    ])->assertRedirect(route('home'));
+
+    $this->assertAuthenticatedAs($employee);
 });
 
 it('rejects invalid credentials without authenticating the user', function (): void {

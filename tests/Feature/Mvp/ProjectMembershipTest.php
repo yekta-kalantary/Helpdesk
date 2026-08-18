@@ -38,6 +38,46 @@ it('grants visibility only while membership is active', function (): void {
     expect(Project::query()->visibleTo($customer)->whereKey($project)->exists())->toBeFalse();
 });
 
+it('grants employees visibility only through active same-client membership', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $employee = User::factory()->employee($client)->create();
+    $project = mvpProject($client, 'Employee project');
+    $manager = app(ProjectMembershipManager::class);
+
+    expect(Project::query()->visibleTo($employee)->whereKey($project)->exists())->toBeFalse();
+
+    $manager->add($project, $employee, $admin);
+
+    expect(Project::query()->visibleTo($employee)->whereKey($project)->exists())->toBeTrue();
+
+    $manager->remove($project, $employee, $admin);
+
+    expect(Project::query()->visibleTo($employee)->whereKey($project)->exists())->toBeFalse();
+});
+
+it('keeps customer and employee visibility equivalent for equivalent memberships', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->customer($client)->create();
+    $employee = User::factory()->employee($client)->create();
+    $project = mvpProject($client, 'Equivalent access');
+    $manager = app(ProjectMembershipManager::class);
+
+    $manager->add($project, $customer, $admin);
+    $manager->add($project, $employee, $admin);
+
+    expect(Project::query()->visibleTo($customer)->whereKey($project)->exists())
+        ->toBe(Project::query()->visibleTo($employee)->whereKey($project)->exists());
+});
+
+it('gives admins full visibility without membership or a client', function (): void {
+    $admin = User::factory()->admin()->create();
+    $project = mvpProject(Client::factory()->create(), 'Admin project');
+
+    expect(Project::query()->visibleTo($admin)->whereKey($project)->exists())->toBeTrue();
+});
+
 it('reactivates the same membership row and preserves lifecycle history', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
@@ -94,6 +134,19 @@ it('rejects cross-client membership and inactive customers', function (): void {
 
     expect(fn () => $manager->add($project, $customerB, $admin))->toThrow(DomainException::class)
         ->and(fn () => $manager->add($project, $inactiveCustomerA, $admin))->toThrow(DomainException::class);
+});
+
+it('rejects cross-client and inactive employee memberships', function (): void {
+    $clientA = Client::factory()->create();
+    $clientB = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $employeeB = User::factory()->employee($clientB)->create();
+    $inactiveEmployeeA = User::factory()->employee($clientA)->inactive()->create();
+    $project = mvpProject($clientA, 'Client A project');
+    $manager = app(ProjectMembershipManager::class);
+
+    expect(fn () => $manager->add($project, $employeeB, $admin))->toThrow(DomainException::class)
+        ->and(fn () => $manager->add($project, $inactiveEmployeeA, $admin))->toThrow(DomainException::class);
 });
 
 it('keeps project client immutable after creation', function (): void {

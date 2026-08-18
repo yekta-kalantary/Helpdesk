@@ -46,6 +46,29 @@ class TaskWorkflow
         ]);
     }
 
+    public function createForEmployee(User $actor, Project $project, array $data): Task
+    {
+        if (! $actor->isEmployee()) {
+            throw new DomainException('Only an Employee may use the Employee task creation flow.');
+        }
+
+        $this->assertProjectAccess($actor, $project);
+
+        if (filled($data['work_group_id'] ?? null)) {
+            throw new DomainException('Employee-created Tasks must be created at the Project root.');
+        }
+
+        return $this->createTask($actor, $project, [
+            'title' => $data['title'] ?? '',
+            'description' => $data['description'] ?? null,
+            'project_status_id' => $data['project_status_id'] ?? null,
+            'work_group_id' => null,
+            'priority' => TaskPriority::Normal,
+            'assigned_to' => null,
+            'due_date' => null,
+        ]);
+    }
+
     public function createForAdmin(User $actor, Project $project, array $data): Task
     {
         $this->assertAdmin($actor);
@@ -175,6 +198,15 @@ class TaskWorkflow
     {
         if (! $actor->isCustomer()) {
             throw new DomainException('Only a Customer may use the Customer transition flow.');
+        }
+
+        return $this->changeStatus($actor, $task, $status);
+    }
+
+    public function transitionByEmployee(User $actor, Task $task, ProjectTaskStatus $status): Task
+    {
+        if (! $actor->isEmployee()) {
+            throw new DomainException('Only an Employee may use the Employee transition flow.');
         }
 
         return $this->changeStatus($actor, $task, $status);
@@ -354,10 +386,16 @@ class TaskWorkflow
             throw new DomainException('An active account is required.');
         }
 
-        if (! $user->isAdmin()) {
-            if (! $user->isCustomer() || $user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
+        if ($user->isCustomer()) {
+            if ($user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
                 throw new DomainException('Active Project membership is required.');
             }
+        } elseif ($user->isEmployee()) {
+            if ($user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
+                throw new DomainException('Active Project membership is required.');
+            }
+        } elseif (! $user->isAdmin()) {
+            throw new DomainException('Project access is not allowed.');
         }
 
         $this->assertProjectOpen($project);

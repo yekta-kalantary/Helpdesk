@@ -189,13 +189,36 @@ class Task extends Model
             return;
         }
 
-        if (! $assignee->isCustomer() || ! $assignee->client_id) {
+        if ($assignee->isCustomer()) {
+            if (! $assignee->client_id) {
+                throw new DomainException('Task assignee has an invalid customer account.');
+            }
+
+            $project = Project::query()->find($this->project_id);
+            if (! $project || $project->client_id !== $assignee->client_id || ! $project->hasActiveMember($assignee)) {
+                throw new DomainException('Customer assignee must be an active member of the task Project.');
+            }
+
+            return;
+        }
+
+        if ($assignee->isEmployee()) {
+            if (! $assignee->client_id) {
+                throw new DomainException('Task assignee has an invalid employee account.');
+            }
+
+            $project = Project::query()->find($this->project_id);
+            if (! $project || $project->client_id !== $assignee->client_id || ! $project->hasActiveMember($assignee)) {
+                throw new DomainException('Employee assignee must be an active member of the task Project.');
+            }
+
+            return;
+        }
+
+        if (! $assignee->client_id) {
             throw new DomainException('Task assignee has an invalid role.');
         }
 
-        $project = Project::query()->find($this->project_id);
-        if (! $project || $project->client_id !== $assignee->client_id || ! $project->hasActiveMember($assignee)) {
-            throw new DomainException('Customer assignee must be an active member of the task Project.');
-        }
+        throw new DomainException('Task assignee has an invalid role.');
     }
 }

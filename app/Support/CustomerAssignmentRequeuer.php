@@ -21,13 +21,13 @@ class CustomerAssignmentRequeuer
     ) {}
 
     /** @return Collection<int, Task> */
-    public function requeue(User $customer, User $actor, ?Project $project = null): Collection
+    public function requeue(User $user, User $actor, ?Project $project = null): Collection
     {
-        $this->assertValidActors($customer, $actor);
+        $this->assertValidActors($user, $actor);
 
-        $tasks = DB::transaction(function () use ($customer, $actor, $project): Collection {
+        $tasks = DB::transaction(function () use ($user, $actor, $project): Collection {
             $query = Task::query()
-                ->where('assigned_to', $customer->id)
+                ->where('assigned_to', $user->id)
                 ->whereHas('projectStatus', fn (Builder $statuses): Builder => $statuses->where('is_done', false))
                 ->when($project, fn (Builder $tasks): Builder => $tasks->where('project_id', $project->id));
 
@@ -71,14 +71,20 @@ class CustomerAssignmentRequeuer
         return $tasks;
     }
 
-    private function assertValidActors(User $customer, User $actor): void
+    private function assertValidActors(User $user, User $actor): void
     {
         if (! $actor->isAdmin() || ! $actor->is_active) {
-            throw new DomainException('Only an active Admin may release Customer assignments.');
+            throw new DomainException('Only an active Admin may release Customer or Employee assignments.');
         }
 
-        if (! $customer->isCustomer()) {
-            throw new DomainException('Only Customer assignments may be released.');
+        if ($user->isCustomer()) {
+            return;
         }
+
+        if ($user->isEmployee()) {
+            return;
+        }
+
+        throw new DomainException('Only Customer or Employee assignments may be released.');
     }
 }

@@ -51,6 +51,14 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function employee(Client $client): static
+    {
+        return $this->state(fn () => [
+            'client_id' => $client->id,
+            'role' => UserRole::Employee,
+        ]);
+    }
+
     public function inactive(): static
     {
         return $this->state(fn () => ['is_active' => false]);
