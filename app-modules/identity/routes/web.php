@@ -17,5 +17,11 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->middleware('account.active')
         ->name('profile.edit');
+    Route::post('/profile/personal', [ProfileController::class, 'updatePersonalInformation'])
+        ->middleware('account.active')
+        ->name('profile.personal.update');
+    Route::post('/profile/contact', [ProfileController::class, 'updateContactInformation'])
+        ->middleware('account.active')
+        ->name('profile.contact.update');
     Route::post('/logout', [AuthenticationController::class, 'destroy'])->name('logout');
 });

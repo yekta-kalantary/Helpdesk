@@ -2,9 +2,14 @@
 
 namespace Modules\Identity\Presentation\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Identity\Application\UpdateUserContactInformation;
+use Modules\Identity\Application\UpdateUserPersonalInformation;
+use Modules\Identity\Presentation\Http\Requests\UpdateContactInformationRequest;
+use Modules\Identity\Presentation\Http\Requests\UpdatePersonalInformationRequest;
 
 class ProfileController
 {
@@ -23,5 +28,25 @@ class ProfileController
                 ],
             ],
         ]);
+    }
+
+    public function updatePersonalInformation(
+        UpdatePersonalInformationRequest $request,
+        UpdateUserPersonalInformation $action,
+    ): RedirectResponse {
+        $action->execute($request->user(), $request->validated());
+
+        return to_route('profile.edit')
+            ->with('status', __('identity::messages.general_saved'));
+    }
+
+    public function updateContactInformation(
+        UpdateContactInformationRequest $request,
+        UpdateUserContactInformation $action,
+    ): RedirectResponse {
+        $action->execute($request->user(), $request->validated());
+
+        return to_route('profile.edit')
+            ->with('status', __('identity::messages.contact_saved'));
     }
 }
