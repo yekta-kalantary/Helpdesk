@@ -14,6 +14,8 @@ Route::middleware(['web', 'guest'])->group(function (): void {
 });
 
 Route::middleware(['web', 'auth'])->group(function (): void {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->middleware('account.active')
+        ->name('profile.edit');
     Route::post('/logout', [AuthenticationController::class, 'destroy'])->name('logout');
 });

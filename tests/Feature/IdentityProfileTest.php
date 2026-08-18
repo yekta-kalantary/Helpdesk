@@ -7,6 +7,13 @@ it('requires authentication to view the profile page', function (): void {
         ->assertRedirect(route('login'));
 });
 
+it('rejects inactive authenticated users from the profile page', function (): void {
+    $user = User::factory()->admin()->inactive()->create();
+
+    $this->actingAs($user)->get(route('profile.edit'))
+        ->assertRedirect(route('login'));
+});
+
 it('returns the authenticated profile read contract', function (): void {
     $user = User::factory()->admin()->create([
         'name' => 'Ada',
