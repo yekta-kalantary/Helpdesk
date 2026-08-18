@@ -50,13 +50,16 @@ it('covers the profile page presentation contract', function (): void {
 
     expect($pageSource)->toBeString()
         ->and($pageSource)->toContain('personalForm.post(\'/profile/personal\'')
-        ->toContain('contactForm.post(\'/profile/contact\'')
+        ->toContain('emailForm.post(\'/profile/email\'')
+        ->toContain('mobileForm.post(\'/profile/mobile\'')
         ->toContain('passwordForm.post(\'/profile/password\'')
         ->toContain('personalSaved')
-        ->toContain('contactSaved')
+        ->toContain('emailSaved')
+        ->toContain('mobileSaved')
         ->toContain('passwordSaved')
         ->toContain('props.profile.status?.personal')
-        ->toContain('props.profile.status?.contact')
+        ->toContain('props.profile.status?.email')
+        ->toContain('props.profile.status?.mobile')
         ->toContain('props.profile.status?.password')
         ->toContain('role="status" aria-live="polite"')
         ->toContain('profile-password-error')
@@ -83,6 +86,8 @@ it('covers the profile page presentation contract', function (): void {
             ->where('translations.identity.profile.personal.saved', __('identity::messages.profile.personal.saved'))
             ->where('translations.identity.profile.contact.email_label', __('identity::messages.profile.contact.email_label'))
             ->where('translations.identity.profile.contact.mobile_label', __('identity::messages.profile.contact.mobile_label'))
+            ->where('translations.identity.profile.contact.email_saved', __('identity::messages.profile.contact.email_saved'))
+            ->where('translations.identity.profile.contact.mobile_saved', __('identity::messages.profile.contact.mobile_saved'))
             ->where('translations.identity.profile.contact.description', __('identity::messages.profile.contact.description'))
             ->where('translations.identity.profile.contact.submit', __('identity::messages.profile.contact.submit'))
             ->where('translations.identity.profile.contact.submitting', __('identity::messages.profile.contact.submitting'))
@@ -168,6 +173,44 @@ it('updates contact information without changing personal information', function
             'name' => 'Ada',
             'last_name' => 'Lovelace',
             'email' => 'grace@example.test',
+            'mobile' => '+15557654321',
+        ]);
+});
+
+it('updates email without changing mobile information', function (): void {
+    $user = User::factory()->admin()->create([
+        'email' => 'ada@example.test',
+        'mobile' => '+15551234567',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('profile.email.update'), [
+            'email' => 'grace@example.test',
+        ])
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->only(['email', 'mobile']))
+        ->toBe([
+            'email' => 'grace@example.test',
+            'mobile' => '+15551234567',
+        ]);
+});
+
+it('updates mobile without changing email information', function (): void {
+    $user = User::factory()->admin()->create([
+        'email' => 'ada@example.test',
+        'mobile' => '+15551234567',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('profile.mobile.update'), [
+            'mobile' => '+15557654321',
+        ])
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->only(['email', 'mobile']))
+        ->toBe([
+            'email' => 'ada@example.test',
             'mobile' => '+15557654321',
         ]);
 });

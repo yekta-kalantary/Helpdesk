@@ -23,6 +23,12 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::post('/profile/contact', [ProfileController::class, 'updateContactInformation'])
         ->middleware('account.active')
         ->name('profile.contact.update');
+    Route::post('/profile/email', [ProfileController::class, 'updateEmail'])
+        ->middleware('account.active')
+        ->name('profile.email.update');
+    Route::post('/profile/mobile', [ProfileController::class, 'updateMobile'])
+        ->middleware('account.active')
+        ->name('profile.mobile.update');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])
         ->middleware('account.active')
         ->name('profile.password.update');
