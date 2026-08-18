@@ -70,13 +70,25 @@ function restoreMigrationTestDatabase(string $database): void
 function baselineMigrationPaths(): array
 {
     return [
-        'database/migrations/0001_01_01_000001_create_cache_tables.php',
-        'database/migrations/0001_01_01_000002_create_queue_tables.php',
+        'database/migrations/0001_01_01_000001_create_cache_table.php',
+        'database/migrations/0001_01_01_000002_create_cache_locks_table.php',
+        'database/migrations/0001_01_01_000003_create_jobs_table.php',
+        'database/migrations/0001_01_01_000004_create_job_batches_table.php',
+        'database/migrations/0001_01_01_000005_create_failed_jobs_table.php',
         'app-modules/clients/database/migrations/0001_01_01_000100_create_clients_table.php',
-        'app-modules/identity/database/migrations/0001_01_01_000200_create_identity_tables.php',
-        'app-modules/projects/database/migrations/0001_01_01_000300_create_project_tables.php',
-        'app-modules/tasks/database/migrations/0001_01_01_000400_create_task_tables.php',
-        'database/migrations/0001_01_01_000500_create_activity_and_notification_tables.php',
+        'app-modules/identity/database/migrations/0001_01_01_000200_create_users_table.php',
+        'app-modules/identity/database/migrations/0001_01_01_000201_create_password_reset_tokens_table.php',
+        'app-modules/identity/database/migrations/0001_01_01_000202_create_sessions_table.php',
+        'app-modules/projects/database/migrations/0001_01_01_000300_create_projects_table.php',
+        'app-modules/projects/database/migrations/0001_01_01_000301_create_project_user_table.php',
+        'app-modules/projects/database/migrations/0001_01_01_000302_create_project_task_statuses_table.php',
+        'app-modules/projects/database/migrations/0001_01_01_000303_create_work_groups_table.php',
+        'app-modules/tasks/database/migrations/0001_01_01_000400_create_tasks_table.php',
+        'app-modules/tasks/database/migrations/0001_01_01_000401_create_task_comments_table.php',
+        'app-modules/tasks/database/migrations/0001_01_01_000402_create_attachments_table.php',
+        'app-modules/tasks/database/migrations/0001_01_01_000403_create_task_checklist_items_table.php',
+        'database/migrations/0001_01_01_000500_create_activities_table.php',
+        'database/migrations/0001_01_01_000501_create_notifications_table.php',
     ];
 }
 
