@@ -18,18 +18,23 @@ const emit = defineEmits<{
 }>()
 
 const closeButton = ref<HTMLButtonElement | null>(null)
+const backdrop = ref<HTMLButtonElement | null>(null)
 const drawer = ref<HTMLElement | null>(null)
 
 function getFocusableElements(): HTMLElement[] {
-    if (!drawer.value) {
+    if (!backdrop.value && !drawer.value) {
         return []
     }
 
-    return Array.from(
-        drawer.value.querySelectorAll<HTMLElement>(
-            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
-    )
+    const drawerElements = drawer.value
+        ? Array.from(
+              drawer.value.querySelectorAll<HTMLElement>(
+                  'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+              ),
+          )
+        : []
+
+    return backdrop.value ? [backdrop.value, ...drawerElements] : drawerElements
 }
 
 function closeOnEscape(event: KeyboardEvent): void {
@@ -85,6 +90,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', closeOnEscape))
     >
         <div v-if="open" class="fixed inset-0 z-50 lg:hidden" role="presentation">
             <button
+                ref="backdrop"
                 type="button"
                 class="absolute inset-0 h-full w-full bg-slate-950/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white motion-reduce:transition-none"
                 :aria-label="navigationCloseLabel"
