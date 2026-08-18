@@ -50,13 +50,11 @@ async function closeMobileNavigation(): Promise<void> {
                     :navigation-open="mobileNavigationOpen"
                     @open-navigation="openMobileNavigation"
                 >
-                    <UserMenu
-                        v-if="page.props.auth.user"
-                        :user="page.props.auth.user"
-                        :locale="page.props.locale"
-                        :labels="page.props.translations.app.userMenu"
-                        :current-path="page.url"
-                    />
+                        <UserMenu
+                            v-if="page.props.auth.user"
+                            :user="page.props.auth.user"
+                            :labels="page.props.translations.app.userMenu"
+                        />
                 </TopBar>
                 <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                     <slot />

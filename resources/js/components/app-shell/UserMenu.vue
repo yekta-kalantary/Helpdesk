@@ -1,31 +1,22 @@
 <script setup lang="ts">
-import { ChevronDown, Globe, LogOut } from '@lucide/vue'
+import { ChevronDown, LogOut } from '@lucide/vue'
 import { router } from '@inertiajs/vue3'
-import { computed, nextTick, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 
 import type { AuthenticatedUser } from '@/types/navigation'
 
-const props = defineProps<{
+defineProps<{
     user: AuthenticatedUser
-    locale: string
     labels: {
         open: string
         close: string
         logout: string
-        switchLocale: string
-        english: string
-        persian: string
     }
-    currentPath: string
 }>()
 
 const open = ref(false)
 const trigger = ref<HTMLButtonElement | null>(null)
 const menuId = 'user-menu-panel'
-const nextLocale = computed(() => (props.locale === 'fa' ? 'en' : 'fa'))
-const nextLocaleLabel = computed(() => (nextLocale.value === 'fa' ? props.labels.persian : props.labels.english))
-const localeUrl = computed(() => `/locale/${nextLocale.value}?redirect=${encodeURIComponent(props.currentPath)}`)
-
 function logout(): void {
     router.post('/logout')
 }
@@ -64,14 +55,6 @@ async function closeMenu(): Promise<void> {
                 <p class="truncate text-xs text-slate-500">{{ user.email }}</p>
             </div>
             <div class="my-1 border-t border-slate-100" />
-            <a
-                :href="localeUrl"
-                class="flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
-                @click="closeMenu"
-            >
-                <Globe :size="16" aria-hidden="true" />
-                <span>{{ labels.switchLocale }}: {{ nextLocaleLabel }}</span>
-            </a>
             <button
                 type="button"
                 class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"

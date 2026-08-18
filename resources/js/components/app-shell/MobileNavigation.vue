@@ -2,6 +2,8 @@
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { isNavigationItemActive } from '@/navigation'
+import NavigationIcon from '@/components/app-shell/NavigationIcon.vue'
+import { X } from '@lucide/vue'
 import type { NavigationSection } from '@/types/navigation'
 
 const props = defineProps<{
@@ -122,7 +124,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', closeOnEscape))
                             :aria-label="navigationCloseLabel"
                             @click="emit('close')"
                         >
-                            <span aria-hidden="true" class="text-xl leading-none">&times;</span>
+                            <X :size="20" aria-hidden="true" />
                         </button>
                     </div>
 
@@ -136,18 +138,20 @@ onBeforeUnmount(() => document.removeEventListener('keydown', closeOnEscape))
                                     <a
                                         v-if="item.href"
                                         :href="item.href"
-                                        class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                                        class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
                                         :class="isNavigationItemActive(item, currentUrl) ? 'bg-brand-50 text-brand-700' : ''"
                                         :aria-current="isNavigationItemActive(item, currentUrl) ? 'page' : undefined"
                                         @click="emit('close')"
                                     >
+                                        <NavigationIcon :name="item.icon" class="shrink-0" />
                                         {{ item.label }}
                                     </a>
                                     <span
                                         v-else
-                                        class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-400"
+                                        class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-400"
                                         aria-disabled="true"
                                     >
+                                        <NavigationIcon :name="item.icon" class="shrink-0" />
                                         {{ item.label }}
                                     </span>
                                 </template>

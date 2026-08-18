@@ -6,10 +6,13 @@ export interface AuthenticatedUser {
     email: string
 }
 
+export type NavigationIconName = 'building' | 'dashboard' | 'projects' | 'tasks' | 'users'
+
 export interface NavigationItem {
     key: string
     label: string
     href: string | null
+    icon: NavigationIconName
     capability?: string
     pending?: boolean
 }
@@ -38,9 +41,6 @@ export interface ApplicationShellProps {
                 open: string
                 close: string
                 logout: string
-                switchLocale: string
-                english: string
-                persian: string
             }
         }
     }

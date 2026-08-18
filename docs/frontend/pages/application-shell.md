@@ -12,7 +12,7 @@ The Application Shell is the shared authenticated workspace frame for the Helpde
 2. A top bar with page context, mobile navigation control, and user actions.
 3. Navigation for Dashboard, Users, Clients, Projects, and Tasks.
 4. Role-aware visibility for navigation items without placing authorization rules in Vue.
-5. User menu actions for profile context, locale switching, and logout.
+5. User menu actions for profile context and logout.
 6. An Inertia layout contract that later authenticated pages can consume without duplicating shell markup.
 
 ## Ownership
@@ -20,7 +20,6 @@ The Application Shell is the shared authenticated workspace frame for the Helpde
 - Shared layout composition: `resources/js/Layouts/`
 - Shared navigation and presentation contracts: `resources/js/`
 - Authentication logout behavior: `app-modules/identity`
-- Cross-cutting locale switching: root application integration
 - Domain authorization: Laravel policies and backend-provided capabilities
 
 ## Visual Direction
@@ -63,7 +62,6 @@ Navigation items contain a stable key, localized label, route URL, icon key, and
 ## User Actions
 
 - Display the authenticated user's localized name and email in the user menu.
-- Provide a locale switch that navigates through the application locale contract and preserves the current path when possible.
 - Submit logout through the Identity-owned route using Inertia, then redirect to Login.
 - Do not implement role checks, password logic, or domain queries in Vue components.
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { isNavigationItemActive } from '@/navigation'
+import NavigationIcon from '@/components/app-shell/NavigationIcon.vue'
 import type { NavigationSection } from '@/types/navigation'
 
 defineProps<{
@@ -28,17 +29,19 @@ defineProps<{
                         <a
                             v-if="item.href"
                             :href="item.href"
-                            class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                            class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
                             :class="isNavigationItemActive(item, currentUrl) ? 'bg-brand-50 text-brand-700' : ''"
                             :aria-current="isNavigationItemActive(item, currentUrl) ? 'page' : undefined"
                         >
+                            <NavigationIcon :name="item.icon" class="shrink-0" />
                             {{ item.label }}
                         </a>
                         <span
                             v-else
-                            class="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-slate-400"
+                            class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-400"
                             aria-disabled="true"
                         >
+                            <NavigationIcon :name="item.icon" class="shrink-0" />
                             {{ item.label }}
                         </span>
                     </template>

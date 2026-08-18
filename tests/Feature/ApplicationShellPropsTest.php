@@ -17,23 +17,23 @@ it('shares the application shell contract with guests', function (): void {
                     'key' => 'overview',
                     'label' => __('app.navigation.overview'),
                     'items' => [
-                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard')],
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard'), 'icon' => 'dashboard'],
                     ],
                 ],
                 [
                     'key' => 'workspace',
                     'label' => __('app.navigation.workspace'),
                     'items' => [
-                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'pending' => true, 'capability' => 'clients.view'],
-                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'pending' => true, 'capability' => 'projects.view'],
-                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'pending' => true, 'capability' => 'tasks.view'],
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'icon' => 'building', 'pending' => true, 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'icon' => 'projects', 'pending' => true, 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'icon' => 'tasks', 'pending' => true, 'capability' => 'tasks.view'],
                     ],
                 ],
                 [
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'pending' => true, 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'icon' => 'users', 'pending' => true, 'capability' => 'users.view'],
                     ],
                 ],
             ]));
@@ -76,23 +76,23 @@ it('shares Persian shell presentation data for a Persian request', function (): 
                     'key' => 'overview',
                     'label' => __('app.navigation.overview'),
                     'items' => [
-                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard')],
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard'), 'icon' => 'dashboard'],
                     ],
                 ],
                 [
                     'key' => 'workspace',
                     'label' => __('app.navigation.workspace'),
                     'items' => [
-                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'pending' => true, 'capability' => 'clients.view'],
-                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'pending' => true, 'capability' => 'projects.view'],
-                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'pending' => true, 'capability' => 'tasks.view'],
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'icon' => 'building', 'pending' => true, 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'icon' => 'projects', 'pending' => true, 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'icon' => 'tasks', 'pending' => true, 'capability' => 'tasks.view'],
                     ],
                 ],
                 [
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'pending' => true, 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'icon' => 'users', 'pending' => true, 'capability' => 'users.view'],
                     ],
                 ],
             ]));
@@ -103,8 +103,7 @@ it('shares localized user menu interaction labels', function (): void {
         ->assertInertia(fn ($page) => $page
             ->where('translations.app.userMenu.open', __('app.user_menu.open'))
             ->where('translations.app.userMenu.close', __('app.user_menu.close'))
-            ->where('translations.app.userMenu.logout', __('app.user_menu.logout'))
-            ->where('translations.app.userMenu.switchLocale', __('app.user_menu.switch_locale')));
+            ->where('translations.app.userMenu.logout', __('app.user_menu.logout')));
 });
 
 it('renders root application translations from the configured language path', function (): void {

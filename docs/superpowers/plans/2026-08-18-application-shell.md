@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task.
 
-**Goal:** Build the shared authenticated Helpdesk workspace shell with responsive navigation, role-aware presentation, locale switching, and Identity-owned logout.
+**Goal:** Build the shared authenticated Helpdesk workspace shell with responsive navigation, role-aware presentation, and Identity-owned logout.
 
-**Architecture:** Shared Vue layout components live under `resources/js/Layouts` and consume serializable shared Inertia props. Navigation is a presentation configuration filtered by backend-provided capabilities; authorization remains in Laravel. Identity owns logout, while the root application owns the locale-switch contract.
+**Architecture:** Shared Vue layout components live under `resources/js/Layouts` and consume serializable shared Inertia props. Navigation is a presentation configuration filtered by backend-provided capabilities; authorization remains in Laravel. Identity owns logout.
 
 **Tech Stack:** Laravel 13, PHP 8.4, Inertia.js 3, Vue 3, TypeScript, Vite 8, Tailwind CSS 4, shadcn-vue, Reka UI, Pest 5.
 
@@ -82,23 +82,20 @@
 
 **Verification:** Run frontend type checking, Vite build, and shell render feature coverage, then commit with `Add responsive application shell navigation`.
 
-### Task 4: User Menu, Locale Switch, and Logout
+### Task 4: User Menu and Logout
 
 **Files:**
 - Create: `resources/js/components/app-shell/UserMenu.vue`
 - Modify: `resources/js/Layouts/AppShell.vue`
 - Modify: `app-modules/identity/routes/web.php`
 - Modify: `app-modules/identity/src/Presentation/Http/Controllers/AuthenticationController.php`
-- Modify: `lang/en/app.php`
-- Modify: `lang/fa/app.php`
 - Test: `tests/Feature/IdentityLogoutTest.php`
 
-**Deliverable:** Accessible user menu with localized user context, locale switch link, and working Identity logout.
+**Deliverable:** Accessible user menu with localized user context and working Identity logout.
 
 **Required behavior:**
 - Logout uses a POST request with CSRF protection and invalidates the session.
 - Successful logout redirects to the named Login route.
-- Locale switching uses a root application route, preserves the current path when safe, and validates the locale against `en` and `fa`.
 - All action and accessible labels come from Laravel translations.
 
 **Verification:** Run logout and locale feature tests, the existing Identity suite, Pint, and TypeScript validation, then commit with `Add shell user actions and logout`.

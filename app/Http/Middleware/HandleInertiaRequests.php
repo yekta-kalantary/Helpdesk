@@ -19,10 +19,6 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        if (in_array(session('locale'), ['en', 'fa'], true)) {
-            app()->setLocale((string) session('locale'));
-        }
-
         $locale = app()->getLocale();
         $user = $request->user();
         $capabilities = $user?->isAdmin() === true
@@ -48,23 +44,23 @@ class HandleInertiaRequests extends Middleware
                     'key' => 'overview',
                     'label' => __('app.navigation.overview'),
                     'items' => [
-                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard')],
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard'), 'icon' => 'dashboard'],
                     ],
                 ],
                 [
                     'key' => 'workspace',
                     'label' => __('app.navigation.workspace'),
                     'items' => [
-                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'pending' => true, 'capability' => 'clients.view'],
-                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'pending' => true, 'capability' => 'projects.view'],
-                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'pending' => true, 'capability' => 'tasks.view'],
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'icon' => 'building', 'pending' => true, 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'icon' => 'projects', 'pending' => true, 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'icon' => 'tasks', 'pending' => true, 'capability' => 'tasks.view'],
                     ],
                 ],
                 [
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'pending' => true, 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'icon' => 'users', 'pending' => true, 'capability' => 'users.view'],
                     ],
                 ],
             ],
@@ -74,9 +70,6 @@ class HandleInertiaRequests extends Middleware
                         'open' => __('app.user_menu.open'),
                         'close' => __('app.user_menu.close'),
                         'logout' => __('app.user_menu.logout'),
-                        'switchLocale' => __('app.user_menu.switch_locale'),
-                        'english' => __('app.user_menu.english'),
-                        'persian' => __('app.user_menu.persian'),
                     ],
                 ],
                 'identity' => [
