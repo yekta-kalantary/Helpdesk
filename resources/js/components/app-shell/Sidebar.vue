@@ -13,7 +13,7 @@ defineProps<{
 <template>
     <aside class="hidden w-64 shrink-0 border-e border-slate-200 bg-white lg:flex lg:flex-col">
         <div class="flex h-16 items-center border-b border-slate-200 px-6">
-            <a href="/" class="text-base font-bold tracking-tight text-slate-950 focus-visible:outline-none">
+            <a href="/" class="text-base font-bold tracking-tight text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2">
                 {{ appName }}
             </a>
         </div>

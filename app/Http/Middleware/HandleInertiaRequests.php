@@ -30,6 +30,7 @@ class HandleInertiaRequests extends Middleware
             'locale' => $locale,
             'direction' => $locale === 'fa' ? 'rtl' : 'ltr',
             'navigationLabel' => __('app.navigation.label'),
+            'navigationCloseLabel' => __('app.navigation.close'),
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->getKey(),

@@ -4,6 +4,7 @@ return [
     'name' => 'Contact & Project Manager',
     'navigation' => [
         'label' => 'Application navigation',
+        'close' => 'Close navigation',
         'overview' => 'Overview',
         'workspace' => 'Workspace',
         'administration' => 'Administration',

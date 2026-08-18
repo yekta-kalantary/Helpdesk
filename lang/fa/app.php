@@ -4,6 +4,7 @@ return [
     'name' => 'سامانه مدیریت مخاطب و پروژه',
     'navigation' => [
         'label' => 'ناوبری برنامه',
+        'close' => 'بستن ناوبری',
         'overview' => 'نمای کلی',
         'workspace' => 'فضای کاری',
         'administration' => 'مدیریت',

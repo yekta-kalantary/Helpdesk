@@ -26,6 +26,7 @@ export interface ApplicationShellProps {
     locale: string
     direction: Direction
     navigationLabel: string
+    navigationCloseLabel: string
     auth: {
         user: AuthenticatedUser | null
         capabilities: string[]

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 
 import MobileNavigation from '@/components/app-shell/MobileNavigation.vue'
 import Sidebar from '@/components/app-shell/Sidebar.vue'
@@ -15,6 +15,18 @@ const navigation = computed(() =>
 )
 
 const mobileNavigationOpen = ref(false)
+const mobileNavigationTrigger = ref<HTMLButtonElement | null>(null)
+
+function openMobileNavigation(trigger: HTMLButtonElement): void {
+    mobileNavigationTrigger.value = trigger
+    mobileNavigationOpen.value = true
+}
+
+async function closeMobileNavigation(): Promise<void> {
+    mobileNavigationOpen.value = false
+    await nextTick()
+    mobileNavigationTrigger.value?.focus()
+}
 </script>
 
 <template>
@@ -36,7 +48,7 @@ const mobileNavigationOpen = ref(false)
                     :navigation-label="page.props.navigationLabel"
                     :user-name="page.props.auth.user?.name"
                     :navigation-open="mobileNavigationOpen"
-                    @open-navigation="mobileNavigationOpen = true"
+                    @open-navigation="openMobileNavigation"
                 />
                 <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                     <slot />
@@ -46,10 +58,11 @@ const mobileNavigationOpen = ref(false)
         <MobileNavigation
             :app-name="page.props.appName"
             :navigation-label="page.props.navigationLabel"
+            :navigation-close-label="page.props.navigationCloseLabel"
             :navigation="navigation"
             :current-url="page.url"
             :open="mobileNavigationOpen"
-            @close="mobileNavigationOpen = false"
+            @close="closeMobileNavigation"
         />
     </div>
 </template>

@@ -9,8 +9,12 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-    openNavigation: []
+    openNavigation: [trigger: HTMLButtonElement]
 }>()
+
+function openNavigation(event: MouseEvent): void {
+    emit('openNavigation', event.currentTarget as HTMLButtonElement)
+}
 </script>
 
 <template>
@@ -23,11 +27,11 @@ const emit = defineEmits<{
                 aria-controls="mobile-navigation"
                 aria-haspopup="dialog"
                 :aria-expanded="navigationOpen"
-                @click="emit('openNavigation')"
+                @click="openNavigation"
             >
                 <Menu :size="20" aria-hidden="true" />
             </button>
-            <a href="/" class="truncate text-base font-bold tracking-tight text-slate-950 lg:hidden">
+            <a href="/" class="truncate text-base font-bold tracking-tight text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 lg:hidden">
                 {{ appName }}
             </a>
         </div>
