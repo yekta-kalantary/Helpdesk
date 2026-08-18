@@ -8,4 +8,6 @@ Route::middleware(['web', 'guest'])->group(function (): void {
     Route::post('/login', [AuthenticationController::class, 'store'])->name('login.store');
     Route::get('/forgot-password', [AuthenticationController::class, 'forgotPassword'])->name('password.request');
     Route::post('/forgot-password', [AuthenticationController::class, 'sendPasswordResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthenticationController::class, 'resetPassword'])->name('password.reset');
+    Route::post('/reset-password/{token}', [AuthenticationController::class, 'updatePassword'])->name('password.update');
 });
