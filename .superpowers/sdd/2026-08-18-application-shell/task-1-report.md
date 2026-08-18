@@ -33,3 +33,26 @@
 
 - The shell is intentionally not wired into existing pages because Task 1 only defines the shared shell contract and frame.
 - Navigation URLs are presentation paths because several domain routes are not currently registered in the application route list.
+
+## Reviewer Fix Report
+
+### Findings Addressed
+
+- `AppShell` now consumes the complete typed shared contract through `usePage<ApplicationShellProps>()`, including app name, locale, direction, authenticated user data, capabilities, and navigation.
+- `resources/js/app.ts` now mounts `AppShell` as the shared Inertia boundary around every resolved page. Capability handling remains generic and presentation-only; no later domain navigation behavior was added.
+- The feature test now includes a Persian-locale request and verifies `fa`, `rtl`, and all Persian navigation labels with their capability identifiers.
+
+### Verification
+
+- `php artisan test --compact tests/Feature/ApplicationShellPropsTest.php`
+  - Passed: 3 tests, 43 assertions.
+- `npx vue-tsc --noEmit`
+  - Passed with exit code 0 and no output.
+- `vendor/bin/pint --dirty --format agent`
+  - Passed with no formatting changes required.
+- `git diff --check`
+  - Passed with no whitespace errors.
+
+### Fix Concerns
+
+- The shared boundary now wraps authentication pages as well as application pages; later task work may refine page-specific layout selection if required.

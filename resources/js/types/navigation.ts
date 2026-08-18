@@ -13,6 +13,7 @@ export interface NavigationItem {
 }
 
 export interface ApplicationShellProps {
+    [key: string]: unknown
     appName: string
     locale: string
     direction: Direction

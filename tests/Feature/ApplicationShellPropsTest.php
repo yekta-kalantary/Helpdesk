@@ -42,3 +42,20 @@ it('shares authenticated user presentation data and capabilities', function (): 
                 'tasks.view',
             ]));
 });
+
+it('shares Persian shell presentation data for a Persian request', function (): void {
+    $this->app->setLocale('fa');
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('locale', 'fa')
+            ->where('direction', 'rtl')
+            ->where('navigation', [
+                ['label' => __('navigation.dashboard'), 'href' => '/'],
+                ['label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
+                ['label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
+                ['label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
+                ['label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+            ]));
+});
