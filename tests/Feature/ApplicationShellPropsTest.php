@@ -97,3 +97,12 @@ it('shares Persian shell presentation data for a Persian request', function (): 
                 ],
             ]));
 });
+
+it('shares localized user menu interaction labels', function (): void {
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('translations.app.userMenu.open', __('app.user_menu.open'))
+            ->where('translations.app.userMenu.close', __('app.user_menu.close'))
+            ->where('translations.app.userMenu.logout', __('app.user_menu.logout'))
+            ->where('translations.app.userMenu.switchLocale', __('app.user_menu.switch_locale')));
+});

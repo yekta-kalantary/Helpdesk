@@ -1,8 +1,10 @@
 <?php
 
 it('switches to a supported locale and preserves a safe path', function (): void {
-    $this->get(route('locale.switch', ['locale' => 'en', 'redirect' => '/']))
-        ->assertRedirect('/');
+    $this->get(route('locale.switch', [
+        'locale' => 'en',
+        'redirect' => '/projects?tab=active&sort=name',
+    ]))->assertRedirect('/projects?tab=active&sort=name');
 
     expect(session('locale'))->toBe('en');
 
@@ -18,8 +20,17 @@ it('rejects unsupported locales', function (): void {
 });
 
 it('rejects unsafe locale redirect targets', function (): void {
-    $this->get(route('locale.switch', [
-        'locale' => 'en',
-        'redirect' => 'https://attacker.example.test',
-    ]))->assertRedirect(route('home'));
+    foreach ([
+        'https://attacker.example.test',
+        '//attacker.example.test/path',
+        '/\\attacker.example.test/path',
+        '/%5Cattacker.example.test/path',
+        '/%00attacker.example.test/path',
+        "\/\u{0000}attacker.example.test",
+    ] as $redirect) {
+        $this->get(route('locale.switch', [
+            'locale' => 'en',
+            'redirect' => $redirect,
+        ]))->assertRedirect(route('home'));
+    }
 });

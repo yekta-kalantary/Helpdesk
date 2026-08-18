@@ -17,9 +17,17 @@ Route::get('/locale/{locale}', function (Request $request, string $locale): Redi
 
     $redirect = (string) $request->query('redirect', route('home'));
     $parsedRedirect = parse_url($redirect);
-    $isSafeRedirect = str_starts_with($redirect, '/')
-        && ! str_starts_with($redirect, '//')
-        && ! isset($parsedRedirect['scheme'], $parsedRedirect['host']);
+    $path = is_array($parsedRedirect) ? (string) ($parsedRedirect['path'] ?? '') : '';
+    $decodedPath = rawurldecode($path);
+    $hasUnsafeCharacters = str_contains($redirect, '\\')
+        || preg_match('/[\x00-\x1F\x7F]/', $redirect) === 1
+        || preg_match('/[\x00-\x1F\x7F]/', $decodedPath) === 1;
+    $isSafeRedirect = ! $hasUnsafeCharacters
+        && str_starts_with($path, '/')
+        && ! str_starts_with($decodedPath, '//')
+        && ! str_contains($decodedPath, '\\')
+        && ! isset($parsedRedirect['scheme'])
+        && ! isset($parsedRedirect['host']);
 
     return redirect()->to($isSafeRedirect ? $redirect : route('home'));
 })->whereIn('locale', ['en', 'fa'])->name('locale.switch');
