@@ -40,6 +40,8 @@ Frontend design and implementation are approved one page at a time.
 - Keep page code inside its owning module.
 - Keep shared primitives and shell composition in the shared frontend layer.
 - Use local assets only: IRANYekanXVF and the installed Lucide icon package.
+- Use Lucide icons where they improve recognition, navigation, or action clarity; do not add decorative icons indiscriminately.
+- Give every icon-only control a localized accessible name and mark decorative icons as hidden from assistive technology.
 - Use Laravel localization with English and Persian entries for every user-facing string.
 - Do not pass Eloquent models directly to Inertia pages.
 - Do not put domain rules in Vue components.
