@@ -53,4 +53,18 @@ return [
         'forgot_password' => 'Forgot your password?',
         'rate_limited' => 'Too many login attempts. Please try again later.',
     ],
+    'password_recovery' => [
+        'brand' => 'Helpdesk',
+        'title' => 'Reset your password',
+        'description' => 'Enter your email address and we will send recovery instructions if the account is registered.',
+        'email_label' => 'Email address',
+        'submit' => 'Send recovery link',
+        'submitting' => 'Sending recovery link...',
+        'return_to_login' => 'Return to sign in',
+        'confirmation_title' => 'Check your email',
+        'confirmation_description' => 'If an account matches this email, recovery instructions have been sent.',
+        'check_spam' => 'Check your spam or junk folder if the message does not arrive soon.',
+        'rate_limited' => 'Too many recovery requests. Please try again later.',
+        'generic_error' => 'We could not process the request. Please try again later.',
+    ],
 ];

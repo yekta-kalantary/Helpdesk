@@ -4,6 +4,8 @@ namespace Modules\Identity\Infrastructure\Models;
 
 use Database\Factories\UserFactory;
 use DomainException;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,10 +20,10 @@ use Modules\Identity\Domain\Enums\UserRole;
 
 #[Fillable(['client_id', 'role', 'name', 'last_name', 'email', 'mobile', 'password', 'is_active', 'last_login_at'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use CanResetPassword, HasFactory, Notifiable;
 
     protected static function newFactory(): UserFactory
     {
