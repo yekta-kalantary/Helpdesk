@@ -15,8 +15,16 @@ export function filterNavigationSections(
 }
 
 export function isNavigationItemActive(item: NavigationItem, url: string): boolean {
-    const currentPath = new URL(url, window.location.origin).pathname.replace(/\/$/, '') || '/'
-    const itemPath = new URL(item.href, window.location.origin).pathname.replace(/\/$/, '') || '/'
+    if (!item.href) {
+        return false
+    }
+
+    const currentPath = new URL(url, 'http://localhost').pathname.replace(/\/$/, '') || '/'
+    const itemPath = new URL(item.href, 'http://localhost').pathname.replace(/\/$/, '') || '/'
 
     return itemPath === '/' ? currentPath === '/' : currentPath === itemPath || currentPath.startsWith(`${itemPath}/`)
+}
+
+export function getNavigationItemAriaCurrent(item: NavigationItem, url: string): 'page' | undefined {
+    return isNavigationItemActive(item, url) ? 'page' : undefined
 }

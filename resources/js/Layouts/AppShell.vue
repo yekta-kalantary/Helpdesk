@@ -2,7 +2,7 @@
 import { usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 
-import { filterNavigationSections, isNavigationItemActive } from '@/navigation'
+import { filterNavigationSections, getNavigationItemAriaCurrent } from '@/navigation'
 import type { ApplicationShellProps } from '@/types/navigation'
 
 const page = usePage<ApplicationShellProps>()
@@ -28,15 +28,23 @@ const navigation = computed(() =>
                 </a>
                 <div v-for="section in navigation" :key="section.key" class="flex items-center gap-4">
                     <span class="sr-only">{{ section.label }}</span>
-                    <a
-                        v-for="item in section.items"
-                        :key="item.key"
-                        :href="item.href"
-                        class="text-sm font-semibold text-slate-600 hover:text-indigo-600"
-                        :aria-current="isNavigationItemActive(item, page.url) ? 'page' : undefined"
-                    >
-                        {{ item.label }}
-                    </a>
+                    <template v-for="item in section.items" :key="item.key">
+                        <a
+                            v-if="item.href"
+                            :href="item.href"
+                            class="text-sm font-semibold text-slate-600 hover:text-indigo-600"
+                            :aria-current="getNavigationItemAriaCurrent(item, page.url)"
+                        >
+                            {{ item.label }}
+                        </a>
+                        <span
+                            v-else
+                            class="text-sm font-semibold text-slate-400"
+                            aria-disabled="true"
+                        >
+                            {{ item.label }}
+                        </span>
+                    </template>
                 </div>
                 <span v-if="page.props.auth.user" class="text-sm text-slate-500">
                     {{ page.props.auth.user.name }}

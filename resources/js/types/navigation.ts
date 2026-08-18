@@ -9,8 +9,9 @@ export interface AuthenticatedUser {
 export interface NavigationItem {
     key: string
     label: string
-    href: string
+    href: string | null
     capability?: string
+    pending?: boolean
 }
 
 export interface NavigationSection {

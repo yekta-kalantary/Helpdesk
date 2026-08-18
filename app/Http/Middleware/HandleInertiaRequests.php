@@ -50,16 +50,16 @@ class HandleInertiaRequests extends Middleware
                     'key' => 'workspace',
                     'label' => __('app.navigation.workspace'),
                     'items' => [
-                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
-                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
-                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => null, 'pending' => true, 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => null, 'pending' => true, 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => null, 'pending' => true, 'capability' => 'tasks.view'],
                     ],
                 ],
                 [
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'pending' => true, 'capability' => 'users.view'],
                     ],
                 ],
             ],
