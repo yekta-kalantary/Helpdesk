@@ -21,6 +21,11 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'appName' => config('app.name'),
+            'translations' => [
+                'identity' => [
+                    'login' => __('identity::messages.login'),
+                ],
+            ],
         ]);
     }
 }

@@ -41,4 +41,16 @@ return [
     'password_required_to_activate' => 'Set a password before activating the account.',
     'search_users' => 'Search by first name, last name, email or mobile',
     'login_title' => 'Sign in to panel',
+    'login' => [
+        'brand' => 'Helpdesk',
+        'title' => 'Sign in to Helpdesk',
+        'description' => 'Use your account to continue to your workspace.',
+        'email_label' => 'Email address',
+        'password_label' => 'Password',
+        'remember_label' => 'Remember this device',
+        'submit' => 'Sign in',
+        'submitting' => 'Signing in...',
+        'forgot_password' => 'Forgot your password?',
+        'rate_limited' => 'Too many login attempts. Please try again later.',
+    ],
 ];
