@@ -141,45 +141,38 @@ function submitPassword(): void {
                 </CardContent>
             </Card>
 
+            <form class="contents" @submit.prevent="submitContact">
             <Card>
                 <CardHeader>
-                    <div class="flex items-start gap-3">
-                        <div class="flex size-8 shrink-0 items-center justify-center rounded-md bg-teal-50 text-teal-800">
-                            <Mail class="size-4" aria-hidden="true" />
-                        </div>
-                        <div>
-                            <CardTitle>{{ $page.props.translations?.identity?.profile?.contact?.title }}</CardTitle>
-                            <CardDescription class="mt-0.5">
-                                {{ $page.props.translations?.identity?.profile?.contact?.description }}
-                            </CardDescription>
-                        </div>
-                    </div>
+                    <CardTitle>{{ $page.props.translations?.identity?.profile?.contact?.email_label }}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <form class="space-y-4" @submit.prevent="submitContact">
-                        <div class="grid gap-3 md:grid-cols-2">
-                            <div class="space-y-2 rounded-md border border-slate-200 bg-slate-50/60 p-3">
-                                <label for="profile-email" class="text-sm font-semibold text-slate-800">
-                                    {{ $page.props.translations?.identity?.profile?.contact?.email_label }}
-                                </label>
-                                <Input id="profile-email" v-model="contactForm.email" type="email" name="email" autocomplete="email" required :aria-invalid="Boolean(contactForm.errors.email)" :aria-describedby="contactForm.errors.email ? 'profile-email-error' : undefined" />
-                                <p v-if="contactForm.errors.email" id="profile-email-error" class="text-sm text-red-700" role="alert">{{ contactForm.errors.email }}</p>
-                            </div>
-                            <div class="space-y-2 rounded-md border border-slate-200 bg-slate-50/60 p-3">
-                                <label for="profile-mobile" class="text-sm font-semibold text-slate-800">
-                                    {{ $page.props.translations?.identity?.profile?.contact?.mobile_label }}
-                                </label>
-                                <Input id="profile-mobile" v-model="contactForm.mobile" type="tel" name="mobile" autocomplete="tel" :aria-invalid="Boolean(contactForm.errors.mobile)" :aria-describedby="contactForm.errors.mobile ? 'profile-mobile-error' : undefined" />
-                                <p v-if="contactForm.errors.mobile" id="profile-mobile-error" class="text-sm text-red-700" role="alert">{{ contactForm.errors.mobile }}</p>
-                            </div>
-                        </div>
-                        <p v-if="contactSaved || contactStatus" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ contactStatus || $page.props.translations?.identity?.profile?.contact?.saved }}</p>
-                        <Button type="submit" class="min-h-10 bg-teal-700 text-white hover:bg-teal-800" :disabled="contactForm.processing">
-                            {{ contactForm.processing ? $page.props.translations?.identity?.profile?.contact?.submitting : $page.props.translations?.identity?.profile?.contact?.submit }}
-                        </Button>
-                    </form>
+                    <div class="space-y-2">
+                        <Input id="profile-email" v-model="contactForm.email" type="email" name="email" autocomplete="email" required :aria-label="$page.props.translations?.identity?.profile?.contact?.email_label" :aria-invalid="Boolean(contactForm.errors.email)" :aria-describedby="contactForm.errors.email ? 'profile-email-error' : undefined" />
+                        <p v-if="contactForm.errors.email" id="profile-email-error" class="text-sm text-red-700" role="alert">{{ contactForm.errors.email }}</p>
+                    </div>
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{{ $page.props.translations?.identity?.profile?.contact?.mobile_label }}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div class="space-y-2">
+                        <Input id="profile-mobile" v-model="contactForm.mobile" type="tel" name="mobile" autocomplete="tel" :aria-label="$page.props.translations?.identity?.profile?.contact?.mobile_label" :aria-invalid="Boolean(contactForm.errors.mobile)" :aria-describedby="contactForm.errors.mobile ? 'profile-mobile-error' : undefined" />
+                        <p v-if="contactForm.errors.mobile" id="profile-mobile-error" class="text-sm text-red-700" role="alert">{{ contactForm.errors.mobile }}</p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div class="flex flex-wrap items-center gap-3 lg:col-span-2">
+                <p v-if="contactSaved || contactStatus" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ contactStatus || $page.props.translations?.identity?.profile?.contact?.saved }}</p>
+                <Button type="submit" class="min-h-10 bg-teal-700 text-white hover:bg-teal-800" :disabled="contactForm.processing">
+                    {{ contactForm.processing ? $page.props.translations?.identity?.profile?.contact?.submitting : $page.props.translations?.identity?.profile?.contact?.submit }}
+                </Button>
+            </div>
+            </form>
 
             <Card class="lg:col-span-2">
                 <CardHeader>
