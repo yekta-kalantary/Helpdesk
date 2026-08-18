@@ -7,9 +7,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Identity\Application\UpdateUserContactInformation;
+use Modules\Identity\Application\UpdateUserPassword;
 use Modules\Identity\Application\UpdateUserPersonalInformation;
 use Modules\Identity\Presentation\Http\Requests\UpdateContactInformationRequest;
 use Modules\Identity\Presentation\Http\Requests\UpdatePersonalInformationRequest;
+use Modules\Identity\Presentation\Http\Requests\UpdateUserPasswordRequest;
 
 class ProfileController
 {
@@ -48,5 +50,15 @@ class ProfileController
 
         return to_route('profile.edit')
             ->with('status', __('identity::messages.contact_saved'));
+    }
+
+    public function updatePassword(
+        UpdateUserPasswordRequest $request,
+        UpdateUserPassword $action,
+    ): RedirectResponse {
+        $action->execute($request->user(), $request->string('password')->toString());
+
+        return to_route('profile.edit')
+            ->with('status', __('identity::messages.password_saved'));
     }
 }

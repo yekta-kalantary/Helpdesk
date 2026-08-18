@@ -23,5 +23,8 @@ Route::middleware(['web', 'auth'])->group(function (): void {
     Route::post('/profile/contact', [ProfileController::class, 'updateContactInformation'])
         ->middleware('account.active')
         ->name('profile.contact.update');
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])
+        ->middleware('account.active')
+        ->name('profile.password.update');
     Route::post('/logout', [AuthenticationController::class, 'destroy'])->name('logout');
 });

@@ -33,9 +33,11 @@ return [
     'created_at' => 'Created at',
     'general_saved' => 'General information saved.',
     'contact_saved' => 'Contact information saved.',
+    'password_saved' => 'Password updated.',
     'validation' => [
         'name_required' => 'The first name is required.',
         'last_name_required' => 'The last name is required.',
+        'current_password' => 'The current password is incorrect.',
         'email_required' => 'The email address is required.',
         'email_invalid' => 'Enter a valid email address.',
         'email_unique' => 'That email address is already in use.',

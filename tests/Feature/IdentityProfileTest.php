@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Hash;
 use Modules\Identity\Infrastructure\Models\User;
 
 it('requires authentication to view the profile page', function (): void {
@@ -136,4 +137,67 @@ it('rejects an overlong mobile number', function (): void {
             'mobile' => str_repeat('1', 33),
         ])
         ->assertSessionHasErrors('mobile');
+});
+
+it('updates the authenticated user password and keeps the session authenticated', function (): void {
+    $user = User::factory()->admin()->create([
+        'password' => 'current-password',
+        'remember_token' => 'old-token',
+        'name' => 'Ada',
+    ]);
+
+    $this->actingAs($user)
+        ->post(route('profile.password.update'), [
+            'current_password' => 'current-password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])
+        ->assertRedirect(route('profile.edit'))
+        ->assertSessionHas('status', __('identity::messages.password_saved'));
+
+    $updatedUser = $user->refresh();
+
+    expect(Hash::check('new-password', $updatedUser->password))->toBeTrue()
+        ->and($updatedUser->remember_token)->not->toBe('old-token')
+        ->and($updatedUser->name)->toBe('Ada');
+
+    $this->assertAuthenticatedAs($user);
+});
+
+it('rejects an incorrect current password', function (): void {
+    $user = User::factory()->admin()->create(['password' => 'current-password']);
+
+    $this->actingAs($user)
+        ->post(route('profile.password.update'), [
+            'current_password' => 'wrong-password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])
+        ->assertSessionHasErrors([
+            'current_password' => __('identity::messages.validation.current_password'),
+        ]);
+});
+
+it('rejects a weak password', function (): void {
+    $user = User::factory()->admin()->create(['password' => 'current-password']);
+
+    $this->actingAs($user)
+        ->post(route('profile.password.update'), [
+            'current_password' => 'current-password',
+            'password' => 'short',
+            'password_confirmation' => 'short',
+        ])
+        ->assertSessionHasErrors('password');
+});
+
+it('rejects a password confirmation mismatch', function (): void {
+    $user = User::factory()->admin()->create(['password' => 'current-password']);
+
+    $this->actingAs($user)
+        ->post(route('profile.password.update'), [
+            'current_password' => 'current-password',
+            'password' => 'new-password',
+            'password_confirmation' => 'different-password',
+        ])
+        ->assertSessionHasErrors('password');
 });

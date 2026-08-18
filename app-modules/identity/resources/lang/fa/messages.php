@@ -34,9 +34,11 @@ return [
     'created_at' => 'تاریخ ایجاد',
     'general_saved' => 'اطلاعات عمومی ذخیره شد.',
     'contact_saved' => 'اطلاعات تماس ذخیره شد.',
+    'password_saved' => 'رمز عبور به‌روزرسانی شد.',
     'validation' => [
         'name_required' => 'نام الزامی است.',
         'last_name_required' => 'نام خانوادگی الزامی است.',
+        'current_password' => 'رمز عبور فعلی صحیح نیست.',
         'email_required' => 'آدرس ایمیل الزامی است.',
         'email_invalid' => 'یک آدرس ایمیل معتبر وارد کنید.',
         'email_unique' => 'این آدرس ایمیل قبلاً استفاده شده است.',
