@@ -1,153 +1,83 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 uses(TestCase::class);
 
-it('upgrades valid legacy users, projects, and memberships without deleting history', function (): void {
-    $database = useLegacyUpgradeDatabase();
+it('creates the final schema from the fresh baseline migrations', function (): void {
+    $database = useMigrationTestDatabase();
 
     try {
-        createLegacyUpgradeSchema();
+        foreach (baselineMigrationPaths() as $path) {
+            runMigration($path);
+        }
 
-        DB::table('users')->insert([
-            [
-                'id' => 1,
-                'name' => 'Legacy',
-                'last_name' => 'Admin',
-                'email' => 'admin@example.test',
-                'is_admin' => true,
-                'is_active' => true,
-            ],
-            [
-                'id' => 2,
-                'name' => 'Ada',
-                'last_name' => 'Customer',
-                'email' => 'ada@example.test',
-                'is_admin' => false,
-                'is_active' => true,
-            ],
-            [
-                'id' => 3,
-                'name' => 'Grace',
-                'last_name' => 'Customer',
-                'email' => 'grace@example.test',
-                'is_admin' => false,
-                'is_active' => true,
-            ],
-        ]);
-
-        DB::table('projects')->insert([
-            ['id' => 10, 'title' => 'Ada project'],
-            ['id' => 11, 'title' => 'Grace project'],
-        ]);
-        DB::table('project_user')->insert([
-            ['project_id' => 10, 'user_id' => 1],
-            ['project_id' => 10, 'user_id' => 2],
-            ['project_id' => 10, 'user_id' => 3],
-            ['project_id' => 11, 'user_id' => 3],
-        ]);
-
-        runMigration('app-modules/clients/database/migrations/2026_08_11_120000_create_clients_table.php');
-        runMigration('app-modules/identity/database/migrations/2026_08_11_121000_upgrade_users_for_mvp.php');
-        runMigration('app-modules/projects/database/migrations/2026_08_11_122000_upgrade_projects_for_mvp.php');
-
-        $users = DB::table('users')->orderBy('id')->get();
-        $adaClientId = $users->firstWhere('id', 2)->client_id;
-        $graceClientId = $users->firstWhere('id', 3)->client_id;
-
-        expect($adaClientId)->toBeInt()
-            ->and($graceClientId)->toBeInt()
-            ->and($adaClientId)->not->toBe($graceClientId)
-            ->and(DB::table('clients')->where('id', $adaClientId)->value('name'))->toBe('Ada Customer')
-            ->and(DB::table('clients')->where('id', $graceClientId)->value('name'))->toBe('Grace Customer')
-            ->and(DB::table('projects')->where('id', 10)->value('client_id'))->toBe($adaClientId)
-            ->and(DB::table('projects')->where('id', 11)->value('client_id'))->toBe($graceClientId)
-            ->and(DB::table('project_user')->count())->toBe(4)
-            ->and(DB::table('project_user')->where('project_id', 10)->where('user_id', 1)->exists())->toBeTrue()
-            ->and(DB::table('project_user')->where('project_id', 10)->where('user_id', 2)->whereNull('removed_at')->exists())->toBeTrue()
-            ->and(DB::table('project_user')->where('project_id', 10)->where('user_id', 3)->whereNotNull('removed_at')->exists())->toBeTrue();
+        expect(Schema::hasTable('cache'))->toBeTrue()
+            ->and(Schema::hasTable('cache_locks'))->toBeTrue()
+            ->and(Schema::hasTable('jobs'))->toBeTrue()
+            ->and(Schema::hasTable('job_batches'))->toBeTrue()
+            ->and(Schema::hasTable('failed_jobs'))->toBeTrue()
+            ->and(Schema::hasTable('clients'))->toBeTrue()
+            ->and(Schema::hasTable('users'))->toBeTrue()
+            ->and(Schema::hasTable('password_reset_tokens'))->toBeTrue()
+            ->and(Schema::hasTable('sessions'))->toBeTrue()
+            ->and(Schema::hasTable('projects'))->toBeTrue()
+            ->and(Schema::hasTable('project_user'))->toBeTrue()
+            ->and(Schema::hasTable('project_task_statuses'))->toBeTrue()
+            ->and(Schema::hasTable('work_groups'))->toBeTrue()
+            ->and(Schema::hasTable('tasks'))->toBeTrue()
+            ->and(Schema::hasTable('task_comments'))->toBeTrue()
+            ->and(Schema::hasTable('attachments'))->toBeTrue()
+            ->and(Schema::hasTable('task_checklist_items'))->toBeTrue()
+            ->and(Schema::hasTable('activities'))->toBeTrue()
+            ->and(Schema::hasTable('notifications'))->toBeTrue()
+            ->and(Schema::hasColumn('users', 'role'))->toBeTrue()
+            ->and(Schema::hasColumn('users', 'last_login_at'))->toBeTrue()
+            ->and(Schema::hasColumn('users', 'is_admin'))->toBeFalse()
+            ->and(Schema::hasColumn('projects', 'name'))->toBeTrue()
+            ->and(Schema::hasColumn('projects', 'title'))->toBeFalse()
+            ->and(Schema::hasColumn('tasks', 'reference'))->toBeTrue()
+            ->and(Schema::hasColumn('tasks', 'project_status_id'))->toBeTrue()
+            ->and(Schema::hasColumn('tasks', 'status'))->toBeFalse()
+            ->and(Schema::hasColumn('activities', 'metadata'))->toBeTrue();
     } finally {
-        restoreApplicationDatabase($database);
+        restoreMigrationTestDatabase($database);
     }
 });
 
-it('stops before changing the user schema when a legacy non-admin email is invalid', function (): void {
-    $database = useLegacyUpgradeDatabase();
-
-    try {
-        createLegacyUpgradeSchema();
-        DB::table('users')->insert([
-            'id' => 2,
-            'name' => 'Missing',
-            'last_name' => 'Email',
-            'email' => null,
-            'is_admin' => false,
-            'is_active' => true,
-        ]);
-        runMigration('app-modules/clients/database/migrations/2026_08_11_120000_create_clients_table.php');
-
-        expect(fn (): mixed => runMigration('app-modules/identity/database/migrations/2026_08_11_121000_upgrade_users_for_mvp.php'))
-            ->toThrow(RuntimeException::class, 'Legacy non-admin user 2 has an invalid email; provide a valid email address before retrying the upgrade.');
-
-        expect(Schema::hasColumn('users', 'client_id'))->toBeFalse()
-            ->and(DB::table('users')->where('id', 2)->value('email'))->toBeNull()
-            ->and(DB::table('clients')->count())->toBe(0);
-    } finally {
-        restoreApplicationDatabase($database);
-    }
-});
-
-function useLegacyUpgradeDatabase(): string
+function useMigrationTestDatabase(): string
 {
     $defaultConnection = (string) config('database.default');
     config([
-        'database.connections.legacy_upgrade' => config('database.connections.sqlite'),
-        'database.connections.legacy_upgrade.database' => ':memory:',
-        'database.default' => 'legacy_upgrade',
+        'database.connections.migration_test' => config('database.connections.sqlite'),
+        'database.connections.migration_test.database' => ':memory:',
+        'database.default' => 'migration_test',
     ]);
-    DB::purge('legacy_upgrade');
-    DB::reconnect('legacy_upgrade');
+    DB::purge('migration_test');
+    DB::reconnect('migration_test');
 
     return $defaultConnection;
 }
 
-function restoreApplicationDatabase(string $database): void
+function restoreMigrationTestDatabase(string $database): void
 {
-    DB::disconnect('legacy_upgrade');
+    DB::disconnect('migration_test');
     config(['database.default' => $database]);
 }
 
-function createLegacyUpgradeSchema(): void
+function baselineMigrationPaths(): array
 {
-    Schema::create('users', function (Blueprint $table): void {
-        $table->id();
-        $table->string('name');
-        $table->string('last_name');
-        $table->string('email')->nullable();
-        $table->string('password')->nullable();
-        $table->boolean('is_active')->default(false);
-        $table->boolean('is_admin')->default(false);
-        $table->index('is_admin');
-        $table->timestamps();
-    });
-
-    Schema::create('projects', function (Blueprint $table): void {
-        $table->id();
-        $table->string('title');
-        $table->text('description')->nullable();
-        $table->timestamps();
-    });
-
-    Schema::create('project_user', function (Blueprint $table): void {
-        $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
-        $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-        $table->timestamps();
-        $table->primary(['project_id', 'user_id']);
-    });
+    return [
+        'database/migrations/0001_01_01_000001_create_cache_tables.php',
+        'database/migrations/0001_01_01_000002_create_queue_tables.php',
+        'app-modules/clients/database/migrations/0001_01_01_000100_create_clients_table.php',
+        'app-modules/identity/database/migrations/0001_01_01_000200_create_identity_tables.php',
+        'app-modules/projects/database/migrations/0001_01_01_000300_create_project_tables.php',
+        'app-modules/tasks/database/migrations/0001_01_01_000400_create_task_tables.php',
+        'database/migrations/0001_01_01_000500_create_activity_and_notification_tables.php',
+    ];
 }
 
 function runMigration(string $path): void
