@@ -18,17 +18,22 @@ class ProfileController
     public function edit(Request $request): Response
     {
         $user = $request->user();
+        $profile = [
+            'user' => [
+                'id' => $user->getKey(),
+                'name' => $user->name,
+                'last_name' => $user->last_name,
+                'email' => $user->email,
+                'mobile' => $user->mobile,
+            ],
+        ];
+
+        if ($request->session()->has('profile_status')) {
+            $profile['status'] = $request->session()->get('profile_status');
+        }
 
         return Inertia::render('Identity/Profile/Edit', [
-            'profile' => [
-                'user' => [
-                    'id' => $user->getKey(),
-                    'name' => $user->name,
-                    'last_name' => $user->last_name,
-                    'email' => $user->email,
-                    'mobile' => $user->mobile,
-                ],
-            ],
+            'profile' => $profile,
         ]);
     }
 
@@ -39,7 +44,9 @@ class ProfileController
         $action->execute($request->user(), $request->validated());
 
         return to_route('profile.edit')
-            ->with('status', __('identity::messages.general_saved'));
+            ->with('profile_status', [
+                'personal' => __('identity::messages.profile.personal.saved'),
+            ]);
     }
 
     public function updateContactInformation(
@@ -49,7 +56,9 @@ class ProfileController
         $action->execute($request->user(), $request->validated());
 
         return to_route('profile.edit')
-            ->with('status', __('identity::messages.contact_saved'));
+            ->with('profile_status', [
+                'contact' => __('identity::messages.profile.contact.saved'),
+            ]);
     }
 
     public function updatePassword(
@@ -59,6 +68,8 @@ class ProfileController
         $action->execute($request->user(), $request->string('password')->toString());
 
         return to_route('profile.edit')
-            ->with('status', __('identity::messages.password_saved'));
+            ->with('profile_status', [
+                'password' => __('identity::messages.profile.password.saved'),
+            ]);
     }
 }

@@ -22,6 +22,11 @@ interface ProfileProps {
             email: string
             mobile: string | null
         }
+        status?: {
+            personal?: string
+            contact?: string
+            password?: string
+        }
     }
 }
 
@@ -48,6 +53,9 @@ const showCurrentPassword = ref(false)
 const showPassword = ref(false)
 const showConfirmation = ref(false)
 const direction = computed(() => props.direction)
+const personalStatus = computed(() => props.profile.status?.personal)
+const contactStatus = computed(() => props.profile.status?.contact)
+const passwordStatus = computed(() => props.profile.status?.password)
 
 function submitPersonal(): void {
     personalSaved.value = false
@@ -125,7 +133,7 @@ function submitPassword(): void {
                                 <p v-if="personalForm.errors.last_name" id="profile-last-name-error" class="text-sm text-red-700" role="alert">{{ personalForm.errors.last_name }}</p>
                             </div>
                         </div>
-                        <p v-if="personalSaved" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ $page.props.translations?.identity?.profile?.personal?.saved }}</p>
+                        <p v-if="personalSaved || personalStatus" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ personalStatus || $page.props.translations?.identity?.profile?.personal?.saved }}</p>
                         <Button type="submit" class="min-h-11 bg-indigo-600 text-white hover:bg-indigo-700" :disabled="personalForm.processing">
                             {{ personalForm.processing ? $page.props.translations?.identity?.profile?.personal?.submitting : $page.props.translations?.identity?.profile?.personal?.submit }}
                         </Button>
@@ -163,7 +171,7 @@ function submitPassword(): void {
                             <Input id="profile-mobile" v-model="contactForm.mobile" type="tel" name="mobile" autocomplete="tel" :aria-invalid="Boolean(contactForm.errors.mobile)" :aria-describedby="contactForm.errors.mobile ? 'profile-mobile-error' : undefined" />
                             <p v-if="contactForm.errors.mobile" id="profile-mobile-error" class="text-sm text-red-700" role="alert">{{ contactForm.errors.mobile }}</p>
                         </div>
-                        <p v-if="contactSaved" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ $page.props.translations?.identity?.profile?.contact?.saved }}</p>
+                        <p v-if="contactSaved || contactStatus" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ contactStatus || $page.props.translations?.identity?.profile?.contact?.saved }}</p>
                         <Button type="submit" class="min-h-11 bg-indigo-600 text-white hover:bg-indigo-700" :disabled="contactForm.processing">
                             {{ contactForm.processing ? $page.props.translations?.identity?.profile?.contact?.submitting : $page.props.translations?.identity?.profile?.contact?.submit }}
                         </Button>
@@ -229,7 +237,7 @@ function submitPassword(): void {
                             </div>
                         </div>
                         <p id="password-requirements" class="text-sm leading-6 text-slate-600">{{ $page.props.translations?.identity?.profile?.password?.requirements }}</p>
-                        <p v-if="passwordSaved" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ $page.props.translations?.identity?.profile?.password?.saved }}</p>
+                        <p v-if="passwordSaved || passwordStatus" class="text-sm font-medium text-emerald-700" role="status" aria-live="polite">{{ passwordStatus || $page.props.translations?.identity?.profile?.password?.saved }}</p>
                         <Button type="submit" class="min-h-11 bg-indigo-600 text-white hover:bg-indigo-700" :disabled="passwordForm.processing">
                             {{ passwordForm.processing ? $page.props.translations?.identity?.profile?.password?.submitting : $page.props.translations?.identity?.profile?.password?.submit }}
                         </Button>

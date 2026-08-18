@@ -43,3 +43,19 @@ Implemented the card-based Identity Profile page and committed the changes with 
 - `git diff --check`: passed.
 
 The first attempt launched the two Pest commands concurrently and hit the existing shared-MariaDB migration race. After `php artisan migrate:fresh --env=testing --force`, both suites were rerun serially and passed.
+
+## Task 4 Final Review Fix
+
+- Replaced the generic `status` flash contract with feature-scoped `profile_status.personal`, `profile_status.contact`, and `profile_status.password` flash keys.
+- Exposed flashed profile status through `profile.status` on redirected Profile page props, preserving only the active card's status key.
+- Kept local SPA success refs and added server-provided scoped status rendering to the matching personal, contact, or password card.
+- Added deterministic endpoint assertions for exclusive scoped flash keys and a reload assertion for personal status prop consumption.
+
+## Final Review Fix Verification
+
+- `php artisan test --compact tests/Feature/IdentityProfileTest.php`: 17 passed, 158 assertions.
+- `php artisan test --compact`: 58 passed, 504 assertions.
+- `npx vue-tsc --noEmit`: passed.
+- `npm run build`: passed.
+- `vendor/bin/pint --dirty --format agent`: passed.
+- `git diff --check`: passed.

@@ -39,6 +39,7 @@ it('returns the authenticated profile read contract', function (): void {
             ->where('translations.identity.profile.personal.saved', __('identity::messages.profile.personal.saved'))
             ->where('translations.identity.profile.contact.saved', __('identity::messages.profile.contact.saved'))
             ->where('translations.identity.profile.password.saved', __('identity::messages.profile.password.saved'))
+            ->missing('profile.status')
             ->missing('profile.user.email_verified_at')
             ->missing('translations.identity.profile.verification'));
 });
@@ -54,6 +55,9 @@ it('covers the profile page presentation contract', function (): void {
         ->toContain('personalSaved')
         ->toContain('contactSaved')
         ->toContain('passwordSaved')
+        ->toContain('props.profile.status?.personal')
+        ->toContain('props.profile.status?.contact')
+        ->toContain('props.profile.status?.password')
         ->toContain('role="status" aria-live="polite"')
         ->toContain('profile-password-error')
         ->toContain('profile-password-confirmation-error')
@@ -96,6 +100,22 @@ it('covers the profile page presentation contract', function (): void {
             ->missing('translations.identity.profile.verification'));
 });
 
+it('passes only the personal status to the personal card after a reload', function (): void {
+    $user = User::factory()->admin()->create();
+
+    $this->withSession([
+        'profile_status' => [
+            'personal' => __('identity::messages.profile.personal.saved'),
+        ],
+    ])->actingAs($user)->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page
+            ->where('profile.status', [
+                'personal' => __('identity::messages.profile.personal.saved'),
+            ])
+            ->missing('profile.status.contact')
+            ->missing('profile.status.password'));
+});
+
 it('updates personal information without changing contact information', function (): void {
     $user = User::factory()->admin()->create([
         'name' => 'Ada',
@@ -110,7 +130,10 @@ it('updates personal information without changing contact information', function
             'last_name' => 'Hopper',
         ])
         ->assertRedirect(route('profile.edit'))
-        ->assertSessionHas('status', __('identity::messages.general_saved'));
+        ->assertSessionHas('profile_status.personal', __('identity::messages.profile.personal.saved'))
+        ->assertSessionMissing('status')
+        ->assertSessionMissing('profile_status.contact')
+        ->assertSessionMissing('profile_status.password');
 
     expect($user->refresh()->only(['name', 'last_name', 'email', 'mobile']))
         ->toBe([
@@ -135,7 +158,10 @@ it('updates contact information without changing personal information', function
             'mobile' => '+15557654321',
         ])
         ->assertRedirect(route('profile.edit'))
-        ->assertSessionHas('status', __('identity::messages.contact_saved'));
+        ->assertSessionHas('profile_status.contact', __('identity::messages.profile.contact.saved'))
+        ->assertSessionMissing('status')
+        ->assertSessionMissing('profile_status.personal')
+        ->assertSessionMissing('profile_status.password');
 
     expect($user->refresh()->only(['name', 'last_name', 'email', 'mobile']))
         ->toBe([
@@ -214,7 +240,10 @@ it('updates the authenticated user password and keeps the session authenticated'
             'password_confirmation' => 'new-password',
         ])
         ->assertRedirect(route('profile.edit'))
-        ->assertSessionHas('status', __('identity::messages.password_saved'));
+        ->assertSessionHas('profile_status.password', __('identity::messages.profile.password.saved'))
+        ->assertSessionMissing('status')
+        ->assertSessionMissing('profile_status.personal')
+        ->assertSessionMissing('profile_status.contact');
 
     $updatedUser = $user->refresh();
 
