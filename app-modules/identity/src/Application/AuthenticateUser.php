@@ -19,7 +19,6 @@ class AuthenticateUser
         }
 
         $user = User::query()
-            ->with('client')
             ->where('email', $email)
             ->first();
 

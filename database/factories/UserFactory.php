@@ -51,10 +51,10 @@ class UserFactory extends Factory
         ]);
     }
 
-    public function employee(Client $client): static
+    public function employee(?Client $client = null): static
     {
         return $this->state(fn () => [
-            'client_id' => $client->id,
+            'client_id' => $client?->id,
             'role' => UserRole::Employee,
         ]);
     }

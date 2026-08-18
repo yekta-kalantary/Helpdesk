@@ -15,7 +15,7 @@ beforeEach(function (): void {
 it('allows employees to create and transition tasks only in member projects', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
-    $employee = User::factory()->employee($client)->create();
+    $employee = User::factory()->employee()->create();
     $project = mvpProject($client, 'Employee task project');
     $manager = app(ProjectMembershipManager::class);
     $manager->add($project, $employee, $admin);
@@ -30,12 +30,11 @@ it('allows employees to create and transition tasks only in member projects', fu
     expect($task->refresh()->isDone())->toBeTrue();
 });
 
-it('allows active employee members as task assignees and rejects removed or cross-client members', function (): void {
+it('allows clientless active employee members as task assignees and rejects removed members', function (): void {
     $clientA = Client::factory()->create();
-    $clientB = Client::factory()->create();
     $admin = User::factory()->admin()->create();
-    $employeeA = User::factory()->employee($clientA)->create();
-    $employeeB = User::factory()->employee($clientB)->create();
+    $employeeA = User::factory()->employee()->create();
+    $employeeB = User::factory()->employee()->create();
     $project = mvpProject($clientA, 'Assignment project');
     $manager = app(ProjectMembershipManager::class);
     $manager->add($project, $employeeA, $admin);

@@ -115,12 +115,11 @@ class Project extends Model
         }
 
         if ($user->isEmployee()) {
-            if (! $user->canAuthenticate() || ! $user->client_id) {
+            if (! $user->canAuthenticate()) {
                 return $query->whereRaw('1 = 0');
             }
 
             return $query
-                ->where('client_id', $user->client_id)
                 ->whereHas('members', fn (Builder $members) => $members
                     ->whereKey($user->id)
                     ->whereNull('project_user.removed_at'));

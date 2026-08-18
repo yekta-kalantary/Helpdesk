@@ -41,10 +41,6 @@ class User extends Authenticatable implements CanResetPasswordContract
                 throw new DomainException('Customer users must belong to a client.');
             }
 
-            if ($role === UserRole::Employee && ! $user->client_id) {
-                throw new DomainException('Employee users must belong to a client.');
-            }
-
             if ($role === UserRole::Admin && $user->client_id) {
                 throw new DomainException('Admin users cannot belong to a client.');
             }
@@ -102,11 +98,11 @@ class User extends Authenticatable implements CanResetPasswordContract
         }
 
         if ($this->isCustomer()) {
-            return $this->client()->active()->exists();
+            return (bool) $this->client_id && $this->client()->active()->exists();
         }
 
         if ($this->isEmployee()) {
-            return $this->client()->active()->exists();
+            return true;
         }
 
         return false;

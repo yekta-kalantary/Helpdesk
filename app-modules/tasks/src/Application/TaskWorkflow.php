@@ -391,7 +391,7 @@ class TaskWorkflow
                 throw new DomainException('Active Project membership is required.');
             }
         } elseif ($user->isEmployee()) {
-            if ($user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
+            if (! $project->hasActiveMember($user)) {
                 throw new DomainException('Active Project membership is required.');
             }
         } elseif (! $user->isAdmin()) {

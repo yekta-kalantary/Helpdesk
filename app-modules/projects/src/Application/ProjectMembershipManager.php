@@ -139,7 +139,7 @@ class ProjectMembershipManager
             throw new DomainException('Only customer or employee users can be project members.');
         }
 
-        if ($user->client_id !== $project->client_id) {
+        if ($user->isCustomer() && $user->client_id !== $project->client_id) {
             throw new DomainException('Project members must belong to the same client as the project.');
         }
     }

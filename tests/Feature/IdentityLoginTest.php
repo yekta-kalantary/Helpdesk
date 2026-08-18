@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Hash;
-use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 
 it('renders the identity login page for guests', function (): void {
@@ -33,8 +32,8 @@ it('authenticates an active user and regenerates the session', function (): void
     expect($user->refresh()->last_login_at)->not->toBeNull();
 });
 
-it('authenticates an active employee with an active client', function (): void {
-    $employee = User::factory()->employee(Client::factory()->create())->create([
+it('authenticates an active employee without a client', function (): void {
+    $employee = User::factory()->employee()->create([
         'email' => 'employee@example.test',
         'password' => Hash::make('secret-password'),
     ]);
