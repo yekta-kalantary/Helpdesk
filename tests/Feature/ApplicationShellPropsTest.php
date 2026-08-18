@@ -17,7 +17,7 @@ it('shares the application shell contract with guests', function (): void {
                     'key' => 'overview',
                     'label' => __('app.navigation.overview'),
                     'items' => [
-                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('home')],
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard')],
                     ],
                 ],
                 [
@@ -76,7 +76,7 @@ it('shares Persian shell presentation data for a Persian request', function (): 
                     'key' => 'overview',
                     'label' => __('app.navigation.overview'),
                     'items' => [
-                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('home')],
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard')],
                     ],
                 ],
                 [

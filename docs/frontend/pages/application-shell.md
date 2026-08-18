@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved for implementation.
+Implemented. The first authenticated integration is the minimal Dashboard page; the full Dashboard design remains queued separately.
 
 ## Scope
 
@@ -80,3 +80,10 @@ Every visible label, accessible label, navigation label, action label, and statu
 - Desktop, tablet, and 375px mobile layouts remain usable without horizontal scrolling.
 - Mobile navigation is keyboard accessible and closes on Escape.
 - TypeScript validation, focused feature tests, and Vite build pass.
+
+## Integration Status
+
+- The named `dashboard` route is protected by authentication and account activity middleware.
+- `Dashboard.vue` consumes `AppShell` as an Inertia layout without repeating shell markup.
+- Identity authentication pages remain outside the authenticated shell.
+- Dashboard domain data and CRUD interactions are intentionally deferred to the Dashboard page queue item.

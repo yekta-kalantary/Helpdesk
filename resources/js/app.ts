@@ -4,8 +4,6 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import { createApp, h, type DefineComponent } from 'vue'
 
-import AppShell from '@/Layouts/AppShell.vue'
-
 const pages = {
     ...import.meta.glob<DefineComponent>('./Pages/**/*.vue'),
     ...import.meta.glob<DefineComponent>('../../app-modules/**/resources/js/Pages/**/*.vue'),
@@ -36,12 +34,7 @@ createInertiaApp({
             pages,
         ),
     setup({ el, App, props, plugin }) {
-        createApp({
-            render: () =>
-                h(AppShell, {}, {
-                    default: () => h(App, props),
-                }),
-        })
+        createApp({ render: () => h(App, props) })
             .use(plugin)
             .mount(el)
     },

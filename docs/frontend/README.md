@@ -17,7 +17,7 @@ Frontend design and implementation are approved one page at a time.
 | 1 | Login | Identity | Implemented | [identity-login.md](pages/identity-login.md) |
 | 2 | Password Recovery | Identity | Implemented | [identity-password-recovery.md](pages/identity-password-recovery.md) |
 | 3 | Password Reset | Identity | Implemented | [identity-password-reset.md](pages/identity-password-reset.md) |
-| 4 | Application Shell | Shared frontend | Approved | [application-shell.md](pages/application-shell.md) |
+| 4 | Application Shell | Shared frontend | Implemented | [application-shell.md](pages/application-shell.md) |
 | 5 | Dashboard | Shared presentation | Pending | Not started |
 | 6 | User List | Identity | Pending | Not started |
 | 7 | User Create/Edit | Identity | Pending | Not started |

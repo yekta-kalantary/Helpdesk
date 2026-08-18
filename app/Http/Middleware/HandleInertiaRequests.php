@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
                     'key' => 'overview',
                     'label' => __('app.navigation.overview'),
                     'items' => [
-                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('home')],
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('dashboard')],
                     ],
                 ],
                 [

@@ -8,7 +8,7 @@ it('renders the application shell contract for responsive navigation', function 
             ->where('navigationLabel', __('app.navigation.label'))
             ->where('navigationCloseLabel', __('app.navigation.close'))
             ->where('navigation.0.key', 'overview')
-            ->where('navigation.0.items.0.href', route('home'))
+            ->where('navigation.0.items.0.href', route('dashboard'))
             ->where('auth.user', null));
 });
 
