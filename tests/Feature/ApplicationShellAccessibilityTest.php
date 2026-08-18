@@ -62,7 +62,10 @@ it('keeps identity pages outside the authenticated shell and preserves accessibi
         ->toContain('leave-active-class="transition-transform duration-150 ease-in motion-reduce:transition-none"');
     expect($userMenu)
         ->toContain('@keydown.esc="closeMenu"')
-        ->toContain('trigger.value?.focus()');
+        ->toContain('trigger.value?.focus()')
+        ->toContain('document.addEventListener(\'pointerdown\', closeOnOutsideClick)')
+        ->toContain('document.removeEventListener(\'pointerdown\', closeOnOutsideClick)')
+        ->toContain('menu.value?.contains(event.target as Node)');
 
     $this->get(route('login'))
         ->assertOk()

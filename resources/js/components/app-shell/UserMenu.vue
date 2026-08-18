@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ChevronDown, LogOut, UserRound } from '@lucide/vue'
 import { Link, router } from '@inertiajs/vue3'
-import { nextTick, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import type { AuthenticatedUser } from '@/types/navigation'
 
@@ -17,7 +17,17 @@ defineProps<{
 
 const open = ref(false)
 const trigger = ref<HTMLButtonElement | null>(null)
+const menu = ref<HTMLDivElement | null>(null)
 const menuId = 'user-menu-panel'
+
+function closeOnOutsideClick(event: PointerEvent): void {
+    if (!open.value || menu.value?.contains(event.target as Node)) {
+        return
+    }
+
+    open.value = false
+}
+
 function logout(): void {
     router.post('/logout')
 }
@@ -27,10 +37,13 @@ async function closeMenu(): Promise<void> {
     await nextTick()
     trigger.value?.focus()
 }
+
+onMounted(() => document.addEventListener('pointerdown', closeOnOutsideClick))
+onBeforeUnmount(() => document.removeEventListener('pointerdown', closeOnOutsideClick))
 </script>
 
 <template>
-    <div class="relative">
+    <div ref="menu" class="relative">
         <button
             ref="trigger"
             type="button"
