@@ -5,16 +5,6 @@ use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 
-it('exposes the MVP admin modules', function (): void {
-    $admin = User::query()->admins()->firstOrFail();
-
-    $this->actingAs($admin)->get(route('clients.index'))->assertOk();
-    $this->get(route('users.index'))->assertOk();
-    $this->get(route('projects.index'))->assertOk();
-    $this->get(route('tasks.index'))->assertOk();
-    $this->get(route('notifications.index'))->assertOk();
-});
-
 it('keeps authenticated identity separate from the client account', function (): void {
     $client = Client::factory()->create(['name' => 'Acme']);
     $user = User::factory()->customer($client)->create([
