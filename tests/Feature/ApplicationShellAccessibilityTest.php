@@ -24,6 +24,7 @@ it('keeps identity pages outside the authenticated shell and preserves accessibi
     $mobileNavigation = file_get_contents(resource_path('js/components/app-shell/MobileNavigation.vue'));
     $sidebar = file_get_contents(resource_path('js/components/app-shell/Sidebar.vue'));
     $topBar = file_get_contents(resource_path('js/components/app-shell/TopBar.vue'));
+    $userMenu = file_get_contents(resource_path('js/components/app-shell/UserMenu.vue'));
 
     // No browser harness is available in this suite, so verify the rendered accessibility contract statically.
     expect($app)->not->toContain('AppShell');
@@ -59,6 +60,9 @@ it('keeps identity pages outside the authenticated shell and preserves accessibi
         ->toContain('motion-reduce:transition-none')
         ->toContain('enter-active-class="transition-opacity duration-200 ease-out motion-reduce:transition-none"')
         ->toContain('leave-active-class="transition-transform duration-150 ease-in motion-reduce:transition-none"');
+    expect($userMenu)
+        ->toContain('@keydown.esc="closeMenu"')
+        ->toContain('trigger.value?.focus()');
 
     $this->get(route('login'))
         ->assertOk()

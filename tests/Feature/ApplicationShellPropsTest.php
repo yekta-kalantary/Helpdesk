@@ -106,3 +106,21 @@ it('shares localized user menu interaction labels', function (): void {
             ->where('translations.app.userMenu.logout', __('app.user_menu.logout'))
             ->where('translations.app.userMenu.switchLocale', __('app.user_menu.switch_locale')));
 });
+
+it('renders root application translations from the configured language path', function (): void {
+    $this->app->setLocale('en');
+
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('navigationLabel', 'Application navigation')
+            ->where('navigation.0.label', 'Overview')
+            ->where('navigation.0.items.0.label', 'Dashboard'));
+
+    $this->app->setLocale('fa');
+
+    $this->get(route('home'))
+        ->assertInertia(fn ($page) => $page
+            ->where('navigationLabel', 'ناوبری برنامه')
+            ->where('navigation.0.label', 'نمای کلی')
+            ->where('navigation.0.items.0.label', 'داشبورد'));
+});

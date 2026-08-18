@@ -57,3 +57,27 @@ The test includes an explicit comment that runtime browser interaction is unavai
 
 - **1 failed test: deferred Task 5 behavior.** `Issue43QueryBoundsTest` expects the later data-rich dashboard to render `Visible dashboard activity`; Task 5 intentionally provides only the localized Dashboard title and summary.
 - **76 errors: pre-existing unrelated domain gaps.** They are caused by missing deferred/domain routes such as `tasks.show`, `projects.show`, `users.show`, and `clients.index`, plus the missing `components.ui.date` view. No dependencies, CRUD behavior, or dashboard data queries were added to address them.
+
+## Final Review Fix Wave
+
+### Changes
+
+- Moved root `app.php` translations into the configured `resources/lang/{en,fa}` path; existing `navigation.php` files already followed that path.
+- Added literal English and Persian Inertia assertions so locale tests verify rendered values rather than unresolved translation keys.
+- Removed `resources/js/navigation.test.mjs`; it imported TypeScript directly and had no runnable Node test loader or package script. No dependency was added.
+- Added Escape handling to the UserMenu trigger while retaining panel handling; both paths close the menu and restore focus to the trigger after the panel is removed.
+- Reassessed the deferred MobileNavigation `aria-current` minor independently. It remains deferred because this fix wave did not introduce a browser/component test harness and does not touch that behavior.
+
+### Fresh Command Outputs
+
+- `php artisan test --compact tests/Feature/ApplicationShellRenderTest.php tests/Feature/ApplicationShellPropsTest.php tests/Feature/ApplicationShellAccessibilityTest.php tests/Feature/IdentityLoginTest.php tests/Feature/IdentityPasswordRecoveryTest.php tests/Feature/IdentityPasswordResetTest.php tests/Feature/IdentityLogoutTest.php tests/Feature/LocaleSwitchTest.php` -> **27 passed, 300 assertions**.
+- `php artisan tinker --execute 'dump(lang_path()); dump(__('navigation.dashboard')); dump(__('app.navigation.label'));'` -> **`resources/lang`; `داشبورد`; `ناوبری برنامه`**.
+- `npx vue-tsc --noEmit` -> **passed**.
+- `npm run build` -> **passed**; Vite transformed 3,021 modules and built the production bundle.
+- `vendor/bin/pint --dirty --format agent` -> **passed**.
+- `git diff --check` -> **passed**.
+
+### Finding Reproduction
+
+- Before removal, `node --test resources/js/navigation.test.mjs` failed with **`ERR_UNKNOWN_FILE_EXTENSION`** for `resources/js/navigation.ts`.
+- Before relocation, the new literal locale assertion failed because `app.navigation.label` resolved to its key; `navigation.dashboard` already resolved from `resources/lang`.

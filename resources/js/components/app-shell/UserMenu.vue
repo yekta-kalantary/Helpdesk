@@ -47,6 +47,7 @@ async function closeMenu(): Promise<void> {
             :aria-controls="menuId"
             :aria-expanded="open"
             @click="open = !open"
+            @keydown.esc="closeMenu"
         >
             <span class="truncate text-sm font-medium text-slate-700">{{ user.name }}</span>
             <ChevronDown :size="16" aria-hidden="true" />
