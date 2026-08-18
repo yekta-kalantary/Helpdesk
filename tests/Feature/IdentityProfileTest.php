@@ -32,7 +32,15 @@ it('returns the authenticated profile read contract', function (): void {
                 'last_name' => 'Lovelace',
                 'email' => 'ada@example.test',
                 'mobile' => '+15551234567',
-            ]));
+            ])
+            ->where('translations.identity.profile.personal.title', __('identity::messages.profile.personal.title'))
+            ->where('translations.identity.profile.contact.title', __('identity::messages.profile.contact.title'))
+            ->where('translations.identity.profile.password.title', __('identity::messages.profile.password.title'))
+            ->where('translations.identity.profile.personal.saved', __('identity::messages.profile.personal.saved'))
+            ->where('translations.identity.profile.contact.saved', __('identity::messages.profile.contact.saved'))
+            ->where('translations.identity.profile.password.saved', __('identity::messages.profile.password.saved'))
+            ->missing('profile.user.email_verified_at')
+            ->missing('translations.identity.profile.verification'));
 });
 
 it('updates personal information without changing contact information', function (): void {

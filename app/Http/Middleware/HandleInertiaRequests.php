@@ -77,6 +77,7 @@ class HandleInertiaRequests extends Middleware
                     'login' => __('identity::messages.login'),
                     'passwordRecovery' => __('identity::messages.password_recovery'),
                     'passwordReset' => __('identity::messages.password_reset'),
+                    'profile' => __('identity::messages.profile'),
                 ],
             ],
         ]);

@@ -18,21 +18,22 @@ Frontend design and implementation are approved one page at a time.
 | 2 | Password Recovery | Identity | Implemented | [identity-password-recovery.md](pages/identity-password-recovery.md) |
 | 3 | Password Reset | Identity | Implemented | [identity-password-reset.md](pages/identity-password-reset.md) |
 | 4 | Application Shell | Shared frontend | Implemented | [application-shell.md](pages/application-shell.md) |
-| 5 | Dashboard | Shared presentation | Pending | Not started |
-| 6 | User List | Identity | Pending | Not started |
-| 7 | User Create/Edit | Identity | Pending | Not started |
-| 8 | User Detail | Identity | Pending | Not started |
-| 9 | Client List | Clients | Pending | Not started |
-| 10 | Client Create/Edit | Clients | Pending | Not started |
-| 11 | Client Detail | Clients | Pending | Not started |
-| 12 | Project List | Projects | Pending | Not started |
-| 13 | Project Create/Edit | Projects | Pending | Not started |
-| 14 | Project Detail | Projects | Pending | Not started |
-| 15 | Task List | Tasks | Pending | Not started |
-| 16 | Task Create/Edit | Tasks | Pending | Not started |
-| 17 | Task Detail | Tasks | Pending | Not started |
-| 18 | Notifications | Cross-module presentation | Pending | Not started |
-| 19 | Error States | Shared frontend | Pending | Not started |
+| 5 | Profile | Identity | Implemented | Task 4 card-based profile settings |
+| 6 | Dashboard | Shared presentation | Pending | Not started |
+| 7 | User List | Identity | Pending | Not started |
+| 8 | User Create/Edit | Identity | Pending | Not started |
+| 9 | User Detail | Identity | Pending | Not started |
+| 10 | Client List | Clients | Pending | Not started |
+| 11 | Client Create/Edit | Clients | Pending | Not started |
+| 12 | Client Detail | Clients | Pending | Not started |
+| 13 | Project List | Projects | Pending | Not started |
+| 14 | Project Create/Edit | Projects | Pending | Not started |
+| 15 | Project Detail | Projects | Pending | Not started |
+| 16 | Task List | Tasks | Pending | Not started |
+| 17 | Task Create/Edit | Tasks | Pending | Not started |
+| 18 | Task Detail | Tasks | Pending | Not started |
+| 19 | Notifications | Cross-module presentation | Pending | Not started |
+| 20 | Error States | Shared frontend | Pending | Not started |
 
 ## Global Constraints
 
