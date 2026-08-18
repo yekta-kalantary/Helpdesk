@@ -43,6 +43,59 @@ it('returns the authenticated profile read contract', function (): void {
             ->missing('translations.identity.profile.verification'));
 });
 
+it('covers the profile page presentation contract', function (): void {
+    $user = User::factory()->admin()->create();
+    $pageSource = file_get_contents(base_path('app-modules/identity/resources/js/Pages/Profile/Edit.vue'));
+
+    expect($pageSource)->toBeString()
+        ->and($pageSource)->toContain('personalForm.post(\'/profile/personal\'')
+        ->toContain('contactForm.post(\'/profile/contact\'')
+        ->toContain('passwordForm.post(\'/profile/password\'')
+        ->toContain('personalSaved')
+        ->toContain('contactSaved')
+        ->toContain('passwordSaved')
+        ->toContain('role="status" aria-live="polite"')
+        ->toContain('profile-password-error')
+        ->toContain('profile-password-confirmation-error')
+        ->toContain('current-password-error')
+        ->toContain('password-requirements profile-password-error')
+        ->toContain('password-requirements profile-password-confirmation-error')
+        ->toContain('show_password')
+        ->toContain('hide_password')
+        ->not->toContain('verification');
+
+    expect(substr_count($pageSource, 'size-11'))->toBe(3)
+        ->and(substr_count($pageSource, 'aria-pressed='))->toBe(3);
+
+    $this->actingAs($user)->get(route('profile.edit'))
+        ->assertInertia(fn ($page) => $page
+            ->where('translations.identity.profile.title', __('identity::messages.profile.title'))
+            ->where('translations.identity.profile.description', __('identity::messages.profile.description'))
+            ->where('translations.identity.profile.personal.description', __('identity::messages.profile.personal.description'))
+            ->where('translations.identity.profile.personal.name_label', __('identity::messages.profile.personal.name_label'))
+            ->where('translations.identity.profile.personal.last_name_label', __('identity::messages.profile.personal.last_name_label'))
+            ->where('translations.identity.profile.personal.submit', __('identity::messages.profile.personal.submit'))
+            ->where('translations.identity.profile.personal.submitting', __('identity::messages.profile.personal.submitting'))
+            ->where('translations.identity.profile.personal.saved', __('identity::messages.profile.personal.saved'))
+            ->where('translations.identity.profile.contact.email_label', __('identity::messages.profile.contact.email_label'))
+            ->where('translations.identity.profile.contact.mobile_label', __('identity::messages.profile.contact.mobile_label'))
+            ->where('translations.identity.profile.contact.description', __('identity::messages.profile.contact.description'))
+            ->where('translations.identity.profile.contact.submit', __('identity::messages.profile.contact.submit'))
+            ->where('translations.identity.profile.contact.submitting', __('identity::messages.profile.contact.submitting'))
+            ->where('translations.identity.profile.contact.saved', __('identity::messages.profile.contact.saved'))
+            ->where('translations.identity.profile.password.current_label', __('identity::messages.profile.password.current_label'))
+            ->where('translations.identity.profile.password.new_label', __('identity::messages.profile.password.new_label'))
+            ->where('translations.identity.profile.password.confirmation_label', __('identity::messages.profile.password.confirmation_label'))
+            ->where('translations.identity.profile.password.description', __('identity::messages.profile.password.description'))
+            ->where('translations.identity.profile.password.requirements', __('identity::messages.profile.password.requirements'))
+            ->where('translations.identity.profile.password.show_password', __('identity::messages.profile.password.show_password'))
+            ->where('translations.identity.profile.password.hide_password', __('identity::messages.profile.password.hide_password'))
+            ->where('translations.identity.profile.password.submit', __('identity::messages.profile.password.submit'))
+            ->where('translations.identity.profile.password.submitting', __('identity::messages.profile.password.submitting'))
+            ->where('translations.identity.profile.password.saved', __('identity::messages.profile.password.saved'))
+            ->missing('translations.identity.profile.verification'));
+});
+
 it('updates personal information without changing contact information', function (): void {
     $user = User::factory()->admin()->create([
         'name' => 'Ada',

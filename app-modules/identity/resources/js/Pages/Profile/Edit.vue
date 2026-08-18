@@ -194,7 +194,7 @@ function submitPassword(): void {
                                 </label>
                                 <div class="relative">
                                     <Input id="current-password" v-model="passwordForm.current_password" :type="showCurrentPassword ? 'text' : 'password'" name="current_password" autocomplete="current-password" required :aria-invalid="Boolean(passwordForm.errors.current_password)" :aria-describedby="passwordForm.errors.current_password ? 'current-password-error' : undefined" class="pe-11" />
-                                    <button type="button" class="absolute top-1/2 end-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :aria-label="showCurrentPassword ? $page.props.translations?.identity?.profile?.password?.hide_password : $page.props.translations?.identity?.profile?.password?.show_password" :aria-pressed="showCurrentPassword" @click="showCurrentPassword = !showCurrentPassword">
+                                    <button type="button" class="absolute top-1/2 end-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :aria-label="showCurrentPassword ? $page.props.translations?.identity?.profile?.password?.hide_password : $page.props.translations?.identity?.profile?.password?.show_password" :aria-pressed="showCurrentPassword" @click="showCurrentPassword = !showCurrentPassword">
                                         <EyeOff v-if="showCurrentPassword" class="size-4" aria-hidden="true" />
                                         <Eye v-else class="size-4" aria-hidden="true" />
                                     </button>
@@ -206,26 +206,26 @@ function submitPassword(): void {
                                     {{ $page.props.translations?.identity?.profile?.password?.new_label }}
                                 </label>
                                 <div class="relative">
-                                    <Input id="profile-password" v-model="passwordForm.password" :type="showPassword ? 'text' : 'password'" name="password" autocomplete="new-password" required aria-describedby="password-requirements" :aria-invalid="Boolean(passwordForm.errors.password)" class="pe-11" />
-                                    <button type="button" class="absolute top-1/2 end-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :aria-label="showPassword ? $page.props.translations?.identity?.profile?.password?.hide_password : $page.props.translations?.identity?.profile?.password?.show_password" :aria-pressed="showPassword" @click="showPassword = !showPassword">
+                                    <Input id="profile-password" v-model="passwordForm.password" :type="showPassword ? 'text' : 'password'" name="password" autocomplete="new-password" required aria-describedby="password-requirements profile-password-error" :aria-invalid="Boolean(passwordForm.errors.password)" class="pe-11" />
+                                    <button type="button" class="absolute top-1/2 end-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :aria-label="showPassword ? $page.props.translations?.identity?.profile?.password?.hide_password : $page.props.translations?.identity?.profile?.password?.show_password" :aria-pressed="showPassword" @click="showPassword = !showPassword">
                                         <EyeOff v-if="showPassword" class="size-4" aria-hidden="true" />
                                         <Eye v-else class="size-4" aria-hidden="true" />
                                     </button>
                                 </div>
-                                <p v-if="passwordForm.errors.password" class="text-sm text-red-700" role="alert">{{ passwordForm.errors.password }}</p>
+                                <p v-if="passwordForm.errors.password" id="profile-password-error" class="text-sm text-red-700" role="alert">{{ passwordForm.errors.password }}</p>
                             </div>
                             <div class="space-y-2">
                                 <label for="profile-password-confirmation" class="text-sm font-semibold text-slate-800">
                                     {{ $page.props.translations?.identity?.profile?.password?.confirmation_label }}
                                 </label>
                                 <div class="relative">
-                                    <Input id="profile-password-confirmation" v-model="passwordForm.password_confirmation" :type="showConfirmation ? 'text' : 'password'" name="password_confirmation" autocomplete="new-password" required aria-describedby="password-requirements" :aria-invalid="Boolean(passwordForm.errors.password)" class="pe-11" />
-                                    <button type="button" class="absolute top-1/2 end-2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :aria-label="showConfirmation ? $page.props.translations?.identity?.profile?.password?.hide_password : $page.props.translations?.identity?.profile?.password?.show_password" :aria-pressed="showConfirmation" @click="showConfirmation = !showConfirmation">
+                                    <Input id="profile-password-confirmation" v-model="passwordForm.password_confirmation" :type="showConfirmation ? 'text' : 'password'" name="password_confirmation" autocomplete="new-password" required aria-describedby="password-requirements profile-password-confirmation-error" :aria-invalid="Boolean(passwordForm.errors.password)" class="pe-11" />
+                                    <button type="button" class="absolute top-1/2 end-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" :aria-label="showConfirmation ? $page.props.translations?.identity?.profile?.password?.hide_password : $page.props.translations?.identity?.profile?.password?.show_password" :aria-pressed="showConfirmation" @click="showConfirmation = !showConfirmation">
                                         <EyeOff v-if="showConfirmation" class="size-4" aria-hidden="true" />
                                         <Eye v-else class="size-4" aria-hidden="true" />
                                     </button>
                                 </div>
-                                <p v-if="passwordForm.errors.password" class="text-sm text-red-700" role="alert">{{ passwordForm.errors.password }}</p>
+                                <p v-if="passwordForm.errors.password" id="profile-password-confirmation-error" class="text-sm text-red-700" role="alert">{{ passwordForm.errors.password }}</p>
                             </div>
                         </div>
                         <p id="password-requirements" class="text-sm leading-6 text-slate-600">{{ $page.props.translations?.identity?.profile?.password?.requirements }}</p>
