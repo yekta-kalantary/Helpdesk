@@ -19,6 +19,10 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        if (in_array(session('locale'), ['en', 'fa'], true)) {
+            app()->setLocale((string) session('locale'));
+        }
+
         $locale = app()->getLocale();
         $user = $request->user();
         $capabilities = $user?->isAdmin() === true
@@ -65,6 +69,16 @@ class HandleInertiaRequests extends Middleware
                 ],
             ],
             'translations' => [
+                'app' => [
+                    'userMenu' => [
+                        'open' => __('app.user_menu.open'),
+                        'close' => __('app.user_menu.close'),
+                        'logout' => __('app.user_menu.logout'),
+                        'switchLocale' => __('app.user_menu.switch_locale'),
+                        'english' => __('app.user_menu.english'),
+                        'persian' => __('app.user_menu.persian'),
+                    ],
+                ],
                 'identity' => [
                     'login' => __('identity::messages.login'),
                     'passwordRecovery' => __('identity::messages.password_recovery'),

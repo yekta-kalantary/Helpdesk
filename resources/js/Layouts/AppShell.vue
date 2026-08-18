@@ -5,6 +5,7 @@ import { computed, nextTick, ref } from 'vue'
 import MobileNavigation from '@/components/app-shell/MobileNavigation.vue'
 import Sidebar from '@/components/app-shell/Sidebar.vue'
 import TopBar from '@/components/app-shell/TopBar.vue'
+import UserMenu from '@/components/app-shell/UserMenu.vue'
 import { filterNavigationSections } from '@/navigation'
 import type { ApplicationShellProps } from '@/types/navigation'
 
@@ -46,10 +47,17 @@ async function closeMobileNavigation(): Promise<void> {
                 <TopBar
                     :app-name="page.props.appName"
                     :navigation-label="page.props.navigationLabel"
-                    :user-name="page.props.auth.user?.name"
                     :navigation-open="mobileNavigationOpen"
                     @open-navigation="openMobileNavigation"
-                />
+                >
+                    <UserMenu
+                        v-if="page.props.auth.user"
+                        :user="page.props.auth.user"
+                        :locale="page.props.locale"
+                        :labels="page.props.translations.app.userMenu"
+                        :current-path="page.url"
+                    />
+                </TopBar>
                 <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
                     <slot />
                 </main>

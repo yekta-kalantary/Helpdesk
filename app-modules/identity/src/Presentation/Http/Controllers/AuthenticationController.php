@@ -4,6 +4,7 @@ namespace Modules\Identity\Presentation\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Identity\Application\AuthenticateUser;
@@ -40,6 +41,15 @@ class AuthenticationController
         $request->session()->regenerate();
 
         return redirect()->intended(route('home'));
+    }
+
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
     }
 
     public function forgotPassword(): Response

@@ -32,4 +32,16 @@ export interface ApplicationShellProps {
         capabilities: string[]
     }
     navigation: NavigationSection[]
+    translations: {
+        app: {
+            userMenu: {
+                open: string
+                close: string
+                logout: string
+                switchLocale: string
+                english: string
+                persian: string
+            }
+        }
+    }
 }

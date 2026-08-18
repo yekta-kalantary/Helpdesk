@@ -4,7 +4,6 @@ import { Menu } from '@lucide/vue'
 defineProps<{
     appName: string
     navigationLabel: string
-    userName?: string
     navigationOpen: boolean
 }>()
 
@@ -35,8 +34,6 @@ function openNavigation(event: MouseEvent): void {
                 {{ appName }}
             </a>
         </div>
-        <span v-if="userName" class="max-w-[50%] truncate text-sm font-medium text-slate-500">
-            {{ userName }}
-        </span>
+        <slot />
     </header>
 </template>

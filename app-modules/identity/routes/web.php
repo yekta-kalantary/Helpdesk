@@ -11,3 +11,7 @@ Route::middleware(['web', 'guest'])->group(function (): void {
     Route::get('/reset-password/{token}', [AuthenticationController::class, 'resetPassword'])->name('password.reset');
     Route::post('/reset-password/{token}', [AuthenticationController::class, 'updatePassword'])->name('password.update');
 });
+
+Route::middleware(['web', 'auth'])->group(function (): void {
+    Route::post('/logout', [AuthenticationController::class, 'destroy'])->name('logout');
+});
