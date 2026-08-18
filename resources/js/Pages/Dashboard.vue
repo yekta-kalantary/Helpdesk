@@ -13,10 +13,10 @@ defineProps<{
 
 <template>
     <section aria-labelledby="dashboard-title" class="mx-auto w-full max-w-7xl">
-        <h1 id="dashboard-title" class="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+        <h1 id="dashboard-title" class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
             {{ title }}
         </h1>
-        <p class="mt-2 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+        <p class="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
             {{ summary }}
         </p>
     </section>

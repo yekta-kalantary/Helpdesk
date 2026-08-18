@@ -108,19 +108,19 @@ onBeforeUnmount(() => document.removeEventListener('keydown', closeOnEscape))
                     v-if="open"
                     id="mobile-navigation"
                     ref="drawer"
-                    class="relative flex h-full w-[min(18rem,calc(100vw-2rem))] max-w-full flex-col bg-white shadow-2xl"
+                    class="relative flex h-full w-[min(17rem,calc(100vw-2rem))] max-w-full flex-col bg-white shadow-xl"
                     role="dialog"
                     aria-modal="true"
                     :aria-label="navigationLabel"
                 >
-                    <div class="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-5">
-                        <a href="/" class="text-base font-bold tracking-tight text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2">
+                    <div class="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 px-4">
+                        <a href="/" class="text-sm font-semibold tracking-tight text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2">
                             {{ appName }}
                         </a>
                         <button
                             ref="closeButton"
                             type="button"
-                            class="inline-flex size-11 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                            class="inline-flex size-10 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
                             :aria-label="navigationCloseLabel"
                             @click="emit('close')"
                         >
@@ -128,18 +128,18 @@ onBeforeUnmount(() => document.removeEventListener('keydown', closeOnEscape))
                         </button>
                     </div>
 
-                    <nav class="flex-1 overflow-y-auto px-3 py-6" :aria-label="navigationLabel">
-                        <div v-for="section in navigation" :key="section.key" class="mb-7 last:mb-0">
-                            <p class="px-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    <nav class="flex-1 overflow-y-auto px-2.5 py-5" :aria-label="navigationLabel">
+                        <div v-for="section in navigation" :key="section.key" class="mb-5 last:mb-0">
+                            <p class="px-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
                                 {{ section.label }}
                             </p>
-                            <div class="mt-3 grid gap-1">
+                            <div class="mt-2 grid gap-0.5">
                                 <template v-for="item in section.items" :key="item.key">
                                     <a
                                         v-if="item.href"
                                         :href="item.href"
-                                        class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-brand-50 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
-                                        :class="isNavigationItemActive(item, currentUrl) ? 'bg-brand-50 text-brand-700' : ''"
+                                        class="flex min-h-10 items-center gap-2.5 rounded-md border-s-2 border-transparent px-2.5 text-[13px] font-medium text-slate-600 transition-colors hover:bg-teal-50 hover:text-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                                        :class="isNavigationItemActive(item, currentUrl) ? 'border-teal-700 bg-teal-50 text-teal-800' : ''"
                                         :aria-current="isNavigationItemActive(item, currentUrl) ? 'page' : undefined"
                                         @click="emit('close')"
                                     >
@@ -148,7 +148,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', closeOnEscape))
                                     </a>
                                     <span
                                         v-else
-                                        class="flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold text-slate-400"
+                                        class="flex min-h-10 items-center gap-2.5 rounded-md border-s-2 border-transparent px-2.5 text-[13px] font-medium text-slate-400"
                                         aria-disabled="true"
                                     >
                                         <NavigationIcon :name="item.icon" class="shrink-0" />

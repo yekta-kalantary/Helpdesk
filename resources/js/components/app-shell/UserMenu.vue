@@ -34,7 +34,7 @@ async function closeMenu(): Promise<void> {
         <button
             ref="trigger"
             type="button"
-            class="inline-flex min-h-11 max-w-[min(18rem,60vw)] items-center gap-2 rounded-lg px-2 text-start hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+            class="inline-flex min-h-10 max-w-[min(18rem,60vw)] items-center gap-2 rounded-md px-2 text-start hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
             :aria-label="open ? labels.close : labels.open"
             :aria-controls="menuId"
             :aria-expanded="open"
@@ -48,17 +48,17 @@ async function closeMenu(): Promise<void> {
         <div
             v-if="open"
             :id="menuId"
-            class="absolute end-0 top-full z-20 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+            class="absolute end-0 top-full z-20 mt-1.5 w-56 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg"
             @keydown.esc="closeMenu"
         >
-            <div class="px-3 py-2">
+            <div class="px-2.5 py-1.5">
                 <p class="truncate text-sm font-semibold text-slate-900">{{ user.name }}</p>
                 <p class="truncate text-xs text-slate-500">{{ user.email }}</p>
             </div>
             <div class="my-1 border-t border-slate-100" />
             <Link
                 href="/profile"
-                class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                class="flex min-h-10 w-full items-center gap-2 rounded-md px-2.5 text-[13px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
                 @click="open = false"
             >
                 <UserRound :size="16" aria-hidden="true" />
@@ -66,7 +66,7 @@ async function closeMenu(): Promise<void> {
             </Link>
             <button
                 type="button"
-                class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                class="flex min-h-10 w-full items-center gap-2 rounded-md px-2.5 text-[13px] text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
                 @click="logout"
             >
                 <LogOut :size="16" aria-hidden="true" />
