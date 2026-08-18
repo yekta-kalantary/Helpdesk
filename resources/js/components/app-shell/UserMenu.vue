@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ChevronDown, LogOut } from '@lucide/vue'
-import { router } from '@inertiajs/vue3'
+import { ChevronDown, LogOut, UserRound } from '@lucide/vue'
+import { Link, router } from '@inertiajs/vue3'
 import { nextTick, ref } from 'vue'
 
 import type { AuthenticatedUser } from '@/types/navigation'
@@ -10,6 +10,7 @@ defineProps<{
     labels: {
         open: string
         close: string
+        profile: string
         logout: string
     }
 }>()
@@ -55,6 +56,14 @@ async function closeMenu(): Promise<void> {
                 <p class="truncate text-xs text-slate-500">{{ user.email }}</p>
             </div>
             <div class="my-1 border-t border-slate-100" />
+            <Link
+                href="/profile"
+                class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                @click="open = false"
+            >
+                <UserRound :size="16" aria-hidden="true" />
+                <span>{{ labels.profile }}</span>
+            </Link>
             <button
                 type="button"
                 class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-sm text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"

@@ -69,6 +69,7 @@ class HandleInertiaRequests extends Middleware
                     'userMenu' => [
                         'open' => __('app.user_menu.open'),
                         'close' => __('app.user_menu.close'),
+                        'profile' => __('app.user_menu.profile'),
                         'logout' => __('app.user_menu.logout'),
                     ],
                 ],

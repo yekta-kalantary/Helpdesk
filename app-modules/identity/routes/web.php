@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Identity\Presentation\Http\Controllers\AuthenticationController;
+use Modules\Identity\Presentation\Http\Controllers\ProfileController;
 
 Route::middleware(['web', 'guest'])->group(function (): void {
     Route::get('/login', [AuthenticationController::class, 'create'])->name('login');
@@ -13,5 +14,6 @@ Route::middleware(['web', 'guest'])->group(function (): void {
 });
 
 Route::middleware(['web', 'auth'])->group(function (): void {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/logout', [AuthenticationController::class, 'destroy'])->name('logout');
 });

@@ -12,6 +12,7 @@ return [
     'user_menu' => [
         'open' => 'Open user menu',
         'close' => 'Close user menu',
+        'profile' => 'Profile',
         'logout' => 'Logout',
     ],
     'dashboard' => 'Dashboard',

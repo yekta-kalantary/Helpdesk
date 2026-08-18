@@ -40,6 +40,7 @@ export interface ApplicationShellProps {
             userMenu: {
                 open: string
                 close: string
+                profile: string
                 logout: string
             }
         }
