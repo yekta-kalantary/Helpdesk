@@ -19,20 +19,46 @@ it('protects the dashboard and renders its presentation contract through the she
 
 it('keeps identity pages outside the authenticated shell and preserves accessibility contracts', function (): void {
     $app = file_get_contents(resource_path('js/app.ts'));
+    $dashboard = file_get_contents(resource_path('js/Pages/Dashboard.vue'));
     $shell = file_get_contents(resource_path('js/Layouts/AppShell.vue'));
     $mobileNavigation = file_get_contents(resource_path('js/components/app-shell/MobileNavigation.vue'));
     $sidebar = file_get_contents(resource_path('js/components/app-shell/Sidebar.vue'));
     $topBar = file_get_contents(resource_path('js/components/app-shell/TopBar.vue'));
 
+    // No browser harness is available in this suite, so verify the rendered accessibility contract statically.
     expect($app)->not->toContain('AppShell');
-    expect($shell)->toContain('<main');
-    expect($shell)->toContain(':dir="page.props.direction"');
+    expect($dashboard)
+        ->toContain("import AppShell from '@/Layouts/AppShell.vue'")
+        ->toContain('layout: AppShell');
+    expect($shell)
+        ->toContain('<main')
+        ->toContain('<div')
+        ->toContain(':dir="page.props.direction"')
+        ->toContain('nextTick()')
+        ->toContain('mobileNavigationTrigger.value?.focus()');
+    expect($topBar)
+        ->toContain('<header')
+        ->toContain('focus-visible:ring-2')
+        ->toContain('aria-controls="mobile-navigation"')
+        ->toContain('aria-haspopup="dialog"')
+        ->toContain(':aria-expanded="navigationOpen"');
+    expect($sidebar)
+        ->toContain('<aside')
+        ->toContain('<nav')
+        ->toContain('focus-visible:ring-2')
+        ->toContain(':aria-current="isNavigationItemActive(item, currentUrl) ? \'page\' : undefined"');
     expect($mobileNavigation)
+        ->toContain('role="presentation"')
         ->toContain('aria-modal="true"')
+        ->toContain(':aria-label="navigationLabel"')
+        ->toContain('focus-visible:ring-2')
         ->toContain("event.key === 'Escape'")
-        ->toContain('closeButton.value?.focus()');
-    expect($sidebar)->toContain(':aria-current="isNavigationItemActive(item, currentUrl) ? \'page\' : undefined"');
-    expect($topBar)->toContain(':aria-expanded="navigationOpen"');
+        ->toContain('closeButton.value?.focus()')
+        ->toContain("'a[href], button:not([disabled]), [tabindex]:not([tabindex=\"-1\"])'")
+        ->toContain('return backdrop.value ? [backdrop.value, ...drawerElements] : drawerElements')
+        ->toContain('motion-reduce:transition-none')
+        ->toContain('enter-active-class="transition-opacity duration-200 ease-out motion-reduce:transition-none"')
+        ->toContain('leave-active-class="transition-transform duration-150 ease-in motion-reduce:transition-none"');
 
     $this->get(route('login'))
         ->assertOk()

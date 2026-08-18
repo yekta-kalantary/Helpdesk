@@ -26,3 +26,34 @@ Implemented the first authenticated application-shell integration only. No domai
 ## Concerns
 
 The full suite contains pre-existing domain/MVP expectations for routes and views that are not part of Task 5, including `tasks.show`, `projects.show`, `users.show`, `clients.index`, and `components.ui.date`. One existing dashboard query-bound test also expects the later data-rich Dashboard implementation. Those requirements were intentionally not implemented because this task requires a minimal presentation-only dashboard and explicitly defers domain CRUD pages.
+
+## Task 5 Review Fix
+
+### Accessibility Coverage
+
+`ApplicationShellAccessibilityTest` now deterministically checks the complete source-level contract available without a browser harness:
+
+- App shell landmarks: page wrapper, `header`, `aside`, `nav`, and `main`.
+- Focus-visible styling on shell controls and navigation controls.
+- Mobile dialog semantics, accessible labels, and `aria-modal`.
+- Escape-key handling and focus restoration to the mobile navigation trigger.
+- Focus-trap selector coverage and inclusion of the backdrop control in the focusable collection.
+- Active navigation `aria-current` behavior.
+- Reduced-motion transition classes for opacity and drawer movement.
+- Dashboard layout consumption and identity-page shell separation.
+
+The test includes an explicit comment that runtime browser interaction is unavailable; it does not claim to prove actual focus movement or keyboard interaction in a browser.
+
+### Fresh Command Outputs
+
+- `php artisan test --compact tests/Feature/ApplicationShellRenderTest.php tests/Feature/ApplicationShellPropsTest.php tests/Feature/ApplicationShellAccessibilityTest.php tests/Feature/IdentityLoginTest.php tests/Feature/IdentityPasswordRecoveryTest.php tests/Feature/IdentityPasswordResetTest.php tests/Feature/LocaleSwitchTest.php` -> **24 passed, 267 assertions**.
+- `php artisan test --compact` -> **135 tests: 58 passed, 1 failed, 76 errors, 405 assertions**.
+- `vendor/bin/pint --dirty --format agent` -> **passed**.
+- `npx vue-tsc --noEmit` -> **passed**.
+- `npm run build` -> **passed**; Vite transformed 3,021 modules and built the production bundle.
+- `git diff --check` -> **passed**.
+
+### Failure Classification
+
+- **1 failed test: deferred Task 5 behavior.** `Issue43QueryBoundsTest` expects the later data-rich dashboard to render `Visible dashboard activity`; Task 5 intentionally provides only the localized Dashboard title and summary.
+- **76 errors: pre-existing unrelated domain gaps.** They are caused by missing deferred/domain routes such as `tasks.show`, `projects.show`, `users.show`, and `clients.index`, plus the missing `components.ui.date` view. No dependencies, CRUD behavior, or dashboard data queries were added to address them.
