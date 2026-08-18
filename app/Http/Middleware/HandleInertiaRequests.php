@@ -29,6 +29,7 @@ class HandleInertiaRequests extends Middleware
             'appName' => config('app.name'),
             'locale' => $locale,
             'direction' => $locale === 'fa' ? 'rtl' : 'ltr',
+            'navigationLabel' => __('app.navigation.label'),
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->getKey(),
@@ -38,11 +39,29 @@ class HandleInertiaRequests extends Middleware
                 'capabilities' => $capabilities,
             ],
             'navigation' => [
-                ['label' => __('navigation.dashboard'), 'href' => '/'],
-                ['label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
-                ['label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
-                ['label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
-                ['label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                [
+                    'key' => 'overview',
+                    'label' => __('app.navigation.overview'),
+                    'items' => [
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('home')],
+                    ],
+                ],
+                [
+                    'key' => 'workspace',
+                    'label' => __('app.navigation.workspace'),
+                    'items' => [
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                    ],
+                ],
+                [
+                    'key' => 'administration',
+                    'label' => __('app.navigation.administration'),
+                    'items' => [
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
+                    ],
+                ],
             ],
             'translations' => [
                 'identity' => [

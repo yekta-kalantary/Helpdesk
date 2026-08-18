@@ -7,9 +7,16 @@ export interface AuthenticatedUser {
 }
 
 export interface NavigationItem {
+    key: string
     label: string
     href: string
     capability?: string
+}
+
+export interface NavigationSection {
+    key: string
+    label: string
+    items: NavigationItem[]
 }
 
 export interface ApplicationShellProps {
@@ -17,9 +24,10 @@ export interface ApplicationShellProps {
     appName: string
     locale: string
     direction: Direction
+    navigationLabel: string
     auth: {
         user: AuthenticatedUser | null
         capabilities: string[]
     }
-    navigation: NavigationItem[]
+    navigation: NavigationSection[]
 }

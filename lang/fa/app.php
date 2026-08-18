@@ -2,6 +2,12 @@
 
 return [
     'name' => 'سامانه مدیریت مخاطب و پروژه',
+    'navigation' => [
+        'label' => 'ناوبری برنامه',
+        'overview' => 'نمای کلی',
+        'workspace' => 'فضای کاری',
+        'administration' => 'مدیریت',
+    ],
     'dashboard' => 'داشبورد',
     'dashboard_summary' => 'خلاصه وضعیت کاربران، پروژه‌ها و تسک‌ها',
     'projects' => 'پروژه‌ها',

@@ -9,14 +9,33 @@ it('shares the application shell contract with guests', function (): void {
             ->where('appName', config('app.name'))
             ->where('locale', config('app.locale'))
             ->where('direction', config('app.locale') === 'fa' ? 'rtl' : 'ltr')
+            ->where('navigationLabel', __('app.navigation.label'))
             ->where('auth.user', null)
             ->where('auth.capabilities', [])
             ->where('navigation', [
-                ['label' => __('navigation.dashboard'), 'href' => '/'],
-                ['label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
-                ['label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
-                ['label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
-                ['label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                [
+                    'key' => 'overview',
+                    'label' => __('app.navigation.overview'),
+                    'items' => [
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('home')],
+                    ],
+                ],
+                [
+                    'key' => 'workspace',
+                    'label' => __('app.navigation.workspace'),
+                    'items' => [
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                    ],
+                ],
+                [
+                    'key' => 'administration',
+                    'label' => __('app.navigation.administration'),
+                    'items' => [
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
+                    ],
+                ],
             ]));
 });
 
@@ -51,11 +70,30 @@ it('shares Persian shell presentation data for a Persian request', function (): 
         ->assertInertia(fn ($page) => $page
             ->where('locale', 'fa')
             ->where('direction', 'rtl')
+            ->where('navigationLabel', __('app.navigation.label'))
             ->where('navigation', [
-                ['label' => __('navigation.dashboard'), 'href' => '/'],
-                ['label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
-                ['label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
-                ['label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
-                ['label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                [
+                    'key' => 'overview',
+                    'label' => __('app.navigation.overview'),
+                    'items' => [
+                        ['key' => 'dashboard', 'label' => __('navigation.dashboard'), 'href' => route('home')],
+                    ],
+                ],
+                [
+                    'key' => 'workspace',
+                    'label' => __('app.navigation.workspace'),
+                    'items' => [
+                        ['key' => 'clients', 'label' => __('navigation.clients'), 'href' => '/clients', 'capability' => 'clients.view'],
+                        ['key' => 'projects', 'label' => __('navigation.projects'), 'href' => '/projects', 'capability' => 'projects.view'],
+                        ['key' => 'tasks', 'label' => __('navigation.tasks'), 'href' => '/tasks', 'capability' => 'tasks.view'],
+                    ],
+                ],
+                [
+                    'key' => 'administration',
+                    'label' => __('app.navigation.administration'),
+                    'items' => [
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => '/users', 'capability' => 'users.view'],
+                    ],
+                ],
             ]));
 });

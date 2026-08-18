@@ -2,6 +2,12 @@
 
 return [
     'name' => 'Contact & Project Manager',
+    'navigation' => [
+        'label' => 'Application navigation',
+        'overview' => 'Overview',
+        'workspace' => 'Workspace',
+        'administration' => 'Administration',
+    ],
     'dashboard' => 'Dashboard',
     'dashboard_summary' => 'Overview of users, projects and tasks',
     'projects' => 'Projects',
