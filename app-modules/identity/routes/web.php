@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Identity\Presentation\Http\Controllers\AuthenticationController;
 use Modules\Identity\Presentation\Http\Controllers\ProfileController;
+use Modules\Identity\Presentation\Http\Controllers\UserManagementController;
 
 Route::middleware(['web', 'guest'])->group(function (): void {
     Route::get('/login', [AuthenticationController::class, 'create'])->name('login');
@@ -14,6 +15,12 @@ Route::middleware(['web', 'guest'])->group(function (): void {
 });
 
 Route::middleware(['web', 'auth'])->group(function (): void {
+    Route::get('/users', [UserManagementController::class, 'index'])
+        ->middleware('account.active')
+        ->name('users.index');
+    Route::post('/users', [UserManagementController::class, 'store'])
+        ->middleware('account.active')
+        ->name('users.store');
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->middleware('account.active')
         ->name('profile.edit');

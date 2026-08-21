@@ -91,6 +91,12 @@ return [
     'is_active' => 'حساب فعال باشد',
     'email_required_to_activate' => 'برای فعال‌سازی حساب ایمیل معتبر لازم است.',
     'password_required_to_activate' => 'برای ورود، کاربر باید از لینک تنظیم رمز عبور استفاده کند.',
+    'user_created' => 'کاربر با موفقیت ایجاد شد.',
+    'roles' => [
+        'admin' => 'مدیر',
+        'customer' => 'مشتری',
+        'employee' => 'کارمند',
+    ],
     'search_users' => 'جستجو در نام، نام خانوادگی، ایمیل یا موبایل',
     'login_title' => 'ورود به پنل',
     'login' => [

@@ -90,6 +90,12 @@ return [
     'is_active' => 'Account is active',
     'email_required_to_activate' => 'Add the user email under contact information before activating the account.',
     'password_required_to_activate' => 'Set a password before activating the account.',
+    'user_created' => 'User created successfully.',
+    'roles' => [
+        'admin' => 'Administrator',
+        'customer' => 'Customer',
+        'employee' => 'Employee',
+    ],
     'search_users' => 'Search by first name, last name, email or mobile',
     'login_title' => 'Sign in to panel',
     'login' => [
