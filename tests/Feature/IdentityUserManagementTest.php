@@ -17,7 +17,8 @@ it('allows administrators to view users and active client options', function ():
             ->component('Identity/Users/Index')
             ->has('users.data')
             ->where('clients', fn ($clients) => collect($clients)->contains('id', $activeClient->id))
-            ->where('clients', fn ($clients) => ! collect($clients)->contains('name', 'Inactive client')));
+            ->where('clients', fn ($clients) => ! collect($clients)->contains('name', 'Inactive client'))
+            ->where('roles', fn ($roles) => collect($roles)->pluck('value')->contains('admin')));
 });
 
 it('rejects non-admin users from user management', function (): void {
@@ -92,6 +93,25 @@ it('rejects an inactive client for customer users', function (): void {
 });
 
 it('rejects a client assignment for non-customer users', function (): void {
+    $employee = User::factory()->employee()->create();
+    $client = Client::factory()->create();
+
+    $this->actingAs($employee)
+        ->post(route('users.store'), [
+            'name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.test',
+            'role' => 'employee',
+            'client_id' => $client->id,
+            'is_active' => true,
+            'password_mode' => 'manual',
+            'password' => 'manual-password',
+            'password_confirmation' => 'manual-password',
+        ])
+        ->assertSessionHasErrors('client_id');
+});
+
+it('rejects a client assignment for admin users', function (): void {
     $admin = User::factory()->admin()->create();
     $client = Client::factory()->create();
 
@@ -100,7 +120,7 @@ it('rejects a client assignment for non-customer users', function (): void {
             'name' => 'Ada',
             'last_name' => 'Lovelace',
             'email' => 'ada@example.test',
-            'role' => 'employee',
+            'role' => 'admin',
             'client_id' => $client->id,
             'is_active' => true,
             'password_mode' => 'manual',
@@ -124,6 +144,63 @@ it('requires a password for manual password mode', function (): void {
             'is_active' => true,
             'password_mode' => 'manual',
             'password_confirmation' => '',
+        ])
+        ->assertSessionHasErrors('password');
+});
+
+it('rejects a manual password confirmation mismatch', function (): void {
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('users.store'), [
+            'name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.test',
+            'role' => 'customer',
+            'client_id' => $client->id,
+            'is_active' => true,
+            'password_mode' => 'manual',
+            'password' => 'manual-password',
+            'password_confirmation' => 'different-password',
+        ])
+        ->assertSessionHasErrors('password');
+});
+
+it('rejects a manual password shorter than the minimum length', function (): void {
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('users.store'), [
+            'name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.test',
+            'role' => 'customer',
+            'client_id' => $client->id,
+            'is_active' => true,
+            'password_mode' => 'manual',
+            'password' => 'short',
+            'password_confirmation' => 'short',
+        ])
+        ->assertSessionHasErrors('password');
+});
+
+it('prohibits a submitted password in email password mode', function (): void {
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('users.store'), [
+            'name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.test',
+            'role' => 'customer',
+            'client_id' => $client->id,
+            'is_active' => true,
+            'password_mode' => 'email',
+            'password' => 'submitted-password',
+            'password_confirmation' => 'submitted-password',
         ])
         ->assertSessionHasErrors('password');
 });
