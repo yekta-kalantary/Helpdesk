@@ -126,3 +126,47 @@ git diff --check
 Output: no output, exit code 0.
 
 No PHP files changed in this fix, so no additional PHP formatter run was required.
+
+## Remaining Accessibility Fix
+
+Applied the final Task 4 accessibility fix in `app-modules/identity/resources/js/Pages/Users/Index.vue`:
+
+- Added `aria-invalid`, conditional `aria-describedby`, stable `is-active-error` output, and visible `role="alert"` errors for `is_active`.
+- Added matching invalid/description attributes to the password-mode fieldset and radios, plus stable `password-mode-error` output with `role="alert"`.
+- Preserved the existing localized copy and password-mode behavior.
+
+### Final Fix Verification
+
+Command:
+
+```text
+php artisan test --compact tests/Feature/IdentityUserManagementTest.php
+```
+
+Output:
+
+```text
+tests: 15, passed: 15, assertions: 52, duration: 3701ms
+```
+
+Command:
+
+```text
+npm run build
+```
+
+Output:
+
+```text
+vite v8.2.1 building client environment for production...
+3042 modules transformed.
+✓ built in 1.89s
+```
+
+Command:
+
+```text
+git diff --check
+```
+
+Output: no output, exit code 0.
