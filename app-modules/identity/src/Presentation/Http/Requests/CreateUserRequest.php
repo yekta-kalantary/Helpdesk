@@ -2,9 +2,10 @@
 
 namespace Modules\Identity\Presentation\Http\Requests;
 
-use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Modules\Clients\Application\DTOs\ClientSummary;
+use Modules\Clients\Application\Queries\ActiveClientDirectory;
 use Modules\Identity\Domain\Enums\UserRole;
 
 class CreateUserRequest extends FormRequest
@@ -13,7 +14,7 @@ class CreateUserRequest extends FormRequest
     {
         $user = $this->user();
 
-        return $user?->is_active === true;
+        return $user?->is_active === true && $user->isAdmin();
     }
 
     /**
@@ -21,6 +22,8 @@ class CreateUserRequest extends FormRequest
      */
     public function rules(): array
     {
+        $activeClientIds = $this->activeClientIds();
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -31,7 +34,7 @@ class CreateUserRequest extends FormRequest
                 'nullable',
                 Rule::requiredIf(fn (): bool => $this->input('role') === UserRole::Customer->value),
                 Rule::prohibitedIf(fn (): bool => $this->input('role') !== UserRole::Customer->value),
-                Rule::exists('clients', 'id')->where(fn (Builder $query): Builder => $query->where('status', 'active')),
+                Rule::in($activeClientIds),
             ],
             'is_active' => ['required', 'boolean'],
             'password_mode' => ['required', Rule::in(['manual', 'email'])],
@@ -57,6 +60,36 @@ class CreateUserRequest extends FormRequest
             'email.required' => __('identity::messages.validation.email_required'),
             'email.email' => __('identity::messages.validation.email_invalid'),
             'email.unique' => __('identity::messages.validation.email_unique'),
+            'client_id.required' => __('identity::messages.validation.client_required'),
+            'client_id.in' => __('identity::messages.validation.client_active'),
+            'client_id.prohibited' => __('identity::messages.validation.client_prohibited'),
+            'client_id.prohibited_if' => __('identity::messages.validation.client_prohibited'),
+        ];
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function activeClientIds(): array
+    {
+        $clientId = $this->input('client_id');
+
+        if (! is_numeric($clientId) || (int) $clientId < 1) {
+            return [];
+        }
+
+        return collect(app(ActiveClientDirectory::class)->executeForIds([(int) $clientId]))
+            ->map(fn (ClientSummary $client): int => $client->id)
+            ->all();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'client_id' => __('identity::messages.validation.client_id'),
         ];
     }
 }

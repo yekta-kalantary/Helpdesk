@@ -19,4 +19,23 @@ final class ActiveClientDirectory
             ->map(fn (Client $client): ClientSummary => ClientSummary::fromModel($client))
             ->all();
     }
+
+    /**
+     * @param  array<int, int>  $clientIds
+     * @return array<int, ClientSummary>
+     */
+    public function executeForIds(array $clientIds): array
+    {
+        if ($clientIds === []) {
+            return [];
+        }
+
+        return Client::query()
+            ->active()
+            ->whereIn('id', $clientIds)
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Client $client): ClientSummary => ClientSummary::fromModel($client))
+            ->all();
+    }
 }

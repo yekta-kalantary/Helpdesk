@@ -48,6 +48,23 @@ it('rejects non-admin users from user management', function (): void {
         ->assertForbidden();
 });
 
+it('rejects active employees from creating users', function (): void {
+    $employee = User::factory()->employee()->create();
+
+    $this->actingAs($employee)
+        ->post(route('users.store'), [
+            'name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.test',
+            'role' => 'employee',
+            'is_active' => true,
+            'password_mode' => 'manual',
+            'password' => 'manual-password',
+            'password_confirmation' => 'manual-password',
+        ])
+        ->assertForbidden();
+});
+
 it('creates a customer with a manually assigned password', function (): void {
     $admin = User::factory()->admin()->create();
     $client = Client::factory()->create();
@@ -112,10 +129,10 @@ it('rejects an inactive client for customer users', function (): void {
 });
 
 it('rejects a client assignment for non-customer users', function (): void {
-    $employee = User::factory()->employee()->create();
+    $admin = User::factory()->admin()->create();
     $client = Client::factory()->create();
 
-    $this->actingAs($employee)
+    $this->actingAs($admin)
         ->post(route('users.store'), [
             'name' => 'Ada',
             'last_name' => 'Lovelace',
@@ -128,6 +145,17 @@ it('rejects a client assignment for non-customer users', function (): void {
             'password_confirmation' => 'manual-password',
         ])
         ->assertSessionHasErrors('client_id');
+});
+
+it('resolves requested active client summaries through the client contract', function (): void {
+    $activeClient = Client::factory()->create(['name' => 'Active client']);
+    $inactiveClient = Client::factory()->inactive()->create(['name' => 'Inactive client']);
+
+    $summaries = (new ActiveClientDirectory)->executeForIds([$activeClient->id, $inactiveClient->id]);
+
+    expect($summaries)->toHaveCount(1)
+        ->and($summaries[0]->id)->toBe($activeClient->id)
+        ->and($summaries[0]->name)->toBe('Active client');
 });
 
 it('rejects a client assignment for admin users', function (): void {
