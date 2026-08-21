@@ -18,7 +18,11 @@ it('allows administrators to view users and active client options', function ():
             ->has('users.data')
             ->where('clients', fn ($clients) => collect($clients)->contains('id', $activeClient->id))
             ->where('clients', fn ($clients) => ! collect($clients)->contains('name', 'Inactive client'))
-            ->where('roles', fn ($roles) => collect($roles)->pluck('value')->contains('admin')));
+            ->where('roles', fn ($roles) => collect($roles)->sort()->values()->all() === [
+                'admin',
+                'customer',
+                'employee',
+            ]));
 });
 
 it('rejects non-admin users from user management', function (): void {
