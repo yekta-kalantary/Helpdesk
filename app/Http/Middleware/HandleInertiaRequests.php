@@ -31,6 +31,9 @@ class HandleInertiaRequests extends Middleware
             'direction' => $locale === 'fa' ? 'rtl' : 'ltr',
             'navigationLabel' => __('app.navigation.label'),
             'navigationCloseLabel' => __('app.navigation.close'),
+            'flash' => [
+                'status' => fn (): ?string => $request->session()->get('status'),
+            ],
             'auth' => [
                 'user' => $user ? [
                     'id' => $user->getKey(),
@@ -60,7 +63,7 @@ class HandleInertiaRequests extends Middleware
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'icon' => 'users', 'pending' => true, 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => route('users.index'), 'icon' => 'users', 'capability' => 'users.view'],
                     ],
                 ],
             ],

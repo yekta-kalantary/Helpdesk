@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import { Plus, UsersRound, X } from '@lucide/vue'
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
@@ -57,6 +57,7 @@ const props = defineProps<{
     translations: { identity: { users: UserTranslations } }
 }>()
 
+const page = usePage<{ flash: { status?: string } }>()
 const copy = props.translations.identity.users
 const isModalOpen = ref(false)
 const createTrigger = ref<HTMLButtonElement | null>(null)
@@ -169,6 +170,7 @@ document.addEventListener('keydown', handleKeydown)
 
 <template>
     <section aria-labelledby="users-title" class="mx-auto w-full max-w-7xl">
+        <div v-if="page.props.flash.status" class="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" role="status" aria-live="polite">{{ page.props.flash.status }}</div>
         <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
                 <h1 id="users-title" class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{{ copy.title }}</h1>

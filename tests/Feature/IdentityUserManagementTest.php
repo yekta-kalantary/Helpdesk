@@ -23,7 +23,8 @@ it('returns active clients ordered by name', function (): void {
 it('allows administrators to view users and active client options', function (): void {
     $admin = User::factory()->admin()->create();
     $activeClient = Client::factory()->create(['name' => 'Active client']);
-    Client::factory()->inactive()->create(['name' => 'Inactive client']);
+    $inactiveClient = Client::factory()->inactive()->create(['name' => 'Inactive client']);
+    $user = User::factory()->customer($inactiveClient)->create(['name' => 'Grace', 'last_name' => 'Hopper']);
 
     $this->actingAs($admin)
         ->get(route('users.index'))
@@ -31,13 +32,27 @@ it('allows administrators to view users and active client options', function ():
         ->assertInertia(fn ($page) => $page
             ->component('Identity/Users/Index')
             ->has('users.data')
+            ->where('users.data', fn ($users) => collect($users)->contains(fn ($listedUser) => $listedUser['id'] === $user->id
+                && $listedUser['name'] === $user->name
+                && $listedUser['last_name'] === $user->last_name
+                && $listedUser['role'] === 'customer'
+                && $listedUser['client']['name'] === $inactiveClient->name))
             ->where('clients', fn ($clients) => collect($clients)->contains('id', $activeClient->id))
             ->where('clients', fn ($clients) => ! collect($clients)->contains('name', 'Inactive client'))
             ->where('roles', fn ($roles) => collect($roles)->sort()->values()->all() === [
                 'admin',
                 'customer',
                 'employee',
-            ]));
+            ])
+            ->where('direction', 'rtl')
+            ->where('translations.identity.users.title', __('identity::messages.users_page.title'))
+            ->where('translations.identity.users.roles.employee', __('identity::messages.users_page.roles.employee'))
+            ->where('roleLabels.employee', __('identity::messages.roles.employee'))
+            ->where('navigation', fn ($sections) => collect($sections)
+                ->flatMap(fn ($section) => $section['items'])
+                ->contains(fn ($item) => $item['key'] === 'users'
+                    && $item['href'] === route('users.index')
+                    && ! ($item['pending'] ?? false))));
 });
 
 it('rejects non-admin users from user management', function (): void {
@@ -83,6 +98,10 @@ it('creates a customer with a manually assigned password', function (): void {
             'password_confirmation' => 'manual-password',
         ])
         ->assertRedirect(route('users.index'));
+
+    $this->get(route('users.index'))
+        ->assertInertia(fn ($page) => $page
+            ->where('flash.status', __('identity::messages.user_created')));
 
     $user = User::query()->where('email', 'ada@example.test')->firstOrFail();
 
@@ -277,4 +296,28 @@ it('creates an inactive user and dispatches a reset link in email mode', functio
 
     expect($user->password)->toBeNull()
         ->and($user->is_active)->toBeFalse();
+});
+
+it('rolls back user creation when the password reset is throttled', function (): void {
+    Password::shouldReceive('sendResetLink')
+        ->once()
+        ->with(['email' => 'throttled@example.test'])
+        ->andReturn(Password::RESET_THROTTLED);
+
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+
+    $this->actingAs($admin)
+        ->post(route('users.store'), [
+            'name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'throttled@example.test',
+            'role' => 'customer',
+            'client_id' => $client->id,
+            'is_active' => true,
+            'password_mode' => 'email',
+        ])
+        ->assertSessionHasErrors('email');
+
+    $this->assertDatabaseMissing('users', ['email' => 'throttled@example.test']);
 });

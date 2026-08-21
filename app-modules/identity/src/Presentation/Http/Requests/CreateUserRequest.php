@@ -60,10 +60,19 @@ class CreateUserRequest extends FormRequest
             'email.required' => __('identity::messages.validation.email_required'),
             'email.email' => __('identity::messages.validation.email_invalid'),
             'email.unique' => __('identity::messages.validation.email_unique'),
+            'mobile.max' => __('identity::messages.users_page.validation.mobile_max'),
+            'role.required' => __('identity::messages.users_page.validation.role_required'),
+            'role.enum' => __('identity::messages.users_page.validation.role_invalid'),
             'client_id.required' => __('identity::messages.validation.client_required'),
             'client_id.in' => __('identity::messages.validation.client_active'),
             'client_id.prohibited' => __('identity::messages.validation.client_prohibited'),
             'client_id.prohibited_if' => __('identity::messages.validation.client_prohibited'),
+            'is_active.required' => __('identity::messages.users_page.validation.active_required'),
+            'is_active.boolean' => __('identity::messages.users_page.validation.active_invalid'),
+            'password.required' => __('identity::messages.users_page.validation.password_required'),
+            'password.min' => __('identity::messages.users_page.validation.password_min'),
+            'password.confirmed' => __('identity::messages.users_page.validation.password_confirmed'),
+            'password.prohibited' => __('identity::messages.users_page.validation.password_prohibited'),
         ];
     }
 

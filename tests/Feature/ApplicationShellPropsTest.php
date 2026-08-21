@@ -33,7 +33,7 @@ it('shares the application shell contract with guests', function (): void {
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'icon' => 'users', 'pending' => true, 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => route('users.index'), 'icon' => 'users', 'capability' => 'users.view'],
                     ],
                 ],
             ]));
@@ -92,7 +92,7 @@ it('shares Persian shell presentation data for a Persian request', function (): 
                     'key' => 'administration',
                     'label' => __('app.navigation.administration'),
                     'items' => [
-                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => null, 'icon' => 'users', 'pending' => true, 'capability' => 'users.view'],
+                        ['key' => 'users', 'label' => __('navigation.users'), 'href' => route('users.index'), 'icon' => 'users', 'capability' => 'users.view'],
                     ],
                 ],
             ]));

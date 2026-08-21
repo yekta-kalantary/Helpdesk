@@ -23,7 +23,7 @@ class UserManagementController
             ->latest()
             ->paginate(15);
 
-        $clientsById = collect($activeClientDirectory->executeForIds(
+        $clientsById = collect($activeClientDirectory->executeForIdsIncludingInactive(
             $users->getCollection()
                 ->pluck('client_id')
                 ->filter()
