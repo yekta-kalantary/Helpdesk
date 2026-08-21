@@ -69,6 +69,8 @@ class CreateUserRequest extends FormRequest
             'client_id.prohibited_if' => __('identity::messages.validation.client_prohibited'),
             'is_active.required' => __('identity::messages.users_page.validation.active_required'),
             'is_active.boolean' => __('identity::messages.users_page.validation.active_invalid'),
+            'password_mode.required' => __('identity::messages.users_page.validation.password_mode_required'),
+            'password_mode.in' => __('identity::messages.users_page.validation.password_mode_invalid'),
             'password.required' => __('identity::messages.users_page.validation.password_required'),
             'password.min' => __('identity::messages.users_page.validation.password_min'),
             'password.confirmed' => __('identity::messages.users_page.validation.password_confirmed'),

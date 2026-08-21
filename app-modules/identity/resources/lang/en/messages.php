@@ -159,6 +159,8 @@ return [
             'client_prohibited' => 'A client can only be assigned to customer users.',
             'active_required' => 'Choose whether the account is active.',
             'active_invalid' => 'Choose a valid account status.',
+            'password_mode_required' => 'Choose a password setup method.',
+            'password_mode_invalid' => 'Choose a valid password setup method.',
             'password_required' => 'Enter a password for manual password setup.',
             'password_min' => 'Use at least 8 characters.',
             'password_confirmed' => 'The password confirmation does not match.',
