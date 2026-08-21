@@ -2,8 +2,23 @@
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Modules\Clients\Application\Queries\ActiveClientDirectory;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
+
+it('returns active clients ordered by name', function (): void {
+    $zuluClient = Client::factory()->create(['name' => 'Zulu client']);
+    Client::factory()->inactive()->create(['name' => 'Inactive client']);
+    $alphaClient = Client::factory()->create(['name' => 'Alpha client']);
+
+    $summaries = (new ActiveClientDirectory)->execute();
+
+    expect($summaries)->toHaveCount(2)
+        ->and($summaries[0]->id)->toBe($alphaClient->id)
+        ->and($summaries[0]->name)->toBe('Alpha client')
+        ->and($summaries[1]->id)->toBe($zuluClient->id)
+        ->and($summaries[1]->name)->toBe('Zulu client');
+});
 
 it('allows administrators to view users and active client options', function (): void {
     $admin = User::factory()->admin()->create();
