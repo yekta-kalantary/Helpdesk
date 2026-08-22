@@ -14,6 +14,6 @@ interface IntegrationEvent
 
     public function correlationId(): string;
 
-    /** @return array<string, bool|int|string|null> */
+    /** @return array<string, bool|float|int|string|null> */
     public function payload(): array;
 }
