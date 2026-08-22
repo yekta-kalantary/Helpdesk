@@ -12,7 +12,9 @@
             "options": {
                 "symlink": true,
                 "versions": {
+                    "modules/audit": "1.0.0",
                     "modules/identity": "1.0.0",
+                    "modules/notifications": "1.0.0",
                     "modules/projects": "1.0.0",
                     "modules/tasks": "1.0.0"
                 }
@@ -25,7 +27,9 @@
         "internachi/modular": "^3.0",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
+        "modules/audit": "*",
         "modules/identity": "*",
+        "modules/notifications": "*",
         "modules/projects": "*",
         "modules/tasks": "*"
     },

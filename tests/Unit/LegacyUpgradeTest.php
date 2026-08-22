@@ -6,9 +6,11 @@ use Tests\TestCase;
 
 uses(TestCase::class);
 
-it('inventories root-owned audit and notification migrations before the ownership migration', function (): void {
-    expect(base_path('database/migrations/0001_01_01_000500_create_activities_table.php'))->toBeFile()
-        ->and(base_path('database/migrations/0001_01_01_000501_create_notifications_table.php'))->toBeFile();
+it('keeps audit and notification migrations with their owning modules', function (): void {
+    expect(base_path('app-modules/audit/database/migrations/0001_01_01_000500_create_activities_table.php'))->toBeFile()
+        ->and(base_path('app-modules/notifications/database/migrations/0001_01_01_000501_create_notifications_table.php'))->toBeFile()
+        ->and(base_path('database/migrations/0001_01_01_000500_create_activities_table.php'))->not->toBeFile()
+        ->and(base_path('database/migrations/0001_01_01_000501_create_notifications_table.php'))->not->toBeFile();
 });
 
 it('creates the final schema from the fresh baseline migrations', function (): void {
@@ -38,6 +40,8 @@ it('creates the final schema from the fresh baseline migrations', function (): v
             ->and(Schema::hasTable('task_checklist_items'))->toBeTrue()
             ->and(Schema::hasTable('activities'))->toBeTrue()
             ->and(Schema::hasTable('notifications'))->toBeTrue()
+            ->and(Schema::hasTable('outbox_messages'))->toBeTrue()
+            ->and(Schema::hasTable('processed_integration_events'))->toBeTrue()
             ->and(Schema::hasColumn('users', 'role'))->toBeTrue()
             ->and(Schema::hasColumn('users', 'last_login_at'))->toBeTrue()
             ->and(Schema::hasColumn('users', 'is_admin'))->toBeFalse()
@@ -92,8 +96,10 @@ function baselineMigrationPaths(): array
         'app-modules/tasks/database/migrations/0001_01_01_000401_create_task_comments_table.php',
         'app-modules/tasks/database/migrations/0001_01_01_000402_create_attachments_table.php',
         'app-modules/tasks/database/migrations/0001_01_01_000403_create_task_checklist_items_table.php',
-        'database/migrations/0001_01_01_000500_create_activities_table.php',
-        'database/migrations/0001_01_01_000501_create_notifications_table.php',
+        'app-modules/audit/database/migrations/0001_01_01_000500_create_activities_table.php',
+        'app-modules/notifications/database/migrations/0001_01_01_000501_create_notifications_table.php',
+        'database/migrations/2026_08_22_000000_create_outbox_messages_table.php',
+        'database/migrations/2026_08_22_000003_create_processed_integration_events_table.php',
     ];
 }
 

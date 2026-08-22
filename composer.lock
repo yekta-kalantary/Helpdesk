@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f6b727491b0effa9b21fecd76914f3e5",
+    "content-hash": "97ade31dd6582a9a7662e9655fbffbb4",
     "packages": [
         {
             "name": "brick/math",
@@ -2987,12 +2987,46 @@
             "time": "2025-09-14T11:18:39+00:00"
         },
         {
+            "name": "modules/audit",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "./app-modules/audit",
+                "reference": "5be514fd20b29744821270f3869ebf90a7854d37"
+            },
+            "require": {
+                "laravel/framework": "^13.8",
+                "php": "^8.4"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Audit\\AuditServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Audit\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Audit trail module.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "modules/identity",
             "version": "1.0.0",
             "dist": {
                 "type": "path",
                 "url": "./app-modules/identity",
-                "reference": "6f97611308881725faa1dc60c6e2e51b8fbd1656"
+                "reference": "7985f9e9d7ed674885b42e69db9e4da0e76afc44"
             },
             "require": {
                 "laravel/framework": "^13.8",
@@ -3021,12 +3055,46 @@
             }
         },
         {
+            "name": "modules/notifications",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "./app-modules/notifications",
+                "reference": "4f7d143ed2857c730574abd86bf2818ecaa9bd5a"
+            },
+            "require": {
+                "laravel/framework": "^13.8",
+                "php": "^8.4"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Modules\\Notifications\\NotificationsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Notifications\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Notifications module.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "modules/projects",
             "version": "1.0.0",
             "dist": {
                 "type": "path",
                 "url": "./app-modules/projects",
-                "reference": "71ed72f07a2569085fb29d031743cd8dff7f57e3"
+                "reference": "6252c255cbb4fbd7956436d8826398dc0977e2e8"
             },
             "require": {
                 "laravel/framework": "^13.8",
@@ -3061,7 +3129,7 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/tasks",
-                "reference": "e6d6ca85eaf4336132986fdf39a79bae69f083e8"
+                "reference": "4e4ca55839bf8dadf69a998f31e0f15351421d07"
             },
             "require": {
                 "laravel/framework": "^13.8",
