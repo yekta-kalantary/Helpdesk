@@ -16,7 +16,7 @@ final class ActiveClientDirectory
             ->active()
             ->orderBy('name')
             ->get()
-            ->map(fn (Client $client): ClientSummary => ClientSummary::fromModel($client))
+            ->map(fn (Client $client): ClientSummary => new ClientSummary($client->id, $client->name))
             ->all();
     }
 
@@ -35,7 +35,7 @@ final class ActiveClientDirectory
             ->whereIn('id', $clientIds)
             ->orderBy('name')
             ->get()
-            ->map(fn (Client $client): ClientSummary => ClientSummary::fromModel($client))
+            ->map(fn (Client $client): ClientSummary => new ClientSummary($client->id, $client->name))
             ->all();
     }
 
@@ -53,7 +53,7 @@ final class ActiveClientDirectory
             ->whereIn('id', $clientIds)
             ->orderBy('name')
             ->get()
-            ->map(fn (Client $client): ClientSummary => ClientSummary::fromModel($client))
+            ->map(fn (Client $client): ClientSummary => new ClientSummary($client->id, $client->name))
             ->all();
     }
 }

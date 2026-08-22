@@ -2,10 +2,10 @@
 
 namespace Modules\Clients\Application\DTOs;
 
-final readonly class ClientSummary
+final readonly class ClientStatusSummary
 {
     public function __construct(
         public int $id,
-        public string $name,
+        public bool $isActive,
     ) {}
 }

@@ -2,8 +2,13 @@
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Schema;
+use Modules\Clients\Application\Contracts\ClientStatusQuery;
+use Modules\Clients\Application\DTOs\ClientStatusSummary;
 use Modules\Clients\Domain\Enums\ClientStatus;
 use Modules\Clients\Infrastructure\Models\Client;
+use Modules\Identity\Application\AccountAuthenticationEligibility;
+use Modules\Identity\Application\Contracts\AccountDirectory;
+use Modules\Identity\Application\DTOs\AccountSummary;
 use Modules\Identity\Domain\Enums\UserRole;
 use Modules\Identity\Infrastructure\Models\User;
 
@@ -47,7 +52,25 @@ it('allows admins without a client', function (): void {
         ->and($admin->client_id)->toBeNull();
 });
 
-it('blocks customer authentication while its client is inactive', function (): void {
+it('finds client activation status through the public client contract', function (): void {
+    $activeClient = Client::factory()->create();
+    $inactiveClient = Client::factory()->inactive()->create();
+
+    expect(app(ClientStatusQuery::class)->find($activeClient->id))
+        ->toMatchObject(new ClientStatusSummary($activeClient->id, true))
+        ->and(app(ClientStatusQuery::class)->find($inactiveClient->id))
+        ->toMatchObject(new ClientStatusSummary($inactiveClient->id, false));
+});
+
+it('finds account authentication facts through the public identity contract', function (): void {
+    $activeClient = Client::factory()->create();
+    $customer = User::factory()->customer($activeClient)->create();
+
+    expect(app(AccountDirectory::class)->find($customer->id))
+        ->toMatchObject(new AccountSummary($customer->id, UserRole::Customer, true, $activeClient->id));
+});
+
+it('blocks customer authentication while its client is inactive through the eligibility service', function (): void {
     $client = Client::query()->create([
         'name' => 'Acme',
         'status' => ClientStatus::Inactive,
@@ -61,15 +84,22 @@ it('blocks customer authentication while its client is inactive', function (): v
         'is_active' => true,
     ]);
 
-    expect($customer->canAuthenticate())->toBeFalse();
+    $account = app(AccountDirectory::class)->find($customer->id);
+
+    expect($account)->toBeInstanceOf(AccountSummary::class)
+        ->and(app(AccountAuthenticationEligibility::class)->canAuthenticate($account))->toBeFalse();
 
     $client->update(['status' => ClientStatus::Active]);
 
-    expect($customer->refresh()->canAuthenticate())->toBeTrue();
+    expect(app(AccountAuthenticationEligibility::class)->canAuthenticate(
+        app(AccountDirectory::class)->find($customer->id),
+    ))->toBeTrue();
 });
 
-it('authenticates active employees without checking a client', function (): void {
+it('allows active employees to authenticate without a client through the eligibility service', function (): void {
     $employee = User::factory()->employee()->create();
 
-    expect($employee->canAuthenticate())->toBeTrue();
+    expect(app(AccountAuthenticationEligibility::class)->canAuthenticate(
+        app(AccountDirectory::class)->find($employee->id),
+    ))->toBeTrue();
 });

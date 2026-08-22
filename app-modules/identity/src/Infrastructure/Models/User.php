@@ -11,11 +11,9 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Domain\Enums\UserRole;
 
 #[Fillable(['client_id', 'role', 'name', 'last_name', 'email', 'mobile', 'password', 'is_active', 'last_login_at'])]
@@ -45,11 +43,6 @@ class User extends Authenticatable implements CanResetPasswordContract
                 throw new DomainException('Admin users cannot belong to a client.');
             }
         });
-    }
-
-    public function client(): BelongsTo
-    {
-        return $this->belongsTo(Client::class);
     }
 
     public function scopeActive(Builder $query): Builder
@@ -89,23 +82,7 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function canAuthenticate(): bool
     {
-        if (! $this->is_active) {
-            return false;
-        }
-
-        if ($this->isAdmin()) {
-            return true;
-        }
-
-        if ($this->isCustomer()) {
-            return (bool) $this->client_id && $this->client()->active()->exists();
-        }
-
-        if ($this->isEmployee()) {
-            return true;
-        }
-
-        return false;
+        return $this->is_active;
     }
 
     protected function email(): Attribute
