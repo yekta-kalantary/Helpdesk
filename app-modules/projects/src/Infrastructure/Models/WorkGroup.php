@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Identity\Infrastructure\Models\User;
-use Modules\Tasks\Infrastructure\Models\Task;
 
 class WorkGroup extends Model
 {
@@ -57,24 +55,9 @@ class WorkGroup extends Model
         return $this->hasMany(self::class, 'parent_id')->orderBy('position')->orderBy('id');
     }
 
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class)->orderBy('id');
-    }
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
-    }
-
-    public function scopeVisibleTo(Builder $query, User $user): Builder
-    {
-        return $query->whereHas('project', fn (Builder $projects): Builder => $projects->visibleTo($user));
     }
 
     public function isActive(): bool

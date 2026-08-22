@@ -6,9 +6,6 @@ use DomainException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Identity\Infrastructure\Models\User;
-use Modules\Tasks\Infrastructure\Models\Task;
 
 class ProjectTaskStatus extends Model
 {
@@ -47,16 +44,6 @@ class ProjectTaskStatus extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
-    }
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class, 'project_status_id');
     }
 
     public function scopeActive(Builder $query): Builder

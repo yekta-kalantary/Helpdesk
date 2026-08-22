@@ -2,10 +2,11 @@
 
 namespace Modules\Projects\Application;
 
-use App\Support\ActivityRecorder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Infrastructure\Models\User;
+use Modules\Clients\Application\Contracts\ClientStatusQuery;
+use Modules\Identity\Application\Contracts\AccountDirectory;
+use Modules\Identity\Domain\Enums\UserRole;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Infrastructure\Models\WorkGroup;
 
@@ -13,13 +14,17 @@ class WorkGroupManager
 {
     private const MAX_DEPTH = 5;
 
-    public function __construct(private readonly ActivityRecorder $activities) {}
+    public function __construct(
+        private readonly AccountDirectory $accounts,
+        private readonly ClientStatusQuery $clients,
+    ) {}
 
-    public function create(User $actor, Project $project, array $data): WorkGroup
+    /** @param array<string, mixed> $data */
+    public function create(int $actorId, Project $project, array $data): WorkGroup
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        return DB::transaction(function () use ($actor, $project, $data): WorkGroup {
+        return DB::transaction(function () use ($actorId, $project, $data): WorkGroup {
             $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $this->assertProjectMutable($project);
             $parent = $this->resolveParent($project, $data['parent_id'] ?? null);
@@ -28,46 +33,32 @@ class WorkGroupManager
                 throw new DomainException('Work Group depth may not exceed five levels.');
             }
 
-            $title = $this->title((string) ($data['title'] ?? ''));
-            $position = isset($data['position'])
-                ? max(0, (int) $data['position'])
-                : ((int) WorkGroup::query()
-                    ->where('project_id', $project->id)
-                    ->where('parent_id', $parent?->id)
-                    ->max('position')) + 10;
-
-            $group = WorkGroup::query()->create([
+            return WorkGroup::query()->create([
                 'project_id' => $project->id,
                 'parent_id' => $parent?->id,
-                'title' => $title,
+                'title' => $this->title((string) ($data['title'] ?? '')),
                 'description' => $this->description($data['description'] ?? null),
-                'position' => $position,
+                'position' => isset($data['position'])
+                    ? max(0, (int) $data['position'])
+                    : ((int) WorkGroup::query()->where('project_id', $project->id)->where('parent_id', $parent?->id)->max('position')) + 10,
                 'status' => 'active',
-                'created_by' => $actor->id,
+                'created_by' => $actorId,
             ]);
-
-            $this->activities->record($actor, 'work_group.created', $project, null, [
-                'work_group_id' => $group->id,
-                'title' => $group->title,
-                'parent_id' => $group->parent_id,
-                'description_snapshot' => $group->description,
-            ]);
-
-            return $group;
         });
     }
 
-    public function update(User $actor, WorkGroup $group, array $data): WorkGroup
+    /** @param array<string, mixed> $data */
+    public function update(int $actorId, WorkGroup $group, array $data): WorkGroup
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
         $group = WorkGroup::query()->findOrFail($group->id);
 
         if (array_key_exists('parent_id', $data)) {
             $parent = $data['parent_id'] ? WorkGroup::query()->findOrFail((int) $data['parent_id']) : null;
-            $group = $this->move($actor, $group, $parent);
+            $group = $this->move($actorId, $group, $parent);
         }
 
-        return DB::transaction(function () use ($actor, $group, $data): WorkGroup {
+        return DB::transaction(function () use ($group, $data): WorkGroup {
             $group = WorkGroup::query()->lockForUpdate()->findOrFail($group->id);
             $project = Project::query()->lockForUpdate()->findOrFail($group->project_id);
             $this->assertProjectMutable($project);
@@ -82,38 +73,19 @@ class WorkGroupManager
             if (array_key_exists('position', $data)) {
                 $attributes['position'] = max(0, (int) $data['position']);
             }
-
-            $oldTitle = $group->title;
-            $oldDescription = $group->description;
             if ($attributes !== []) {
                 $group->update($attributes);
-            }
-
-            if (array_key_exists('title', $attributes) && $oldTitle !== $group->title) {
-                $this->activities->record($actor, 'work_group.renamed', $project, null, [
-                    'work_group_id' => $group->id,
-                    'old_title' => $oldTitle,
-                    'new_title' => $group->title,
-                ]);
-            }
-
-            if (array_key_exists('description', $attributes) && $oldDescription !== $group->description) {
-                $this->activities->record($actor, 'work_group.updated', $project, null, [
-                    'work_group_id' => $group->id,
-                    'old_description_snapshot' => $oldDescription,
-                    'new_description_snapshot' => $group->description,
-                ]);
             }
 
             return $group->refresh();
         });
     }
 
-    public function move(User $actor, WorkGroup $group, ?WorkGroup $parent): WorkGroup
+    public function move(int $actorId, WorkGroup $group, ?WorkGroup $parent): WorkGroup
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        return DB::transaction(function () use ($actor, $group, $parent): WorkGroup {
+        return DB::transaction(function () use ($group, $parent): WorkGroup {
             $group = WorkGroup::query()->lockForUpdate()->findOrFail($group->id);
             $project = Project::query()->lockForUpdate()->findOrFail($group->project_id);
             $this->assertProjectMutable($project);
@@ -122,38 +94,28 @@ class WorkGroupManager
             if ($parent && ($parent->project_id !== $group->project_id || ! $parent->isActive())) {
                 throw new DomainException('Work Group parent must be an active group in the same Project.');
             }
-
             if ($parent?->id === $group->id || ($parent && $this->isDescendantOf($parent, $group))) {
                 throw new DomainException('Work Group hierarchy may not contain cycles.');
             }
-
-            $newParentDepth = $parent?->depth() ?? 0;
-            if ($newParentDepth + $this->subtreeHeight($group) > self::MAX_DEPTH) {
+            if (($parent?->depth() ?? 0) + $this->subtreeHeight($group) > self::MAX_DEPTH) {
                 throw new DomainException('Moving this Work Group would exceed five levels.');
             }
-
-            $oldParentId = $group->parent_id;
-            if ($oldParentId === $parent?->id) {
+            if ($group->parent_id === $parent?->id) {
                 return $group;
             }
 
             $group->update(['parent_id' => $parent?->id]);
-            $this->activities->record($actor, 'work_group.moved', $project, null, [
-                'work_group_id' => $group->id,
-                'old_parent_id' => $oldParentId,
-                'new_parent_id' => $parent?->id,
-            ]);
 
             return $group->refresh();
         });
     }
 
     /** @param array<int, int> $orderedIds */
-    public function reorder(User $actor, Project $project, array $orderedIds): void
+    public function reorder(int $actorId, Project $project, array $orderedIds): void
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        DB::transaction(function () use ($actor, $project, $orderedIds): void {
+        DB::transaction(function () use ($project, $orderedIds): void {
             $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $this->assertProjectMutable($project);
             $groups = WorkGroup::query()->where('project_id', $project->id)->whereIn('id', $orderedIds)->lockForUpdate()->get();
@@ -161,20 +123,13 @@ class WorkGroupManager
             if ($groups->count() !== count(array_unique(array_map('intval', $orderedIds))) || $groups->isEmpty()) {
                 throw new DomainException('Work Group order contains invalid groups.');
             }
-
             if ($groups->pluck('parent_id')->unique()->count() !== 1) {
                 throw new DomainException('Only sibling Work Groups may be reordered together.');
             }
 
             $parentId = $groups->first()->parent_id;
-            $expected = WorkGroup::query()
-                ->where('project_id', $project->id)
-                ->where('parent_id', $parentId)
-                ->where('status', 'active')
-                ->pluck('id')
-                ->sort()->values()->all();
+            $expected = WorkGroup::query()->where('project_id', $project->id)->where('parent_id', $parentId)->active()->pluck('id')->sort()->values()->all();
             $actual = collect($orderedIds)->map(fn ($id): int => (int) $id)->sort()->values()->all();
-
             if ($expected !== $actual) {
                 throw new DomainException('Work Group order must contain every active sibling exactly once.');
             }
@@ -182,19 +137,14 @@ class WorkGroupManager
             foreach ($orderedIds as $index => $id) {
                 WorkGroup::query()->whereKey((int) $id)->update(['position' => ($index + 1) * 10]);
             }
-
-            $this->activities->record($actor, 'work_group.reordered', $project, null, [
-                'parent_id' => $parentId,
-                'ordered_work_group_ids' => array_map('intval', $orderedIds),
-            ]);
         });
     }
 
-    public function inactivate(User $actor, WorkGroup $group): WorkGroup
+    public function inactivate(int $actorId, WorkGroup $group): WorkGroup
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        return DB::transaction(function () use ($actor, $group): WorkGroup {
+        return DB::transaction(function () use ($group): WorkGroup {
             $group = WorkGroup::query()->lockForUpdate()->findOrFail($group->id);
             $project = Project::query()->lockForUpdate()->findOrFail($group->project_id);
             $this->assertProjectMutable($project);
@@ -202,24 +152,11 @@ class WorkGroupManager
             if (! $group->isActive()) {
                 return $group;
             }
-
             if ($group->children()->active()->exists()) {
                 throw new DomainException('A Work Group with active child groups cannot be inactivated.');
             }
 
-            if ($group->tasks()->whereHas('projectStatus', fn ($statuses) => $statuses->where('is_done', false))->exists()) {
-                throw new DomainException('A Work Group with active Tasks cannot be inactivated.');
-            }
-
-            $group->update([
-                'status' => 'inactive',
-                'inactivated_at' => now(),
-            ]);
-
-            $this->activities->record($actor, 'work_group.inactivated', $project, null, [
-                'work_group_id' => $group->id,
-                'title_snapshot' => $group->title,
-            ]);
+            $group->update(['status' => 'inactive', 'inactivated_at' => now()]);
 
             return $group->refresh();
         });
@@ -232,7 +169,7 @@ class WorkGroupManager
         }
 
         $parent = WorkGroup::query()->find((int) $parentId);
-        if (! $parent || $parent->project_id !== $project->id || ! $parent->isActive()) {
+        if ($parent === null || $parent->project_id !== $project->id || ! $parent->isActive()) {
             throw new DomainException('Work Group parent must be active and belong to the same Project.');
         }
 
@@ -261,24 +198,24 @@ class WorkGroupManager
     private function subtreeHeight(WorkGroup $group): int
     {
         $children = $group->children()->get();
-        if ($children->isEmpty()) {
-            return 1;
-        }
 
-        return 1 + $children->map(fn (WorkGroup $child): int => $this->subtreeHeight($child))->max();
+        return $children->isEmpty()
+            ? 1
+            : 1 + $children->map(fn (WorkGroup $child): int => $this->subtreeHeight($child))->max();
     }
 
-    private function assertAdmin(User $actor): void
+    private function assertAdmin(int $actorId): void
     {
-        if (! $actor->isAdmin() || ! $actor->is_active) {
+        $actor = $this->accounts->find($actorId);
+
+        if ($actor === null || ! $actor->isActive || $actor->role !== UserRole::Admin) {
             throw new DomainException('Only an active Admin may manage Work Groups.');
         }
     }
 
     private function assertProjectMutable(Project $project): void
     {
-        $project->loadMissing('client');
-        if (! $project->isActive() || ! $project->client->isActive()) {
+        if (! $project->isActive() || $this->clients->find($project->client_id)?->isActive !== true) {
             throw new DomainException('Completed or inactive Projects are read-only.');
         }
     }

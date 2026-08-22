@@ -2,79 +2,71 @@
 
 namespace Modules\Projects\Application;
 
-use App\Support\ActivityRecorder;
+use App\Integration\Outbox\OutboxRecorder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Infrastructure\Models\User;
+use Illuminate\Support\Str;
+use Modules\Clients\Application\Contracts\ClientStatusQuery;
+use Modules\Identity\Application\Contracts\AccountDirectory;
+use Modules\Identity\Domain\Enums\UserRole;
+use Modules\Projects\Application\Events\ProjectTaskStatusChangedV1;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
 
 class ProjectWorkflowManager
 {
-    public function __construct(private readonly ActivityRecorder $activities) {}
+    public function __construct(
+        private readonly AccountDirectory $accounts,
+        private readonly ClientStatusQuery $clients,
+        private readonly OutboxRecorder $outbox,
+    ) {}
 
-    public function create(User $actor, Project $project, string $title): ProjectTaskStatus
+    public function create(int $actorId, Project $project, string $title): ProjectTaskStatus
     {
-        $this->assertAdmin($actor);
-        $this->assertProjectMutable($project);
+        $this->assertAdmin($actorId);
         $title = $this->title($title);
 
-        return DB::transaction(function () use ($actor, $project, $title): ProjectTaskStatus {
+        return DB::transaction(function () use ($actorId, $project, $title): ProjectTaskStatus {
             $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $this->assertProjectMutable($project);
             $position = ((int) $project->taskStatuses()->active()->max('position')) + 10;
-
             $status = $project->taskStatuses()->create([
                 'title' => $title,
                 'position' => $position,
                 'is_done' => false,
                 'is_active' => true,
-                'created_by' => $actor->id,
+                'created_by' => $actorId,
             ]);
-
-            $this->activities->record($actor, 'project_status.created', $project, null, [
-                'project_status_id' => $status->id,
-                'title' => $status->title,
-            ]);
-
             $this->assertWorkflowValid($project);
 
             return $status;
         });
     }
 
-    public function rename(User $actor, ProjectTaskStatus $status, string $title): ProjectTaskStatus
+    public function rename(int $actorId, ProjectTaskStatus $status, string $title): ProjectTaskStatus
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
         $title = $this->title($title);
 
-        return DB::transaction(function () use ($actor, $status, $title): ProjectTaskStatus {
+        return DB::transaction(function () use ($status, $title): ProjectTaskStatus {
             $status = ProjectTaskStatus::query()->lockForUpdate()->findOrFail($status->id);
             $project = Project::query()->lockForUpdate()->findOrFail($status->project_id);
             $this->assertProjectMutable($project);
-            $old = $status->title;
 
-            if ($old === $title) {
-                return $status;
+            if ($status->title !== $title) {
+                $status->update(['title' => $title]);
             }
-
-            $status->update(['title' => $title]);
-            $this->activities->record($actor, 'project_status.renamed', $project, null, [
-                'project_status_id' => $status->id,
-                'old_title' => $old,
-                'new_title' => $title,
-            ]);
 
             return $status->refresh();
         });
     }
 
     /** @param array<int, int> $orderedStatusIds */
-    public function reorder(User $actor, Project $project, array $orderedStatusIds): void
+    public function reorder(int $actorId, Project $project, array $orderedStatusIds): void
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        DB::transaction(function () use ($actor, $project, $orderedStatusIds): void {
+        DB::transaction(function () use ($project, $orderedStatusIds): void {
             $project = Project::query()->lockForUpdate()->findOrFail($project->id);
             $this->assertProjectMutable($project);
             $statuses = $project->taskStatuses()->active()->lockForUpdate()->get();
@@ -88,18 +80,14 @@ class ProjectWorkflowManager
             foreach ($orderedStatusIds as $index => $statusId) {
                 ProjectTaskStatus::query()->whereKey((int) $statusId)->update(['position' => ($index + 1) * 10]);
             }
-
-            $this->activities->record($actor, 'project_status.reordered', $project, null, [
-                'ordered_status_ids' => array_map('intval', $orderedStatusIds),
-            ]);
         });
     }
 
-    public function setDone(User $actor, ProjectTaskStatus $status): void
+    public function setDone(int $actorId, ProjectTaskStatus $status): void
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        DB::transaction(function () use ($actor, $status): void {
+        DB::transaction(function () use ($actorId, $status): void {
             $status = ProjectTaskStatus::query()->lockForUpdate()->findOrFail($status->id);
             $project = Project::query()->lockForUpdate()->findOrFail($status->project_id);
             $this->assertProjectMutable($project);
@@ -108,9 +96,7 @@ class ProjectWorkflowManager
                 throw new DomainException('Inactive Project Status cannot become Done.');
             }
 
-            $statuses = $project->taskStatuses()->active()->lockForUpdate()->get();
-            $previous = $statuses->firstWhere('is_done', true);
-
+            $previous = $project->taskStatuses()->active()->lockForUpdate()->firstWhere('is_done', true);
             if ($previous?->id === $status->id) {
                 return;
             }
@@ -121,31 +107,26 @@ class ProjectWorkflowManager
                 ->where('is_done', true)
                 ->update(['is_done' => false]);
             $status->update(['is_done' => true]);
-
-            $reopenedTaskCount = $previous
-                ? $previous->tasks()->whereNotNull('completed_at')->update(['completed_at' => null])
-                : 0;
-            $completedTaskCount = $status->tasks()
-                ->whereNull('completed_at')
-                ->update(['completed_at' => now()]);
-
             $this->assertWorkflowValid($project);
-            $this->activities->record($actor, 'project_status.done_changed', $project, null, [
-                'previous_status_id' => $previous?->id,
-                'previous_status_title_snapshot' => $previous?->title,
-                'new_status_id' => $status->id,
-                'new_status_title_snapshot' => $status->title,
-                'reopened_task_count' => $reopenedTaskCount,
-                'completed_task_count' => $completedTaskCount,
-            ]);
+
+            $this->outbox->record(new ProjectTaskStatusChangedV1(
+                eventId: (string) Str::uuid(),
+                correlationId: (string) Str::uuid(),
+                occurredAt: now()->toIso8601String(),
+                projectId: $project->id,
+                projectTaskStatusId: $status->id,
+                isDone: true,
+                actorId: $actorId,
+            ));
+
         });
     }
 
-    public function inactivate(User $actor, ProjectTaskStatus $status): void
+    public function inactivate(int $actorId, ProjectTaskStatus $status): void
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
-        DB::transaction(function () use ($actor, $status): void {
+        DB::transaction(function () use ($status): void {
             $status = ProjectTaskStatus::query()->lockForUpdate()->findOrFail($status->id);
             $project = Project::query()->lockForUpdate()->findOrFail($status->project_id);
             $this->assertProjectMutable($project);
@@ -153,29 +134,15 @@ class ProjectWorkflowManager
             if (! $status->is_active) {
                 return;
             }
-
-            if ($status->tasks()->exists()) {
-                throw new DomainException('A Project Status with Tasks cannot be inactivated until Tasks are moved.');
-            }
-
             if ($status->is_done) {
                 throw new DomainException('Set another active Project Status as Done before inactivating the current Done status.');
             }
-
             if ($project->taskStatuses()->active()->count() <= 2) {
                 throw new DomainException('A Project must retain at least two active statuses.');
             }
 
-            $status->update([
-                'is_active' => false,
-                'inactivated_at' => now(),
-            ]);
-
+            $status->update(['is_active' => false, 'inactivated_at' => now()]);
             $this->assertWorkflowValid($project);
-            $this->activities->record($actor, 'project_status.inactivated', $project, null, [
-                'project_status_id' => $status->id,
-                'title_snapshot' => $status->title,
-            ]);
         });
     }
 
@@ -183,30 +150,23 @@ class ProjectWorkflowManager
     {
         $active = $project->taskStatuses()->active()->get(['id', 'is_done']);
 
-        if ($active->count() < 2) {
-            throw new DomainException('A Project must have at least two active statuses.');
-        }
-
-        if ($active->where('is_done', true)->count() !== 1) {
-            throw new DomainException('A Project must have exactly one active Done status.');
-        }
-
-        if ($active->where('is_done', false)->isEmpty()) {
-            throw new DomainException('A Project must have at least one active Open status.');
+        if ($active->count() < 2 || $active->where('is_done', true)->count() !== 1 || $active->where('is_done', false)->isEmpty()) {
+            throw new DomainException('A Project must retain an active Open status and exactly one active Done status.');
         }
     }
 
-    private function assertAdmin(User $actor): void
+    private function assertAdmin(int $actorId): void
     {
-        if (! $actor->isAdmin() || ! $actor->is_active) {
+        $actor = $this->accounts->find($actorId);
+
+        if ($actor === null || ! $actor->isActive || $actor->role !== UserRole::Admin) {
             throw new DomainException('Only an active Admin may manage Project workflow.');
         }
     }
 
     private function assertProjectMutable(Project $project): void
     {
-        $project->loadMissing('client');
-        if (! $project->isActive() || ! $project->client->isActive()) {
+        if (! $project->isActive() || $this->clients->find($project->client_id)?->isActive !== true) {
             throw new DomainException('Completed or inactive Projects are read-only.');
         }
     }
