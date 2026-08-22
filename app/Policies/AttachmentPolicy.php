@@ -2,15 +2,18 @@
 
 namespace App\Policies;
 
+use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Infrastructure\Models\Attachment;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 class AttachmentPolicy
 {
+    public function __construct(private AccountAuthenticationEligibility $eligibility) {}
+
     public function view(User $user, Attachment $attachment): bool
     {
-        if (! $user->canAuthenticate()) {
+        if (! $this->eligibility->canAuthenticateAccount($user->id)) {
             return false;
         }
 

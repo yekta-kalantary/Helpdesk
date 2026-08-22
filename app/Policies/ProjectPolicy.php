@@ -2,14 +2,17 @@
 
 namespace App\Policies;
 
+use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
 
 class ProjectPolicy
 {
+    public function __construct(private AccountAuthenticationEligibility $eligibility) {}
+
     public function viewAny(User $user): bool
     {
-        return $user->canAuthenticate();
+        return $this->eligibility->canAuthenticateAccount($user->id);
     }
 
     public function view(User $user, Project $project): bool

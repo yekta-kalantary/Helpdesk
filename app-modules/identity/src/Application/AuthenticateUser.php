@@ -6,15 +6,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
-use Modules\Identity\Application\Contracts\AccountDirectory;
 use Modules\Identity\Infrastructure\Models\User;
 
 class AuthenticateUser
 {
-    public function __construct(
-        private AccountDirectory $accounts,
-        private AccountAuthenticationEligibility $eligibility,
-    ) {}
+    public function __construct(private AccountAuthenticationEligibility $eligibility) {}
 
     public function execute(string $email, string $password, bool $remember, string $throttleKey): User
     {
@@ -36,9 +32,7 @@ class AuthenticateUser
             ]);
         }
 
-        $account = $this->accounts->find($user->id);
-
-        if ($account === null || ! $this->eligibility->canAuthenticate($account)) {
+        if (! $this->eligibility->canAuthenticateAccount($user->id)) {
             throw ValidationException::withMessages([
                 'email' => __('identity::messages.inactive_account'),
             ]);

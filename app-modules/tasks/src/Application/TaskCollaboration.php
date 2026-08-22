@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Infrastructure\Models\Attachment;
 use Modules\Tasks\Infrastructure\Models\Task;
@@ -24,6 +25,7 @@ class TaskCollaboration
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
         private readonly TaskNotificationRouter $notificationRouter,
+        private readonly AccountAuthenticationEligibility $eligibility,
     ) {}
 
     public function attach(User $actor, Task $task, UploadedFile $file, ?TaskComment $comment = null): Attachment
@@ -180,7 +182,7 @@ class TaskCollaboration
 
     private function assertCanCollaborate(User $actor, Task $task): void
     {
-        if (! $actor->is_active || ! $actor->canAuthenticate()) {
+        if (! $this->eligibility->canAuthenticateAccount($actor->id)) {
             throw new DomainException('An active account is required.');
         }
 

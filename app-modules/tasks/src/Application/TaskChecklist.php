@@ -5,13 +5,17 @@ namespace Modules\Tasks\Application;
 use App\Support\ActivityRecorder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Infrastructure\Models\TaskChecklistItem;
 
 class TaskChecklist
 {
-    public function __construct(private readonly ActivityRecorder $activities) {}
+    public function __construct(
+        private readonly ActivityRecorder $activities,
+        private readonly AccountAuthenticationEligibility $eligibility,
+    ) {}
 
     public function add(User $actor, Task $task, string $title): TaskChecklistItem
     {
@@ -131,7 +135,7 @@ class TaskChecklist
 
     private function assertMutable(User $actor, Task $task): void
     {
-        if (! $actor->is_active || ! $actor->canAuthenticate()) {
+        if (! $this->eligibility->canAuthenticateAccount($actor->id)) {
             throw new DomainException('An active account is required.');
         }
 

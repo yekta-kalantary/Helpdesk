@@ -80,11 +80,6 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->role === UserRole::Employee;
     }
 
-    public function canAuthenticate(): bool
-    {
-        return $this->is_active;
-    }
-
     protected function email(): Attribute
     {
         return Attribute::make(

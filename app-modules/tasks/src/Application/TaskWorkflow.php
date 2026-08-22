@@ -8,6 +8,7 @@ use App\Support\NotificationDispatcher;
 use DomainException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
@@ -21,6 +22,7 @@ class TaskWorkflow
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
         private readonly TaskNotificationRouter $notificationRouter,
+        private readonly AccountAuthenticationEligibility $eligibility,
     ) {}
 
     public function createForCustomer(User $actor, Project $project, array $data): Task
@@ -382,7 +384,7 @@ class TaskWorkflow
 
     private function assertProjectAccess(User $user, Project $project): void
     {
-        if (! $user->is_active || ! $user->canAuthenticate()) {
+        if (! $this->eligibility->canAuthenticateAccount($user->id)) {
             throw new DomainException('An active account is required.');
         }
 

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Hash;
+use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 
 it('renders the identity login page for guests', function (): void {
@@ -44,6 +45,29 @@ it('authenticates an active employee without a client', function (): void {
     ])->assertRedirect(route('home'));
 
     $this->assertAuthenticatedAs($employee);
+});
+
+it('logs out an authenticated customer after its client is deactivated', function (): void {
+    $client = Client::factory()->create();
+    $customer = User::factory()->customer($client)->create([
+        'email' => 'customer@example.test',
+        'password' => Hash::make('secret-password'),
+    ]);
+
+    $this->post(route('login.store'), [
+        'email' => 'customer@example.test',
+        'password' => 'secret-password',
+    ])->assertRedirect(route('home'));
+
+    $this->assertAuthenticatedAs($customer);
+
+    $client->update(['status' => 'inactive']);
+
+    $this->get(route('users.index'))
+        ->assertRedirect(route('login'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
 });
 
 it('rejects invalid credentials without authenticating the user', function (): void {

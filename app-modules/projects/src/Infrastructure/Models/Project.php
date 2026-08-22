@@ -103,19 +103,20 @@ class Project extends Model
         }
 
         if ($user->isCustomer()) {
-            if (! $user->canAuthenticate() || ! $user->client_id) {
+            if (! $user->is_active || ! $user->client_id) {
                 return $query->whereRaw('1 = 0');
             }
 
             return $query
                 ->where('client_id', $user->client_id)
+                ->whereHas('client', fn (Builder $client) => $client->active())
                 ->whereHas('members', fn (Builder $members) => $members
                     ->whereKey($user->id)
                     ->whereNull('project_user.removed_at'));
         }
 
         if ($user->isEmployee()) {
-            if (! $user->canAuthenticate()) {
+            if (! $user->is_active) {
                 return $query->whereRaw('1 = 0');
             }
 

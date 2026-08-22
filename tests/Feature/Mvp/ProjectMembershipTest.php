@@ -38,6 +38,21 @@ it('grants visibility only while membership is active', function (): void {
     expect(Project::query()->visibleTo($customer)->whereKey($project)->exists())->toBeFalse();
 });
 
+it('revokes customer project visibility when its client is deactivated', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $customer = User::factory()->customer($client)->create();
+    $project = mvpProject($client, 'Client activation project');
+
+    app(ProjectMembershipManager::class)->add($project, $customer, $admin);
+
+    expect(Project::query()->visibleTo($customer)->whereKey($project)->exists())->toBeTrue();
+
+    $client->update(['status' => 'inactive']);
+
+    expect(Project::query()->visibleTo($customer)->whereKey($project)->exists())->toBeFalse();
+});
+
 it('grants clientless employees visibility only through active membership', function (): void {
     $client = Client::factory()->create();
     $admin = User::factory()->admin()->create();
