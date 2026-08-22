@@ -6,6 +6,11 @@ use Tests\TestCase;
 
 uses(TestCase::class);
 
+it('inventories root-owned audit and notification migrations before the ownership migration', function (): void {
+    expect(base_path('database/migrations/0001_01_01_000500_create_activities_table.php'))->toBeFile()
+        ->and(base_path('database/migrations/0001_01_01_000501_create_notifications_table.php'))->toBeFile();
+});
+
 it('creates the final schema from the fresh baseline migrations', function (): void {
     $database = useMigrationTestDatabase();
 

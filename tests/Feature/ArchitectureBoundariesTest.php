@@ -2,6 +2,19 @@
 
 use Illuminate\Support\Facades\Schema;
 
+it('inventories cross-context infrastructure imports before the boundary migration', function (): void {
+    $violations = [];
+
+    foreach (moduleSourceFiles() as [$module, $relativePath, $source]) {
+        if (preg_match(crossContextInfrastructureImportPattern($module), $source) === 1) {
+            $violations[$relativePath] = $module;
+        }
+    }
+
+    expect($violations)->not->toBeEmpty()
+        ->and(array_values(array_unique($violations)))->toContain('clients', 'identity', 'projects', 'tasks');
+});
+
 it('has the MVP and project work management domain tables', function (): void {
     expect(Schema::hasTable('clients'))->toBeTrue()
         ->and(Schema::hasTable('users'))->toBeTrue()
@@ -36,3 +49,25 @@ it('keeps the core schemas aligned with project-owned workflow boundaries', func
         ->and(Schema::hasColumns('attachments', ['task_id', 'comment_id', 'uploaded_by', 'original_name', 'storage_path', 'mime_type', 'size', 'hidden_at', 'hidden_by']))->toBeTrue()
         ->and(Schema::hasColumns('activities', ['actor_id', 'project_id', 'task_id', 'action', 'metadata']))->toBeTrue();
 });
+
+function moduleSourceFiles(): iterable
+{
+    $modulesPath = base_path('app-modules');
+    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($modulesPath));
+
+    foreach ($files as $file) {
+        if (! $file->isFile() || $file->getExtension() !== 'php') {
+            continue;
+        }
+
+        $relativePath = str_replace($modulesPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
+        [$module] = explode(DIRECTORY_SEPARATOR, $relativePath, 2);
+
+        yield [$module, $relativePath, file_get_contents($file->getPathname())];
+    }
+}
+
+function crossContextInfrastructureImportPattern(string $module): string
+{
+    return '/^use Modules\\\\(?!'.preg_quote(ucfirst($module), '/').'\\\\)\\w+\\\\Infrastructure\\\\/m';
+}
