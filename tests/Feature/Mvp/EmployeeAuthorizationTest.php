@@ -27,7 +27,7 @@ it('allows employees to create and transition tasks only in member projects', fu
 
     $workflow->transitionByEmployee($employee, $task, mvpDoneStatus($project));
 
-    expect($task->refresh()->isDone())->toBeTrue();
+    expect($task->refresh()->completed_at)->not->toBeNull();
 });
 
 it('allows clientless active employee members as task assignees and rejects removed members', function (): void {
@@ -49,10 +49,8 @@ it('allows clientless active employee members as task assignees and rejects remo
     expect($task->assigned_to)->toBe($employeeA->id);
 
     $manager->remove($project, $employeeA->id, $admin->id);
-    $task->update(['assigned_to' => null]);
-
-    expect(fn () => $task->update(['assigned_to' => $employeeA->id]))->toThrow(DomainException::class)
-        ->and(fn () => $task->update(['assigned_to' => $employeeB->id]))->toThrow(DomainException::class);
+    expect(fn () => app(TaskWorkflow::class)->updateByAdmin($admin, $task, ['assigned_to' => $employeeA->id]))->toThrow(DomainException::class)
+        ->and(fn () => app(TaskWorkflow::class)->updateByAdmin($admin, $task, ['assigned_to' => $employeeB->id]))->toThrow(DomainException::class);
 });
 
 it('keeps employee task mutations separate from admin-only operations', function (): void {

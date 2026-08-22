@@ -4,7 +4,6 @@ namespace Modules\Tasks\Infrastructure\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Identity\Infrastructure\Models\User;
 
 class Attachment extends Model
 {
@@ -36,16 +35,6 @@ class Attachment extends Model
     public function comment(): BelongsTo
     {
         return $this->belongsTo(TaskComment::class, 'comment_id');
-    }
-
-    public function uploader(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'uploaded_by');
-    }
-
-    public function hiddenBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'hidden_by');
     }
 
     public function isPreviewable(): bool

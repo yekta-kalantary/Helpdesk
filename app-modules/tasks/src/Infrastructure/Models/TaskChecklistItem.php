@@ -5,7 +5,6 @@ namespace Modules\Tasks\Infrastructure\Models;
 use DomainException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Identity\Infrastructure\Models\User;
 
 class TaskChecklistItem extends Model
 {
@@ -41,11 +40,6 @@ class TaskChecklistItem extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
-    }
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function isRemoved(): bool

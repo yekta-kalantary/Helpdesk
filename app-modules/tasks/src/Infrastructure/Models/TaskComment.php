@@ -5,7 +5,6 @@ namespace Modules\Tasks\Infrastructure\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Modules\Identity\Infrastructure\Models\User;
 
 class TaskComment extends Model
 {
@@ -25,16 +24,6 @@ class TaskComment extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function hiddenBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'hidden_by');
     }
 
     public function attachments(): HasMany
