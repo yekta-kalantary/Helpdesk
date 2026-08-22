@@ -18,7 +18,7 @@ it('allows employees to create and transition tasks only in member projects', fu
     $employee = User::factory()->employee()->create();
     $project = mvpProject($client, 'Employee task project');
     $manager = app(ProjectMembershipManager::class);
-    $manager->add($project, $employee, $admin);
+    $manager->add($project, $employee->id, $admin->id);
     $workflow = app(TaskWorkflow::class);
 
     $task = $workflow->createForEmployee($employee, $project, ['title' => 'Employee task']);
@@ -37,7 +37,7 @@ it('allows clientless active employee members as task assignees and rejects remo
     $employeeB = User::factory()->employee()->create();
     $project = mvpProject($clientA, 'Assignment project');
     $manager = app(ProjectMembershipManager::class);
-    $manager->add($project, $employeeA, $admin);
+    $manager->add($project, $employeeA->id, $admin->id);
     $task = Task::query()->create([
         'project_id' => $project->id,
         'project_status_id' => mvpOpenStatus($project)->id,
@@ -48,7 +48,7 @@ it('allows clientless active employee members as task assignees and rejects remo
 
     expect($task->assigned_to)->toBe($employeeA->id);
 
-    $manager->remove($project, $employeeA, $admin);
+    $manager->remove($project, $employeeA->id, $admin->id);
     $task->update(['assigned_to' => null]);
 
     expect(fn () => $task->update(['assigned_to' => $employeeA->id]))->toThrow(DomainException::class)
@@ -68,6 +68,6 @@ it('keeps employee task mutations separate from admin-only operations', function
 
     expect(fn () => app(TaskWorkflow::class)->updateByAdmin($employee, $task, ['title' => 'Changed']))
         ->toThrow(DomainException::class)
-        ->and(fn () => app(ProjectMembershipManager::class)->add($project, $employee, $employee))
+        ->and(fn () => app(ProjectMembershipManager::class)->add($project, $employee->id, $employee->id))
         ->toThrow(DomainException::class);
 });

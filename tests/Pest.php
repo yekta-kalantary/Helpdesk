@@ -3,6 +3,8 @@
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Clients\Infrastructure\Models\Client;
+use Modules\Identity\Infrastructure\Models\User;
+use Modules\Projects\Application\ProjectCreator;
 use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
@@ -18,7 +20,9 @@ pest()->extend(TestCase::class)
 
 function mvpProject(Client $client, string $name = 'Project'): Project
 {
-    return Project::query()->create([
+    $creatorId = User::query()->active()->admins()->orderBy('id')->value('id');
+
+    return app(ProjectCreator::class)->create($creatorId, [
         'client_id' => $client->id,
         'name' => $name,
         'status' => ProjectStatus::Active,

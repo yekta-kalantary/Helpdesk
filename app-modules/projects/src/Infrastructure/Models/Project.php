@@ -5,7 +5,6 @@ namespace Modules\Projects\Infrastructure\Models;
 use DomainException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Schema;
 use Modules\Projects\Domain\Enums\ProjectStatus;
 
 class Project extends Model
@@ -21,25 +20,6 @@ class Project extends Model
 
     protected static function booted(): void
     {
-        static::created(function (Project $project): void {
-            if (! Schema::hasTable('project_task_statuses')) {
-                return;
-            }
-
-            $creatorId = auth()->id();
-
-            foreach ([
-                ['title' => 'باز', 'position' => 10, 'is_done' => false],
-                ['title' => 'در حال انجام', 'position' => 20, 'is_done' => false],
-                ['title' => 'انجام‌شده', 'position' => 30, 'is_done' => true],
-            ] as $status) {
-                $project->taskStatuses()->create($status + [
-                    'created_by' => $creatorId,
-                    'is_active' => true,
-                ]);
-            }
-        });
-
         static::updating(function (Project $project): void {
             if ($project->isDirty('client_id')) {
                 throw new DomainException('Project client is immutable after creation.');

@@ -1,15 +1,18 @@
 <?php
 
 use App\Models\OutboxMessage;
+use Illuminate\Support\Facades\Gate;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\Contracts\ProjectAccessQuery;
 use Modules\Projects\Application\Events\ProjectMembershipRemovedV1;
 use Modules\Projects\Application\Events\ProjectTaskStatusChangedV1;
+use Modules\Projects\Application\ProjectCreator;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Projects\Application\ProjectWorkflowManager;
 use Modules\Projects\Domain\Enums\ProjectStatus;
 use Modules\Projects\Infrastructure\Models\Project;
+use Modules\Projects\Presentation\Policies\ProjectPolicy;
 
 it('does not grant project visibility from client ownership alone', function (): void {
     $client = Client::factory()->create();
@@ -164,6 +167,7 @@ it('records an immutable event when the done status changes', function (): void 
     $admin = User::factory()->admin()->create();
     $project = mvpProject(Client::factory()->create(), 'Status event project');
     $status = mvpOpenStatus($project);
+    $previousDoneStatus = mvpDoneStatus($project);
 
     app(ProjectWorkflowManager::class)->setDone($admin->id, $status);
 
@@ -172,9 +176,27 @@ it('records an immutable event when the done status changes', function (): void 
     expect($event->payload)->toMatchArray([
         'project_id' => $project->id,
         'project_task_status_id' => $status->id,
+        'previous_done_status_id' => $previousDoneStatus->id,
         'is_done' => true,
         'actor_id' => $admin->id,
     ]);
+});
+
+it('creates default task statuses through an active admin account', function (): void {
+    $creator = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+
+    $project = app(ProjectCreator::class)->create($creator->id, [
+        'client_id' => $client->id,
+        'name' => 'Creator-owned project',
+        'status' => ProjectStatus::Active,
+    ]);
+
+    expect($project->taskStatuses()->pluck('created_by')->unique()->all())->toBe([$creator->id]);
+});
+
+it('registers the Project policy from the Projects module', function (): void {
+    expect(Gate::getPolicyFor(Project::class))->toBeInstanceOf(ProjectPolicy::class);
 });
 
 it('rejects cross-client membership and inactive customers', function (): void {

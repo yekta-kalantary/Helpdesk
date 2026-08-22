@@ -115,6 +115,7 @@ class ProjectWorkflowManager
                 occurredAt: now()->toIso8601String(),
                 projectId: $project->id,
                 projectTaskStatusId: $status->id,
+                previousDoneStatusId: $previous?->id,
                 isDone: true,
                 actorId: $actorId,
             ));

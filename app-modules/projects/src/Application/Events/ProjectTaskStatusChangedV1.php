@@ -12,6 +12,7 @@ final readonly class ProjectTaskStatusChangedV1 implements IntegrationEvent
         private string $occurredAt,
         public int $projectId,
         public int $projectTaskStatusId,
+        public ?int $previousDoneStatusId,
         public bool $isDone,
         public int $actorId,
     ) {}
@@ -46,6 +47,7 @@ final readonly class ProjectTaskStatusChangedV1 implements IntegrationEvent
         return [
             'project_id' => $this->projectId,
             'project_task_status_id' => $this->projectTaskStatusId,
+            'previous_done_status_id' => $this->previousDoneStatusId,
             'is_done' => $this->isDone,
             'actor_id' => $this->actorId,
         ];

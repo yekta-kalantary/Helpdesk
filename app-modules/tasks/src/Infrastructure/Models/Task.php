@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Projects\Application\Contracts\ProjectMembershipDirectory;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
 use Modules\Projects\Infrastructure\Models\WorkGroup;
@@ -195,7 +196,7 @@ class Task extends Model
             }
 
             $project = Project::query()->find($this->project_id);
-            if (! $project || $project->client_id !== $assignee->client_id || ! $project->hasActiveMember($assignee)) {
+            if (! $project || $project->client_id !== $assignee->client_id || ! app(ProjectMembershipDirectory::class)->hasActiveMembership((int) $this->project_id, $assignee->id)) {
                 throw new DomainException('Customer assignee must be an active member of the task Project.');
             }
 
@@ -204,7 +205,7 @@ class Task extends Model
 
         if ($assignee->isEmployee()) {
             $project = Project::query()->find($this->project_id);
-            if (! $project || ! $project->hasActiveMember($assignee)) {
+            if (! $project || ! app(ProjectMembershipDirectory::class)->hasActiveMembership((int) $this->project_id, $assignee->id)) {
                 throw new DomainException('Employee assignee must be an active member of the task Project.');
             }
 

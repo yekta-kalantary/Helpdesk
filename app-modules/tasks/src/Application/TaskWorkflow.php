@@ -8,8 +8,10 @@ use App\Support\NotificationDispatcher;
 use DomainException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Modules\Clients\Application\Contracts\ClientStatusQuery;
 use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Projects\Application\Contracts\ProjectMembershipDirectory;
 use Modules\Projects\Infrastructure\Models\Project;
 use Modules\Projects\Infrastructure\Models\ProjectTaskStatus;
 use Modules\Projects\Infrastructure\Models\WorkGroup;
@@ -23,6 +25,8 @@ class TaskWorkflow
         private readonly NotificationDispatcher $notifications,
         private readonly TaskNotificationRouter $notificationRouter,
         private readonly AccountAuthenticationEligibility $eligibility,
+        private readonly ProjectMembershipDirectory $memberships,
+        private readonly ClientStatusQuery $clients,
     ) {}
 
     public function createForCustomer(User $actor, Project $project, array $data): Task
@@ -81,7 +85,7 @@ class TaskWorkflow
     public function updateByAdmin(User $actor, Task $task, array $data): Task
     {
         $this->assertAdmin($actor);
-        $task->loadMissing(['project.client', 'projectStatus']);
+        $task->loadMissing('projectStatus');
         $this->assertProjectOpen($task->project);
 
         if ($task->isDone()) {
@@ -389,11 +393,11 @@ class TaskWorkflow
         }
 
         if ($user->isCustomer()) {
-            if ($user->client_id !== $project->client_id || ! $project->hasActiveMember($user)) {
+            if ($user->client_id !== $project->client_id || ! $this->memberships->hasActiveMembership($project->id, $user->id)) {
                 throw new DomainException('Active Project membership is required.');
             }
         } elseif ($user->isEmployee()) {
-            if (! $project->hasActiveMember($user)) {
+            if (! $this->memberships->hasActiveMembership($project->id, $user->id)) {
                 throw new DomainException('Active Project membership is required.');
             }
         } elseif (! $user->isAdmin()) {
@@ -405,8 +409,7 @@ class TaskWorkflow
 
     private function assertProjectOpen(Project $project): void
     {
-        $project->loadMissing('client');
-        if (! $project->isActive() || ! $project->client->isActive()) {
+        if (! $project->isActive() || $this->clients->find($project->client_id)?->isActive !== true) {
             throw new DomainException('The Project is read-only.');
         }
     }

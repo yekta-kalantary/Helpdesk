@@ -47,3 +47,28 @@ Completed. This report is included in the Task 4 cohesive commit; its hash is re
 ## Commit
 
 Task 4 cohesive commit: `Make Projects sole owner of project state`.
+
+## Fix Round 1
+
+### Findings Addressed
+
+1. `ProjectTaskStatusChangedV1` now includes nullable scalar `previous_done_status_id`. `ProjectWorkflowManager::setDone()` records the prior Done status ID before it changes, allowing the future Task consumer to reopen tasks for that prior status.
+2. `CoreModulesTest` and `EmployeeAuthorizationTest` now pass scalar account IDs to `ProjectMembershipManager`. Membership assertions use `ProjectMembershipDirectory::hasActiveMembership()`. Task assignment and employee project-access checks use that same public contract rather than the removed `Project::hasActiveMember()` model method.
+3. `ProjectCreator` owns Project creation and default workflow status initialization. It receives account facts through `AccountDirectory`, requires an active admin creator, and persists that creator ID on every default status. `Project::booted()` now retains only the client immutability guard.
+4. `ProjectPolicy` moved to `Modules\Projects\Presentation\Policies` and is registered by `ProjectsServiceProvider`. The root provider and root policy file no longer own Project authorization. The module policy consumes Identity public application contracts and does not import Identity infrastructure.
+
+### TDD Evidence
+
+1. Before the fix, `php artisan test --compact tests/Feature/CoreModulesTest.php tests/Feature/Mvp/EmployeeAuthorizationTest.php` failed: 0 passed, 4 errors from object arguments passed to the scalar membership API, and 1 failure because the expected authorization exception was a `TypeError`.
+2. Added regressions for the prior Done-status payload ID, application-level creator status ownership, and module-owned policy registration. `php artisan test --compact tests/Feature/Mvp/ProjectMembershipTest.php` failed as expected: 11 passed, 1 missing payload key assertion, and 2 missing-class errors.
+3. After the implementation and Composer autoload regeneration, `php artisan test --compact tests/Feature/Mvp/ProjectMembershipTest.php tests/Feature/CoreModulesTest.php tests/Feature/Mvp/EmployeeAuthorizationTest.php` passed: 19 tests and 52 assertions.
+
+### Verification
+
+- Source scans found no `Project::hasActiveMember()` usage, no object-based Project membership manager calls, no `auth()` or `static::created()` usage in the Project model, and no cross-context infrastructure imports in Projects source.
+- `vendor/bin/pint --dirty --format agent` completed successfully.
+- `git diff --check` completed successfully.
+
+### Fix Commit
+
+Task 4 fix-round cohesive commit: `Repair project ownership boundaries`.
