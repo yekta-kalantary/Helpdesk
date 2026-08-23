@@ -240,22 +240,7 @@ class TaskWorkflow
             ]);
         }
 
-        if ($original['project_status_id'] !== (int) $task->project_status_id) {
-            $this->notifications->sendToAccountIds(
-                $this->notificationRouter->statusChanged($task),
-                $this->notificationFactory->make(
-                    'تغییر وضعیت تسک',
-                    "وضعیت {$task->reference} تغییر کرد.",
-                    route('tasks.show', $task),
-                    [
-                        'resource_type' => 'task',
-                        'resource_id' => $task->id,
-                        'reference' => $task->reference,
-                    ],
-                ),
-                $actorId,
-            );
-        } elseif ($original['assigned_to'] !== $task->assigned_to) {
+        if ($original['assigned_to'] !== $task->assigned_to) {
             $this->notifications->sendToAccountIds(
                 $this->notificationRouter->assigneeChanged($task),
                 $this->notificationFactory->make(

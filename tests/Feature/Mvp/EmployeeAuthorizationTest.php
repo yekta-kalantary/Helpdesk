@@ -1,9 +1,11 @@
 <?php
 
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Modules\Audit\Infrastructure\Models\Activity;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Notifications\Infrastructure\Notifications\ResourceChangedNotification;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskChecklist;
 use Modules\Tasks\Application\TaskWorkflow;
@@ -87,6 +89,27 @@ it('records task lifecycle activity through the audit path', function (): void {
     expect(Activity::query()->where('action', 'task.created')->where('task_id', $task->id)->exists())->toBeTrue()
         ->and(Activity::query()->where('action', 'task.status_changed')->where('task_id', $task->id)->exists())->toBeTrue()
         ->and(Activity::query()->where('action', 'task.completed')->where('task_id', $task->id)->exists())->toBeTrue();
+});
+
+it('sends exactly one status changed notification per admin status update', function (): void {
+    Notification::fake();
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $employee = User::factory()->employee()->create();
+    $project = mvpProject($client, 'Notified status project');
+    app(ProjectMembershipManager::class)->add($project, $employee->id, $admin->id);
+    $task = Task::query()->create([
+        'project_id' => $project->id,
+        'project_status_id' => mvpOpenStatus($project)->id,
+        'created_by' => $admin->id,
+        'assigned_to' => $employee->id,
+        'title' => 'Notified status task',
+    ]);
+
+    app(TaskWorkflow::class)->updateByAdmin($admin, $task, ['project_status_id' => mvpDoneStatus($project)->id]);
+
+    Notification::assertSentToTimes($employee, ResourceChangedNotification::class, 1);
+    Notification::assertSentTo($employee, ResourceChangedNotification::class, fn (ResourceChangedNotification $notification): bool => $notification->title === 'تغییر وضعیت تسک');
 });
 
 it('authorizes task views through project membership', function (): void {
