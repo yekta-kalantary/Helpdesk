@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('client_id')->constrained('clients')->restrictOnDelete();
+            $table->unsignedBigInteger('client_id')->index();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('status', 20)->default('active')->index();

@@ -11,11 +11,11 @@ return new class extends Migration
         Schema::create('tasks', function (Blueprint $table): void {
             $table->id();
             $table->string('reference', 32)->unique();
-            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
-            $table->foreignId('project_status_id')->constrained('project_task_statuses')->restrictOnDelete();
-            $table->foreignId('work_group_id')->nullable()->constrained('work_groups')->restrictOnDelete();
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
-            $table->foreignId('assigned_to')->nullable()->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('project_id')->index();
+            $table->unsignedBigInteger('project_status_id')->index();
+            $table->unsignedBigInteger('work_group_id')->nullable()->index();
+            $table->unsignedBigInteger('created_by')->index();
+            $table->unsignedBigInteger('assigned_to')->nullable()->index();
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('priority', 20)->default('normal')->index();

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('project_user', function (Blueprint $table): void {
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->unsignedBigInteger('user_id')->index();
             $table->timestamp('joined_at');
             $table->timestamp('removed_at')->nullable()->index();
             $table->timestamps();

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "97ade31dd6582a9a7662e9655fbffbb4",
+    "content-hash": "8989d85ec0150a10e665b21ff5d49f2c",
     "packages": [
         {
             "name": "brick/math",
@@ -2992,7 +2992,7 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/audit",
-                "reference": "5be514fd20b29744821270f3869ebf90a7854d37"
+                "reference": "96588ba4e4f9c1996ab670edaf869b3ecafdca0c"
             },
             "require": {
                 "laravel/framework": "^13.8",
@@ -3021,15 +3021,44 @@
             }
         },
         {
+            "name": "modules/clients",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "./app-modules/clients",
+                "reference": "334ada20cf02d715414d79e89362f9111727ed29"
+            },
+            "require": {
+                "laravel/framework": "^13.8",
+                "modules/identity": "*",
+                "php": "^8.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Modules\\Clients\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "description": "Client account management module.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "modules/identity",
             "version": "1.0.0",
             "dist": {
                 "type": "path",
                 "url": "./app-modules/identity",
-                "reference": "7985f9e9d7ed674885b42e69db9e4da0e76afc44"
+                "reference": "c63300afacfd12c6dcba340061ae75fd2a7fb8a4"
             },
             "require": {
                 "laravel/framework": "^13.8",
+                "modules/clients": "*",
                 "php": "^8.4"
             },
             "type": "library",
@@ -3060,7 +3089,7 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/notifications",
-                "reference": "4f7d143ed2857c730574abd86bf2818ecaa9bd5a"
+                "reference": "9aa08559dc0c1a818978b7776e8f015832ca7331"
             },
             "require": {
                 "laravel/framework": "^13.8",
@@ -3094,10 +3123,11 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/projects",
-                "reference": "6252c255cbb4fbd7956436d8826398dc0977e2e8"
+                "reference": "def1e91df655d51f47f5513daaeaf0199a996d52"
             },
             "require": {
                 "laravel/framework": "^13.8",
+                "modules/clients": "*",
                 "modules/identity": "*",
                 "php": "^8.4"
             },
@@ -3129,11 +3159,14 @@
             "dist": {
                 "type": "path",
                 "url": "./app-modules/tasks",
-                "reference": "4e4ca55839bf8dadf69a998f31e0f15351421d07"
+                "reference": "04f2b558e16d028797ef2eb8fc3acd5d9d00fde7"
             },
             "require": {
                 "laravel/framework": "^13.8",
+                "modules/audit": "*",
+                "modules/clients": "*",
                 "modules/identity": "*",
+                "modules/notifications": "*",
                 "modules/projects": "*",
                 "php": "^8.4"
             },

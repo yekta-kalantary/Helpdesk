@@ -16,7 +16,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->unsignedInteger('position')->default(0);
             $table->string('status', 20)->default('active');
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('created_by')->index();
             $table->timestamp('inactivated_at')->nullable();
             $table->timestamps();
             $table->index(['project_id', 'parent_id', 'position']);

@@ -13,6 +13,7 @@
                 "symlink": true,
                 "versions": {
                     "modules/audit": "1.0.0",
+                    "modules/clients": "1.0.0",
                     "modules/identity": "1.0.0",
                     "modules/notifications": "1.0.0",
                     "modules/projects": "1.0.0",

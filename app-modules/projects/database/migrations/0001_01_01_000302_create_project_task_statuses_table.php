@@ -15,7 +15,7 @@ return new class extends Migration
             $table->unsignedInteger('position')->default(0);
             $table->boolean('is_done')->default(false);
             $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('created_by')->nullable()->index();
             $table->timestamp('inactivated_at')->nullable();
             $table->timestamps();
             $table->index(['project_id', 'is_active', 'position']);

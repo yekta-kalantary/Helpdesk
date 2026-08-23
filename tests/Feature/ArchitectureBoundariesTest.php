@@ -63,6 +63,34 @@ it('keeps the core schemas aligned with project-owned workflow boundaries', func
         ->and(Schema::hasColumns('activities', ['actor_id', 'project_id', 'task_id', 'action', 'metadata']))->toBeTrue();
 });
 
+it('keeps cross-context references as plain scalar columns without foreign keys', function (): void {
+    $foreignTables = fn (string $table): array => array_column(Schema::getForeignKeys($table), 'foreign_table');
+
+    expect($foreignTables('users'))->not->toContain('clients')
+        ->and($foreignTables('projects'))->not->toContain('clients', 'users')
+        ->and($foreignTables('project_user'))->not->toContain('clients', 'users')
+        ->and($foreignTables('project_task_statuses'))->not->toContain('clients', 'users')
+        ->and($foreignTables('work_groups'))->not->toContain('clients', 'users')
+        ->and($foreignTables('tasks'))->not->toContain('users', 'projects', 'project_task_statuses', 'work_groups');
+});
+
+it('keeps indexes on scalar reference columns left behind by removed foreign keys', function (): void {
+    $unindexedColumns = fn (string $table, array $columns): array => array_values(array_diff(
+        $columns,
+        array_map(
+            fn (array $index): string => $index['columns'][0],
+            Schema::getIndexes($table),
+        ),
+    ));
+
+    expect($unindexedColumns('users', ['client_id']))->toBe([])
+        ->and($unindexedColumns('projects', ['client_id']))->toBe([])
+        ->and($unindexedColumns('project_user', ['user_id']))->toBe([])
+        ->and($unindexedColumns('project_task_statuses', ['created_by']))->toBe([])
+        ->and($unindexedColumns('work_groups', ['created_by']))->toBe([])
+        ->and($unindexedColumns('tasks', ['project_id', 'project_status_id', 'work_group_id', 'created_by', 'assigned_to']))->toBe([]);
+});
+
 function moduleSourceFiles(): iterable
 {
     $modulesPath = base_path('app-modules');
