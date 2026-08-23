@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('task_id')->constrained('tasks')->restrictOnDelete();
             $table->foreignId('comment_id')->nullable()->constrained('task_comments')->restrictOnDelete();
-            $table->foreignId('uploaded_by')->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('uploaded_by')->index();
             $table->string('original_name');
             $table->string('storage_path')->unique();
             $table->string('mime_type', 150);

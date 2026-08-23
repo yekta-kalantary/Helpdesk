@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('title');
             $table->boolean('is_completed')->default(false);
             $table->unsignedInteger('position')->default(0);
-            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('created_by')->index();
             $table->timestamp('removed_at')->nullable();
             $table->timestamps();
             $table->index(['task_id', 'removed_at', 'position']);

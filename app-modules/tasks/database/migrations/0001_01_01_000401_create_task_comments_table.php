@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('task_comments', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('task_id')->constrained('tasks')->restrictOnDelete();
-            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('user_id')->index();
             $table->text('body')->nullable();
             $table->timestamp('hidden_at')->nullable()->index();
-            $table->foreignId('hidden_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('hidden_by')->nullable()->index();
             $table->timestamps();
         });
     }

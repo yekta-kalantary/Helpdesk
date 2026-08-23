@@ -71,7 +71,11 @@ it('keeps cross-context references as plain scalar columns without foreign keys'
         ->and($foreignTables('project_user'))->not->toContain('clients', 'users')
         ->and($foreignTables('project_task_statuses'))->not->toContain('clients', 'users')
         ->and($foreignTables('work_groups'))->not->toContain('clients', 'users')
-        ->and($foreignTables('tasks'))->not->toContain('users', 'projects', 'project_task_statuses', 'work_groups');
+        ->and($foreignTables('tasks'))->not->toContain('users', 'projects', 'project_task_statuses', 'work_groups')
+        ->and($foreignTables('task_comments'))->not->toContain('users')
+        ->and($foreignTables('attachments'))->not->toContain('users')
+        ->and($foreignTables('task_checklist_items'))->not->toContain('users')
+        ->and($foreignTables('activities'))->not->toContain('users', 'projects', 'tasks');
 });
 
 it('keeps indexes on scalar reference columns left behind by removed foreign keys', function (): void {
@@ -88,7 +92,60 @@ it('keeps indexes on scalar reference columns left behind by removed foreign key
         ->and($unindexedColumns('project_user', ['user_id']))->toBe([])
         ->and($unindexedColumns('project_task_statuses', ['created_by']))->toBe([])
         ->and($unindexedColumns('work_groups', ['created_by']))->toBe([])
-        ->and($unindexedColumns('tasks', ['project_id', 'project_status_id', 'work_group_id', 'created_by', 'assigned_to']))->toBe([]);
+        ->and($unindexedColumns('tasks', ['project_id', 'project_status_id', 'work_group_id', 'created_by', 'assigned_to']))->toBe([])
+        ->and($unindexedColumns('task_comments', ['user_id', 'hidden_by']))->toBe([])
+        ->and($unindexedColumns('attachments', ['uploaded_by', 'hidden_by']))->toBe([])
+        ->and($unindexedColumns('task_checklist_items', ['created_by']))->toBe([])
+        ->and($unindexedColumns('activities', ['actor_id', 'project_id', 'task_id']))->toBe([]);
+});
+
+it('keeps modules from querying or relating to another context’s tables', function (): void {
+    $ownedTables = [
+        'identity' => ['users', 'password_reset_tokens', 'sessions'],
+        'clients' => ['clients'],
+        'projects' => ['projects', 'project_user', 'project_task_statuses', 'work_groups'],
+        'tasks' => ['tasks', 'task_comments', 'task_checklist_items', 'attachments'],
+        'audit' => ['activities'],
+        'notifications' => ['notifications'],
+    ];
+
+    $ownedModels = [
+        'identity' => ['User'],
+        'clients' => ['Client'],
+        'projects' => ['Project', 'ProjectTaskStatus', 'WorkGroup'],
+        'tasks' => ['Task', 'TaskComment', 'TaskChecklistItem', 'Attachment'],
+        'audit' => ['Activity'],
+    ];
+
+    $violations = [];
+
+    foreach (moduleSourceFiles() as [$module, $relativePath, $source]) {
+        foreach ($ownedTables as $owner => $tables) {
+            if ($owner === $module) {
+                continue;
+            }
+
+            foreach ($tables as $table) {
+                if (preg_match("/DB::table\(\s*['\"]".preg_quote($table, '/')."['\"]/", $source) === 1) {
+                    $violations[] = "{$relativePath}: DB::table('{$table}')";
+                }
+            }
+        }
+
+        foreach ($ownedModels as $owner => $models) {
+            if ($owner === $module) {
+                continue;
+            }
+
+            foreach ($models as $model) {
+                if (str_contains($source, "belongsTo({$model}::class)")) {
+                    $violations[] = "{$relativePath}: belongsTo({$model}::class)";
+                }
+            }
+        }
+    }
+
+    expect($violations)->toBe([]);
 });
 
 function moduleSourceFiles(): iterable

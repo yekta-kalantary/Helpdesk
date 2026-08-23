@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('activities', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('project_id')->nullable()->constrained('projects')->restrictOnDelete();
-            $table->foreignId('task_id')->nullable()->constrained('tasks')->restrictOnDelete();
+            $table->unsignedBigInteger('actor_id')->nullable()->index();
+            $table->unsignedBigInteger('project_id')->nullable()->index();
+            $table->unsignedBigInteger('task_id')->nullable()->index();
             $table->string('action', 80)->index();
             $table->json('metadata')->nullable();
             $table->timestamp('created_at')->useCurrent()->index();
