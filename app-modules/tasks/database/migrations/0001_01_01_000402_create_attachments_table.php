@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('mime_type', 150);
             $table->unsignedBigInteger('size');
             $table->timestamp('hidden_at')->nullable()->index();
-            $table->foreignId('hidden_by')->nullable()->constrained('users')->restrictOnDelete();
+            $table->unsignedBigInteger('hidden_by')->nullable()->index();
             $table->timestamps();
         });
     }

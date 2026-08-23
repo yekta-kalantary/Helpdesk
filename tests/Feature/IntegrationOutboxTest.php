@@ -145,7 +145,7 @@ function integrationEventImplementations(): array
 
         $source = (string) file_get_contents($file->getPathname());
 
-        if (! str_contains($source, 'implements IntegrationEvent')) {
+        if (! preg_match('/implements\s+(?:\\\\App\\\\Integration\\\\Events\\\\)?IntegrationEvent\b/', $source)) {
             continue;
         }
 
@@ -153,7 +153,7 @@ function integrationEventImplementations(): array
 
         $eventClass = (($namespaceMatches[1] ?? '').'\\'.$file->getBasename('.php'));
 
-        $events[$eventClass] = integrationEventFixture(new $eventClass(...integrationEventFixtureArguments($eventClass)));
+        $events[$eventClass] = new $eventClass(...integrationEventFixtureArguments($eventClass));
     }
 
     return $events;
@@ -166,7 +166,7 @@ function integrationEventFixtureArguments(string $eventClass): array
 {
     $arguments = [];
 
-    foreach ((new ReflectionClass($eventClass))->getConstructor()->getParameters() as $parameter) {
+    foreach ((new ReflectionClass($eventClass))->getConstructor()?->getParameters() ?? [] as $parameter) {
         $type = $parameter->getType();
 
         if (! $type instanceof ReflectionNamedType || ! in_array($type->getName(), ['string', 'int', 'bool'], true)) {
@@ -181,9 +181,4 @@ function integrationEventFixtureArguments(string $eventClass): array
     }
 
     return $arguments;
-}
-
-function integrationEventFixture(IntegrationEvent $event): IntegrationEvent
-{
-    return $event;
 }

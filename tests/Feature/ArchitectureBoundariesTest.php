@@ -167,5 +167,5 @@ function moduleSourceFiles(): iterable
 
 function crossContextInfrastructureImportPattern(string $module): string
 {
-    return '/^use Modules\\\\(?!'.preg_quote(ucfirst($module), '/').'\\\\)\\w+\\\\Infrastructure\\\\/m';
+    return '/Modules\\\\(?!'.preg_quote(ucfirst($module), '/').'\\\\)\\w+\\\\Infrastructure\\\\/';
 }
