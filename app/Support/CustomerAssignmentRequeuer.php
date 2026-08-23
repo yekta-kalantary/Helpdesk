@@ -9,7 +9,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Application\TaskNotificationRouter;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 class CustomerAssignmentRequeuer
@@ -17,7 +16,6 @@ class CustomerAssignmentRequeuer
     public function __construct(
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
-        private readonly TaskNotificationRouter $notificationRouter,
     ) {}
 
     /** @return Collection<int, Task> */
@@ -28,7 +26,7 @@ class CustomerAssignmentRequeuer
         $tasks = DB::transaction(function () use ($user, $actor, $project): Collection {
             $query = Task::query()
                 ->where('assigned_to', $user->id)
-                ->whereHas('projectStatus', fn (Builder $statuses): Builder => $statuses->where('is_done', false))
+                ->whereNull('completed_at')
                 ->when($project, fn (Builder $tasks): Builder => $tasks->where('project_id', $project->id));
 
             $projectIds = (clone $query)->distinct()->orderBy('project_id')->pluck('project_id')->all();
@@ -36,13 +34,13 @@ class CustomerAssignmentRequeuer
                 Project::query()->whereKey($projectId)->lockForUpdate()->firstOrFail();
             }
 
-            $tasks = $query->with('project')->lockForUpdate()->get();
+            $tasks = $query->lockForUpdate()->get();
             foreach ($tasks as $task) {
                 $oldAssignee = $task->assigned_to;
                 $task->forceFill(['assigned_to' => null])->save();
 
-                $this->activities->record($actor, 'task.assignee_changed', $task->project, $task, [
-                    'old' => $oldAssignee,
+                $this->activities->recordIds($actor->id, 'task.assignee_changed', (int) $task->project_id, $task->id, [
+                    'old' => $oldAssignee !== null ? (int) $oldAssignee : null,
                     'new' => null,
                     'reason' => 'customer_membership_or_account_change',
                 ]);
@@ -52,8 +50,8 @@ class CustomerAssignmentRequeuer
         });
 
         foreach ($tasks as $task) {
-            $this->notifications->send(
-                $this->notificationRouter->activeAdmins(),
+            $this->notifications->sendToAccountIds(
+                User::query()->active()->admins()->pluck('id'),
                 new ResourceChangedNotification(
                     'مسئول تسک نیاز به بازبینی دارد',
                     "مسئول تسک {$task->reference} به‌دلیل تغییر دسترسی مشتری خالی شد.",
@@ -64,7 +62,7 @@ class CustomerAssignmentRequeuer
                         'reference' => $task->reference,
                     ],
                 ),
-                $actor,
+                $actor->id,
             );
         }
 

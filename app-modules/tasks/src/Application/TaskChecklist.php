@@ -5,8 +5,6 @@ namespace Modules\Tasks\Application;
 use App\Support\ActivityRecorder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use Modules\Identity\Application\AccountAuthenticationEligibility;
-use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Infrastructure\Models\TaskChecklistItem;
 
@@ -14,16 +12,16 @@ class TaskChecklist
 {
     public function __construct(
         private readonly ActivityRecorder $activities,
-        private readonly AccountAuthenticationEligibility $eligibility,
+        private readonly TaskAccess $access,
     ) {}
 
-    public function add(User $actor, Task $task, string $title): TaskChecklistItem
+    public function add(int $actorId, Task $task, string $title): TaskChecklistItem
     {
         $title = $this->title($title);
 
-        return DB::transaction(function () use ($actor, $task, $title): TaskChecklistItem {
+        return DB::transaction(function () use ($actorId, $task, $title): TaskChecklistItem {
             $task = Task::query()->lockForUpdate()->findOrFail($task->id);
-            $this->assertMutable($actor, $task);
+            $this->assertMutable($actorId, $task);
             $position = ((int) $task->checklistItems()->max('position')) + 10;
 
             $item = TaskChecklistItem::query()->create([
@@ -31,10 +29,10 @@ class TaskChecklist
                 'title' => $title,
                 'is_completed' => false,
                 'position' => $position,
-                'created_by' => $actor->id,
+                'created_by' => $actorId,
             ]);
 
-            $this->activities->record($actor, 'subtask.added', $task->project, $task, [
+            $this->activities->recordIds($actorId, 'subtask.added', (int) $task->project_id, $task->id, [
                 'subtask_id' => $item->id,
                 'title' => $item->title,
             ]);
@@ -43,20 +41,20 @@ class TaskChecklist
         });
     }
 
-    public function rename(User $actor, TaskChecklistItem $item, string $title): TaskChecklistItem
+    public function rename(int $actorId, TaskChecklistItem $item, string $title): TaskChecklistItem
     {
         $title = $this->title($title);
 
-        return DB::transaction(function () use ($actor, $item, $title): TaskChecklistItem {
+        return DB::transaction(function () use ($actorId, $item, $title): TaskChecklistItem {
             $item = TaskChecklistItem::query()->lockForUpdate()->findOrFail($item->id);
             $this->assertActiveItem($item);
             $task = Task::query()->lockForUpdate()->findOrFail($item->task_id);
-            $this->assertMutable($actor, $task);
+            $this->assertMutable($actorId, $task);
             $old = $item->title;
 
             if ($old !== $title) {
                 $item->update(['title' => $title]);
-                $this->activities->record($actor, 'subtask.renamed', $task->project, $task, [
+                $this->activities->recordIds($actorId, 'subtask.renamed', (int) $task->project_id, $task->id, [
                     'subtask_id' => $item->id,
                     'old_title' => $old,
                     'new_title' => $title,
@@ -67,24 +65,24 @@ class TaskChecklist
         });
     }
 
-    public function toggle(User $actor, TaskChecklistItem $item, bool $completed): TaskChecklistItem
+    public function toggle(int $actorId, TaskChecklistItem $item, bool $completed): TaskChecklistItem
     {
-        return DB::transaction(function () use ($actor, $item, $completed): TaskChecklistItem {
+        return DB::transaction(function () use ($actorId, $item, $completed): TaskChecklistItem {
             $item = TaskChecklistItem::query()->lockForUpdate()->findOrFail($item->id);
             $this->assertActiveItem($item);
             $task = Task::query()->lockForUpdate()->findOrFail($item->task_id);
-            $this->assertMutable($actor, $task);
+            $this->assertMutable($actorId, $task);
 
             if ($item->is_completed === $completed) {
                 return $item;
             }
 
             $item->update(['is_completed' => $completed]);
-            $this->activities->record(
-                $actor,
+            $this->activities->recordIds(
+                $actorId,
                 $completed ? 'subtask.completed' : 'subtask.uncompleted',
-                $task->project,
-                $task,
+                (int) $task->project_id,
+                $task->id,
                 ['subtask_id' => $item->id, 'title_snapshot' => $item->title],
             );
 
@@ -93,11 +91,11 @@ class TaskChecklist
     }
 
     /** @param array<int, int> $orderedItemIds */
-    public function reorder(User $actor, Task $task, array $orderedItemIds): void
+    public function reorder(int $actorId, Task $task, array $orderedItemIds): void
     {
-        DB::transaction(function () use ($actor, $task, $orderedItemIds): void {
+        DB::transaction(function () use ($actorId, $task, $orderedItemIds): void {
             $task = Task::query()->lockForUpdate()->findOrFail($task->id);
-            $this->assertMutable($actor, $task);
+            $this->assertMutable($actorId, $task);
             $expected = $task->checklistItems()->pluck('id')->sort()->values()->all();
             $actual = collect($orderedItemIds)->map(fn ($id): int => (int) $id)->sort()->values()->all();
 
@@ -115,16 +113,16 @@ class TaskChecklist
         });
     }
 
-    public function remove(User $actor, TaskChecklistItem $item): TaskChecklistItem
+    public function remove(int $actorId, TaskChecklistItem $item): TaskChecklistItem
     {
-        return DB::transaction(function () use ($actor, $item): TaskChecklistItem {
+        return DB::transaction(function () use ($actorId, $item): TaskChecklistItem {
             $item = TaskChecklistItem::query()->lockForUpdate()->findOrFail($item->id);
             $this->assertActiveItem($item);
             $task = Task::query()->lockForUpdate()->findOrFail($item->task_id);
-            $this->assertMutable($actor, $task);
+            $this->assertMutable($actorId, $task);
 
             $item->update(['removed_at' => now()]);
-            $this->activities->record($actor, 'subtask.removed', $task->project, $task, [
+            $this->activities->recordIds($actorId, 'subtask.removed', (int) $task->project_id, $task->id, [
                 'subtask_id' => $item->id,
                 'title_snapshot' => $item->title,
             ]);
@@ -133,20 +131,9 @@ class TaskChecklist
         });
     }
 
-    private function assertMutable(User $actor, Task $task): void
+    private function assertMutable(int $actorId, Task $task): void
     {
-        if (! $this->eligibility->canAuthenticateAccount($actor->id)) {
-            throw new DomainException('An active account is required.');
-        }
-
-        if (! $actor->isAdmin() && ! Task::query()->visibleTo($actor)->whereKey($task->id)->exists()) {
-            throw new DomainException('Task access is not allowed.');
-        }
-
-        $task->loadMissing(['project.client', 'projectStatus']);
-        if (! $task->project->isActive() || ! $task->project->client->isActive() || $task->isDone()) {
-            throw new DomainException('Done Tasks and completed Projects have read-only checklists.');
-        }
+        $this->access->assertMutable($actorId, $task);
     }
 
     private function assertActiveItem(TaskChecklistItem $item): void

@@ -16,10 +16,15 @@ class ActivityRecorder
         ?Task $task = null,
         array $metadata = [],
     ): Activity {
+        return $this->recordIds($actor?->id, $action, $project?->id ?? $task?->project_id, $task?->id, $metadata);
+    }
+
+    public function recordIds(?int $actorId, string $action, ?int $projectId, ?int $taskId, array $metadata = []): Activity
+    {
         return Activity::query()->create([
-            'actor_id' => $actor?->id,
-            'project_id' => $project?->id ?? $task?->project_id,
-            'task_id' => $task?->id,
+            'actor_id' => $actorId,
+            'project_id' => $projectId,
+            'task_id' => $taskId,
             'action' => $action,
             'metadata' => $this->sanitize($metadata),
             'created_at' => now(),

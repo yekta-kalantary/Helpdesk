@@ -28,4 +28,12 @@ class NotificationDispatcher
                 }
             });
     }
+
+    /** @param iterable<int> $recipientIds */
+    public function sendToAccountIds(iterable $recipientIds, ResourceChangedNotification $notification, ?int $actorId = null): void
+    {
+        $recipients = User::query()->active()->whereIn('id', Collection::make($recipientIds)->unique())->get();
+
+        $this->send($recipients, $notification, $actorId === null ? null : User::query()->find($actorId));
+    }
 }

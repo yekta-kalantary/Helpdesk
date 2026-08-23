@@ -8,7 +8,10 @@ use InvalidArgumentException;
 
 final class OutboxRecorder
 {
-    public function __construct(private readonly OutboxMessage $outboxMessages) {}
+    public function __construct(
+        private readonly OutboxMessage $outboxMessages,
+        private readonly AfterCommitOutboxDispatcher $dispatcher,
+    ) {}
 
     public function record(IntegrationEvent $event): void
     {
@@ -27,5 +30,7 @@ final class OutboxRecorder
             'occurred_at' => $event->occurredAt(),
             'payload' => $payload,
         ]);
+
+        $this->dispatcher->dispatch($event);
     }
 }

@@ -82,3 +82,23 @@ it('synchronizes task completion when a project status changes done state', func
     expect($task->fresh()->completed_at)->toBeNull()
         ->and(Task::query()->whereKey($task)->count())->toBe(1);
 });
+
+it('delivers a committed membership event from the outbox dispatcher to task consumers', function (): void {
+    $client = Client::factory()->create();
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->employee()->create();
+    $project = mvpProject($client);
+    $manager = app(ProjectMembershipManager::class);
+    $manager->add($project, $member->id, $admin->id);
+    $task = Task::query()->create([
+        'project_id' => $project->id,
+        'project_status_id' => mvpOpenStatus($project)->id,
+        'created_by' => $admin->id,
+        'assigned_to' => $member->id,
+        'title' => 'Outbox task',
+    ]);
+
+    $manager->remove($project, $member->id, $admin->id);
+
+    expect($task->fresh()->assigned_to)->toBeNull();
+});

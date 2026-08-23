@@ -4,11 +4,15 @@ namespace App\Policies;
 
 use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Infrastructure\Models\User;
+use Modules\Tasks\Application\TaskAccess;
 use Modules\Tasks\Infrastructure\Models\Task;
 
 class TaskPolicy
 {
-    public function __construct(private AccountAuthenticationEligibility $eligibility) {}
+    public function __construct(
+        private AccountAuthenticationEligibility $eligibility,
+        private TaskAccess $access,
+    ) {}
 
     public function viewAny(User $user): bool
     {
@@ -17,7 +21,7 @@ class TaskPolicy
 
     public function view(User $user, Task $task): bool
     {
-        return Task::query()->visibleTo($user)->whereKey($task)->exists();
+        return $this->access->canAccess($user->id, $task);
     }
 
     public function create(User $user): bool

@@ -5,7 +5,6 @@ namespace Modules\Tasks\Application;
 use App\Notifications\ResourceChangedNotification;
 use App\Support\ActivityRecorder;
 use App\Support\NotificationDispatcher;
-use DomainException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
@@ -13,7 +12,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Modules\Identity\Application\AccountAuthenticationEligibility;
-use Modules\Identity\Infrastructure\Models\User;
 use Modules\Tasks\Infrastructure\Models\Attachment;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Infrastructure\Models\TaskComment;
@@ -26,29 +24,30 @@ class TaskCollaboration
         private readonly NotificationDispatcher $notifications,
         private readonly TaskNotificationRouter $notificationRouter,
         private readonly AccountAuthenticationEligibility $eligibility,
+        private readonly TaskAccess $access,
     ) {}
 
-    public function attach(User $actor, Task $task, UploadedFile $file, ?TaskComment $comment = null): Attachment
+    public function attach(int $actorId, Task $task, UploadedFile $file, ?TaskComment $comment = null): Attachment
     {
-        $this->assertCanCollaborate($actor, $task);
-        $this->validateUploadRate($actor);
+        $this->assertCanCollaborate($actorId, $task);
+        $this->validateUploadRate($actorId);
         $this->validateFile($file);
 
         $path = $file->store('task-attachments/'.$task->id, 'local');
 
         try {
-            $attachment = DB::transaction(function () use ($actor, $task, $comment, $file, $path): Attachment {
+            $attachment = DB::transaction(function () use ($actorId, $task, $comment, $file, $path): Attachment {
                 $attachment = Attachment::query()->create([
                     'task_id' => $task->id,
                     'comment_id' => $comment?->id,
-                    'uploaded_by' => $actor->id,
+                    'uploaded_by' => $actorId,
                     'original_name' => $file->getClientOriginalName(),
                     'storage_path' => $path,
                     'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
                     'size' => $file->getSize(),
                 ]);
 
-                $this->recordAttachment($actor, $task, $attachment);
+                $this->recordAttachment($actorId, $task, $attachment);
 
                 return $attachment;
             });
@@ -61,9 +60,9 @@ class TaskCollaboration
     }
 
     /** @param array<int, UploadedFile> $files */
-    public function comment(User $actor, Task $task, ?string $body, array $files): TaskComment
+    public function comment(int $actorId, Task $task, ?string $body, array $files): TaskComment
     {
-        $this->assertCanCollaborate($actor, $task);
+        $this->assertCanCollaborate($actorId, $task);
         $body = trim((string) $body);
 
         if ($body === '' && $files === []) {
@@ -73,7 +72,7 @@ class TaskCollaboration
         }
 
         foreach ($files as $file) {
-            $this->validateUploadRate($actor);
+            $this->validateUploadRate($actorId);
             $this->validateFile($file);
         }
 
@@ -81,10 +80,10 @@ class TaskCollaboration
         $createdAttachments = collect();
 
         try {
-            $comment = DB::transaction(function () use ($actor, $task, $body, $files, &$storedPaths, $createdAttachments): TaskComment {
+            $comment = DB::transaction(function () use ($actorId, $task, $body, $files, &$storedPaths, $createdAttachments): TaskComment {
                 $comment = TaskComment::query()->create([
                     'task_id' => $task->id,
-                    'user_id' => $actor->id,
+                    'user_id' => $actorId,
                     'body' => $body !== '' ? $body : null,
                 ]);
 
@@ -95,7 +94,7 @@ class TaskCollaboration
                     $createdAttachments->push(Attachment::query()->create([
                         'task_id' => $task->id,
                         'comment_id' => $comment->id,
-                        'uploaded_by' => $actor->id,
+                        'uploaded_by' => $actorId,
                         'original_name' => $file->getClientOriginalName(),
                         'storage_path' => $path,
                         'mime_type' => $file->getMimeType() ?: $file->getClientMimeType() ?: 'application/octet-stream',
@@ -103,13 +102,13 @@ class TaskCollaboration
                     ]));
                 }
 
-                $this->activities->record($actor, 'comment.added', $task->project, $task, [
+                $this->activities->recordIds($actorId, 'comment.added', $task->project_id, $task->id, [
                     'comment_id' => $comment->id,
                     'attachment_count' => count($files),
                 ]);
 
                 foreach ($createdAttachments as $attachment) {
-                    $this->recordAttachment($actor, $task, $attachment);
+                    $this->recordAttachment($actorId, $task, $attachment);
                 }
 
                 return $comment;
@@ -119,7 +118,7 @@ class TaskCollaboration
             throw $e;
         }
 
-        $this->notifications->send(
+        $this->notifications->sendToAccountIds(
             $this->notificationRouter->commentAdded($task),
             new ResourceChangedNotification(
                 'نظر جدید روی تسک',
@@ -131,48 +130,48 @@ class TaskCollaboration
                     'reference' => $task->reference,
                 ],
             ),
-            $actor,
+            $actorId,
         );
 
         return $comment->load('attachments');
     }
 
-    public function hideComment(User $actor, TaskComment $comment): void
+    public function hideComment(int $actorId, TaskComment $comment): void
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
         if ($comment->hidden_at) {
             return;
         }
 
-        DB::transaction(function () use ($actor, $comment): void {
-            $comment->update(['hidden_at' => now(), 'hidden_by' => $actor->id]);
-            $this->activities->record($actor, 'comment.hidden', $comment->task->project, $comment->task, [
+        DB::transaction(function () use ($actorId, $comment): void {
+            $comment->update(['hidden_at' => now(), 'hidden_by' => $actorId]);
+            $this->activities->recordIds($actorId, 'comment.hidden', null, $comment->task_id, [
                 'comment_id' => $comment->id,
             ]);
         });
     }
 
-    public function hideAttachment(User $actor, Attachment $attachment): void
+    public function hideAttachment(int $actorId, Attachment $attachment): void
     {
-        $this->assertAdmin($actor);
+        $this->assertAdmin($actorId);
 
         if ($attachment->hidden_at) {
             return;
         }
 
-        DB::transaction(function () use ($actor, $attachment): void {
-            $attachment->update(['hidden_at' => now(), 'hidden_by' => $actor->id]);
-            $this->activities->record($actor, 'attachment.hidden', $attachment->task->project, $attachment->task, [
+        DB::transaction(function () use ($actorId, $attachment): void {
+            $attachment->update(['hidden_at' => now(), 'hidden_by' => $actorId]);
+            $this->activities->recordIds($actorId, 'attachment.hidden', null, $attachment->task_id, [
                 'attachment_id' => $attachment->id,
                 'name' => $attachment->original_name,
             ]);
         });
     }
 
-    private function recordAttachment(User $actor, Task $task, Attachment $attachment): void
+    private function recordAttachment(int $actorId, Task $task, Attachment $attachment): void
     {
-        $this->activities->record($actor, 'attachment.added', $task->project, $task, [
+        $this->activities->recordIds($actorId, 'attachment.added', $task->project_id, $task->id, [
             'attachment_id' => $attachment->id,
             'name' => $attachment->original_name,
             'mime_type' => $attachment->mime_type,
@@ -180,33 +179,19 @@ class TaskCollaboration
         ]);
     }
 
-    private function assertCanCollaborate(User $actor, Task $task): void
+    private function assertCanCollaborate(int $actorId, Task $task): void
     {
-        if (! $this->eligibility->canAuthenticateAccount($actor->id)) {
-            throw new DomainException('An active account is required.');
-        }
-
-        if (! $actor->isAdmin() && ! Task::query()->visibleTo($actor)->whereKey($task->id)->exists()) {
-            throw new DomainException('Task access is not allowed.');
-        }
-
-        $project = $task->project()->with('client')->firstOrFail();
-
-        if (! $project->isActive() || ! $project->client->isActive() || $task->isTerminal()) {
-            throw new DomainException('Closed projects and tasks are read-only for collaboration.');
-        }
+        $this->access->assertMutable($actorId, $task);
     }
 
-    private function assertAdmin(User $actor): void
+    private function assertAdmin(int $actorId): void
     {
-        if (! $actor->isAdmin() || ! $actor->is_active) {
-            throw new DomainException('Only an active admin may hide collaboration content.');
-        }
+        $this->access->assertAdmin($actorId);
     }
 
-    private function validateUploadRate(User $actor): void
+    private function validateUploadRate(int $actorId): void
     {
-        $key = 'attachment-upload:'.$actor->id;
+        $key = 'attachment-upload:'.$actorId;
 
         if (! RateLimiter::attempt($key, 20, static fn (): bool => true, 60)) {
             throw ValidationException::withMessages([
