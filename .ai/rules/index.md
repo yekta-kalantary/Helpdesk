@@ -2,8 +2,9 @@
 
 | Path | Rule |
 | --- | --- |
-| `**/*` | [Commit Before Next Task](commit-before-next-task.md) |
+| `**/*` | [Agent Workflow](agent-workflow.md) |
+| `**/*` | [Task Completion](task-completion.md) |
 | `**/*` | [English Only](english-only.md) |
 | `**/*` | [Laravel Localization](laravel-localization.md) |
 | `**/*` | [Icon Usage](icon-usage.md) |
-| `app-modules/**/*` | [Modular Domain Boundaries](modular-domain-boundaries.md) |
+| `**/*` | [Domain Architecture](domain-architecture.md) |
