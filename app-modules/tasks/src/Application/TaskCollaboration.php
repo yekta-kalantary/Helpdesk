@@ -2,16 +2,16 @@
 
 namespace Modules\Tasks\Application;
 
-use App\Notifications\ResourceChangedNotification;
-use App\Support\ActivityRecorder;
-use App\Support\NotificationDispatcher;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Modules\Audit\Application\ActivityRecorder;
 use Modules\Identity\Application\AccountAuthenticationEligibility;
+use Modules\Notifications\Application\Contracts\ResourceChangedNotificationFactory;
+use Modules\Notifications\Application\NotificationDispatcher;
 use Modules\Tasks\Infrastructure\Models\Attachment;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Infrastructure\Models\TaskComment;
@@ -23,6 +23,7 @@ class TaskCollaboration
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
         private readonly TaskNotificationRouter $notificationRouter,
+        private readonly ResourceChangedNotificationFactory $notificationFactory,
         private readonly AccountAuthenticationEligibility $eligibility,
         private readonly TaskAccess $access,
     ) {}
@@ -120,7 +121,7 @@ class TaskCollaboration
 
         $this->notifications->sendToAccountIds(
             $this->notificationRouter->commentAdded($task),
-            new ResourceChangedNotification(
+            $this->notificationFactory->make(
                 'نظر جدید روی تسک',
                 "برای تسک {$task->reference} نظر جدید ثبت شد.",
                 route('tasks.show', $task),

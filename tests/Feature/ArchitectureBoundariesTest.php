@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Schema;
 
-it('inventories cross-context infrastructure imports before the boundary migration', function (): void {
+it('keeps module source free of cross-context infrastructure imports after the boundary migration', function (): void {
     $violations = [];
 
     foreach (moduleSourceFiles() as [$module, $relativePath, $source]) {
@@ -11,8 +11,21 @@ it('inventories cross-context infrastructure imports before the boundary migrati
         }
     }
 
-    expect($violations)->not->toBeEmpty()
-        ->and(array_values(array_unique($violations)))->toContain('clients', 'identity', 'projects', 'tasks');
+    expect($violations)->toBeEmpty();
+});
+
+it('keeps feature ownership out of the root application', function (): void {
+    foreach (
+        [
+            'app/Policies',
+            'app/Support',
+            'app/Notifications',
+            'app/Models/Activity.php',
+            'app/Http/Middleware/EnsureAccountActive.php',
+        ] as $legacyPath
+    ) {
+        expect(base_path($legacyPath))->not->toBeFile();
+    }
 });
 
 it('has the MVP and project work management domain tables', function (): void {

@@ -16,4 +16,9 @@ final class EloquentAccountDirectory implements AccountDirectory
             ? null
             : new AccountSummary($account->id, $account->role, $account->is_active, $account->client_id);
     }
+
+    public function activeAdministratorIds(): array
+    {
+        return User::query()->active()->admins()->pluck('id')->all();
+    }
 }

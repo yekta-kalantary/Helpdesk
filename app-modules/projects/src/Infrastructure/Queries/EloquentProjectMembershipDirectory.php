@@ -59,6 +59,11 @@ final class EloquentProjectMembershipDirectory implements ProjectMembershipDirec
         return $workGroup === null ? null : new WorkGroupSummary($workGroup->id, $workGroup->project_id);
     }
 
+    public function findProjectForUpdate(int $projectId): int
+    {
+        return (int) Project::query()->whereKey($projectId)->lockForUpdate()->firstOrFail()->id;
+    }
+
     private function taskStatusSummary(ProjectTaskStatus $status): ProjectTaskStatusSummary
     {
         return new ProjectTaskStatusSummary($status->id, $status->project_id, $status->is_done);

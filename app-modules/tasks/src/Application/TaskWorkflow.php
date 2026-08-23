@@ -2,16 +2,16 @@
 
 namespace Modules\Tasks\Application;
 
-use App\Notifications\ResourceChangedNotification;
-use App\Support\ActivityRecorder;
-use App\Support\NotificationDispatcher;
 use DomainException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Modules\Audit\Application\ActivityRecorder;
 use Modules\Clients\Application\Contracts\ClientStatusQuery;
 use Modules\Identity\Application\AccountAuthenticationEligibility;
 use Modules\Identity\Application\Contracts\AccountDirectory;
 use Modules\Identity\Domain\Enums\UserRole;
+use Modules\Notifications\Application\Contracts\ResourceChangedNotificationFactory;
+use Modules\Notifications\Application\NotificationDispatcher;
 use Modules\Projects\Application\Contracts\ProjectMembershipDirectory;
 use Modules\Projects\Application\DTOs\ProjectSummary;
 use Modules\Projects\Application\DTOs\ProjectTaskStatusSummary;
@@ -29,6 +29,7 @@ class TaskWorkflow
         private readonly ActivityRecorder $activities,
         private readonly NotificationDispatcher $notifications,
         private readonly TaskNotificationRouter $notificationRouter,
+        private readonly ResourceChangedNotificationFactory $notificationFactory,
     ) {}
 
     public function createForCustomer(object $actor, object $project, array $data): Task
@@ -184,7 +185,16 @@ class TaskWorkflow
 
         $this->notifications->sendToAccountIds(
             $this->notificationRouter->created($task),
-            $this->notification($task, 'تسک جدید', "تسک {$task->reference} ایجاد شد."),
+            $this->notificationFactory->make(
+                'تسک جدید',
+                "تسک {$task->reference} ایجاد شد.",
+                route('tasks.show', $task),
+                [
+                    'resource_type' => 'task',
+                    'resource_id' => $task->id,
+                    'reference' => $task->reference,
+                ],
+            ),
             (int) $task->created_by,
         );
 
@@ -233,13 +243,31 @@ class TaskWorkflow
         if ($original['project_status_id'] !== (int) $task->project_status_id) {
             $this->notifications->sendToAccountIds(
                 $this->notificationRouter->statusChanged($task),
-                $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
+                $this->notificationFactory->make(
+                    'تغییر وضعیت تسک',
+                    "وضعیت {$task->reference} تغییر کرد.",
+                    route('tasks.show', $task),
+                    [
+                        'resource_type' => 'task',
+                        'resource_id' => $task->id,
+                        'reference' => $task->reference,
+                    ],
+                ),
                 $actorId,
             );
         } elseif ($original['assigned_to'] !== $task->assigned_to) {
             $this->notifications->sendToAccountIds(
                 $this->notificationRouter->assigneeChanged($task),
-                $this->notification($task, 'تغییر مسئول تسک', "مسئول تسک {$task->reference} تغییر کرد."),
+                $this->notificationFactory->make(
+                    'تغییر مسئول تسک',
+                    "مسئول تسک {$task->reference} تغییر کرد.",
+                    route('tasks.show', $task),
+                    [
+                        'resource_type' => 'task',
+                        'resource_id' => $task->id,
+                        'reference' => $task->reference,
+                    ],
+                ),
                 $actorId,
             );
         }
@@ -262,22 +290,17 @@ class TaskWorkflow
 
         $this->notifications->sendToAccountIds(
             $this->notificationRouter->statusChanged($task),
-            $this->notification($task, 'تغییر وضعیت تسک', "وضعیت {$task->reference} تغییر کرد."),
+            $this->notificationFactory->make(
+                'تغییر وضعیت تسک',
+                "وضعیت {$task->reference} تغییر کرد.",
+                route('tasks.show', $task),
+                [
+                    'resource_type' => 'task',
+                    'resource_id' => $task->id,
+                    'reference' => $task->reference,
+                ],
+            ),
             $actorId,
-        );
-    }
-
-    private function notification(Task $task, string $title, string $body): ResourceChangedNotification
-    {
-        return new ResourceChangedNotification(
-            $title,
-            $body,
-            route('tasks.show', $task),
-            [
-                'resource_type' => 'task',
-                'resource_id' => $task->id,
-                'reference' => $task->reference,
-            ],
         );
     }
 

@@ -2,21 +2,16 @@
 
 namespace App\Providers;
 
-use App\Policies\AttachmentPolicy;
-use App\Policies\ClientPolicy;
-use App\Policies\TaskPolicy;
-use Illuminate\Support\Facades\Gate;
+use App\Integration\Notifications\EloquentNotifiableDirectory;
 use Illuminate\Support\ServiceProvider;
-use Modules\Clients\Infrastructure\Models\Client;
-use Modules\Tasks\Infrastructure\Models\Attachment;
-use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Notifications\Application\Contracts\NotifiableDirectory;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function boot(): void
+    public function register(): void
     {
-        Gate::policy(Client::class, ClientPolicy::class);
-        Gate::policy(Task::class, TaskPolicy::class);
-        Gate::policy(Attachment::class, AttachmentPolicy::class);
+        $this->app->bind(NotifiableDirectory::class, EloquentNotifiableDirectory::class);
     }
+
+    public function boot(): void {}
 }

@@ -17,4 +17,11 @@ interface ProjectMembershipDirectory
     public function findActiveTaskStatus(int $statusId): ?ProjectTaskStatusSummary;
 
     public function findActiveWorkGroup(int $workGroupId): ?WorkGroupSummary;
+
+    /**
+     * Lock the project row for pending writes and return its identifier.
+     *
+     * @throws Illuminate\Database\Eloquent\ModelNotFoundException when the project is missing
+     */
+    public function findProjectForUpdate(int $projectId): int;
 }

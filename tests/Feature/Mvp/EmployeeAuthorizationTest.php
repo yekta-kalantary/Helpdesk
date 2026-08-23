@@ -1,14 +1,14 @@
 <?php
 
-use App\Models\Activity;
-use App\Policies\TaskPolicy;
 use Illuminate\Support\Facades\Route;
+use Modules\Audit\Infrastructure\Models\Activity;
 use Modules\Clients\Infrastructure\Models\Client;
 use Modules\Identity\Infrastructure\Models\User;
 use Modules\Projects\Application\ProjectMembershipManager;
 use Modules\Tasks\Application\TaskChecklist;
 use Modules\Tasks\Application\TaskWorkflow;
 use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Tasks\Presentation\Policies\TaskPolicy;
 
 beforeEach(function (): void {
     Route::get('/tasks/{task}', fn (): string => '')->name('tasks.show');

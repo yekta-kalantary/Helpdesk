@@ -2,9 +2,9 @@
 
 namespace Modules\Tasks\Application;
 
-use App\Support\ActivityRecorder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Modules\Audit\Application\ActivityRecorder;
 use Modules\Tasks\Infrastructure\Models\Task;
 use Modules\Tasks\Infrastructure\Models\TaskChecklistItem;
 

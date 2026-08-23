@@ -1,24 +1,11 @@
 <?php
 
-namespace App\Support;
+namespace Modules\Audit\Application;
 
-use App\Models\Activity;
-use Modules\Identity\Infrastructure\Models\User;
-use Modules\Projects\Infrastructure\Models\Project;
-use Modules\Tasks\Infrastructure\Models\Task;
+use Modules\Audit\Infrastructure\Models\Activity;
 
 class ActivityRecorder
 {
-    public function record(
-        ?User $actor,
-        string $action,
-        ?Project $project = null,
-        ?Task $task = null,
-        array $metadata = [],
-    ): Activity {
-        return $this->recordIds($actor?->id, $action, $project?->id ?? $task?->project_id, $task?->id, $metadata);
-    }
-
     public function recordIds(?int $actorId, string $action, ?int $projectId, ?int $taskId, array $metadata = []): Activity
     {
         return Activity::query()->create([

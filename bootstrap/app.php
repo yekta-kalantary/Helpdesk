@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Middleware\EnsureAccountActive;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Modules\Identity\Presentation\Http\Middleware\EnsureAccountActive;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
